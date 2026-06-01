@@ -22,17 +22,17 @@ export const resolveUserAccess = async (email?: string | null) => {
 
   const normalizedEmail = email.toLowerCase();
 
+  if (adminEmails.includes(normalizedEmail)) {
+    const admin = await prisma.admin.findFirst();
+    return { id: admin?.id || normalizedEmail, role: "admin" as UserRole };
+  }
+
   const authUser = await prisma.authUser.findUnique({
     where: { email: normalizedEmail },
     select: { id: true, role: true, name: true },
   });
   if (authUser && isAppRole(authUser.role)) {
     return { id: authUser.id, role: authUser.role, name: authUser.name };
-  }
-
-  if (adminEmails.includes(normalizedEmail)) {
-    const admin = await prisma.admin.findFirst();
-    return { id: admin?.id || normalizedEmail, role: "admin" as UserRole };
   }
 
   const Lider = await prisma.lider.findUnique({
@@ -94,6 +94,20 @@ export const authOptions: NextAuthOptions = {
         const password = credentials?.password;
 
         if (!email || !password) return null;
+
+        if (adminEmails.includes(email)) {
+          const admin = await prisma.admin.findFirst();
+          const authUser = await prisma.authUser.findUnique({ where: { email } });
+
+          if (authUser?.passwordHash && !verifyPassword(password, authUser.passwordHash)) return null;
+
+          return {
+            id: admin?.id || authUser?.id || email,
+            email,
+            name: authUser?.name || email,
+            role: "admin",
+          };
+        }
 
         const authUser = await prisma.authUser.findUnique({ where: { email } });
         if (!authUser?.passwordHash || !isAppRole(authUser.role)) return null;
