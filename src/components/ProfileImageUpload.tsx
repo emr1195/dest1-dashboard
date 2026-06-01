@@ -49,7 +49,7 @@ const ProfileImageUpload = ({
 
   const image = (
     <div
-      className={`relative h-36 w-36 overflow-hidden rounded-full ${
+      className={`relative h-40 w-40 overflow-hidden rounded-full ${
         canUpload ? "cursor-pointer ring-2 ring-white/80 ring-offset-2 ring-offset-lamaSky" : ""
       }`}
       title={canUpload ? "Cambiar foto de perfil" : undefined}
@@ -57,9 +57,9 @@ const ProfileImageUpload = ({
       <Image
         src={imageSrc}
         alt="Foto de perfil"
-        width={144}
-        height={144}
-        className="h-36 w-36 rounded-full object-cover"
+        width={160}
+        height={160}
+        className="h-40 w-40 rounded-full object-cover"
       />
       {canUpload && (
         <div className="group absolute inset-0 flex items-end justify-center bg-black/0 text-xs font-medium text-white transition hover:bg-black/35">

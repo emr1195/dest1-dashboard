@@ -66,14 +66,14 @@ const ProfileRankEditor = ({
           onClick={() => setEditing(true)}
           title="Cambiar rango"
           aria-label={`Cambiar rango ${option.label}`}
-          className="absolute left-[104px] top-[112px] z-20 h-12 w-14 rounded-md bg-white/10 p-0 shadow-md transition hover:ring-2 hover:ring-white/80"
+          className="absolute left-[116px] top-[132px] z-20 h-14 w-16 rounded-md bg-white/10 p-0 shadow-md transition hover:ring-2 hover:ring-white/80"
         >
           <Image
             src={option.image}
             alt={`Insignia ${option.label}`}
-            width={55}
-            height={50}
-            className="h-12 w-14 rounded-md object-contain"
+            width={64}
+            height={56}
+            className="h-14 w-16 rounded-md object-contain"
           />
         </button>
       )}
@@ -82,9 +82,9 @@ const ProfileRankEditor = ({
         <Image
           src={option.image}
           alt={`Insignia ${option.label}`}
-          width={55}
-          height={50}
-          className="absolute left-[104px] top-[112px] z-20 h-12 w-14 rounded-md object-contain shadow-md"
+          width={64}
+          height={56}
+          className="absolute left-[116px] top-[132px] z-20 h-14 w-16 rounded-md object-contain shadow-md"
         />
       )}
 
@@ -92,14 +92,14 @@ const ProfileRankEditor = ({
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="absolute left-1/2 top-[156px] -translate-x-1/2 whitespace-nowrap rounded-md bg-white/15 px-3 py-1 text-xs text-white hover:bg-white/25"
+          className="absolute left-1/2 top-[176px] -translate-x-1/2 whitespace-nowrap rounded-md bg-white/15 px-3 py-1 text-xs text-white hover:bg-white/25"
         >
           Asignar rango
         </button>
       )}
 
       {canEdit && editing && (
-        <div className="absolute left-0 top-[184px] z-30 mt-2 w-72 rounded-md bg-white p-2 text-gray-700 shadow-xl ring-1 ring-gray-200">
+        <div className="absolute left-0 top-[204px] z-30 mt-2 w-72 rounded-md bg-white p-2 text-gray-700 shadow-xl ring-1 ring-gray-200">
           <p className="mb-2 px-2 text-xs font-medium text-gray-500">Seleccionar rango</p>
           <button
             type="button"
@@ -132,7 +132,7 @@ const ProfileRankEditor = ({
         </div>
       )}
 
-      {error && <p className="absolute left-0 top-[184px] mt-2 text-xs text-red-100">{error}</p>}
+      {error && <p className="absolute left-0 top-[204px] mt-2 text-xs text-red-100">{error}</p>}
     </>
   );
 };

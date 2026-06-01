@@ -40,7 +40,7 @@ const ProfileInfoCard = ({
       style={studentBackgroundColor ? { backgroundColor: studentBackgroundColor } : undefined}
     >
       <div className="flex w-full justify-center sm:w-[180px] sm:min-w-[180px]">
-        <div className="relative h-[184px] w-36 shrink-0">
+        <div className="relative h-[200px] w-40 shrink-0 pt-3">
           <ProfileImageUpload id={id} type={type} src={img} canUpload={canUpload} />
           <ProfileRankEditor id={id} type={type} rank={rank} canEdit={canUpload} />
         </div>
