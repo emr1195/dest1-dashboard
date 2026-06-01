@@ -1,6 +1,6 @@
 import { Prisma, UserSex } from "@prisma/client";
 import { consumeAccessCode, verifyAccessCode } from "@/lib/accessCodes";
-import { hashPassword } from "@/lib/password";
+import { hashPassword, verifyPassword } from "@/lib/password";
 import prisma from "@/lib/prisma";
 import { isAppRole, isValidLeaderGroup, isValidRankForRole, normalizeAccessCode, type AppRole } from "@/lib/roles";
 import { NextResponse } from "next/server";
@@ -42,6 +42,26 @@ const getExistingProfileId = async (role: AppRole, email: string) => {
   }
 
   const admin = await prisma.admin.findFirst({ where: { username: email }, select: { id: true } });
+  return admin?.id;
+};
+
+const getProfileIdByAuthId = async (role: AppRole, id: string) => {
+  if (role === "student") {
+    const profile = await prisma.muchacho.findUnique({ where: { id }, select: { id: true } });
+    return profile?.id;
+  }
+
+  if (role === "teacher") {
+    const profile = await prisma.lider.findUnique({ where: { id }, select: { id: true } });
+    return profile?.id;
+  }
+
+  if (role === "parent") {
+    const profile = await prisma.parent.findUnique({ where: { id }, select: { id: true } });
+    return profile?.id;
+  }
+
+  const admin = await prisma.admin.findUnique({ where: { id }, select: { id: true } });
   return admin?.id;
 };
 
@@ -88,6 +108,131 @@ const ensureGuardianProfile = async (
       address: DEFAULT_ADDRESS,
     },
   });
+};
+
+const syncRoleProfile = async ({
+  tx,
+  authUserId,
+  role,
+  normalizedEmail,
+  displayName,
+  ageNumber,
+  phoneNumber,
+  guardian,
+  selectedRank,
+  selectedGender,
+  birthday,
+}: {
+  tx: Prisma.TransactionClient;
+  authUserId: string;
+  role: AppRole;
+  normalizedEmail: string;
+  displayName: string;
+  ageNumber: number;
+  phoneNumber: string;
+  guardian: string;
+  selectedRank: string;
+  selectedGender: string;
+  birthday: Date;
+}) => {
+  const personName = splitName(displayName, normalizedEmail);
+
+  if (role === "admin") {
+    await tx.admin.upsert({
+      where: { id: authUserId },
+      create: {
+        id: authUserId,
+        username: normalizedEmail,
+      },
+      update: {
+        username: normalizedEmail,
+      },
+    });
+  }
+
+  if (role === "teacher") {
+    await tx.lider.upsert({
+      where: { id: authUserId },
+      create: {
+        id: authUserId,
+        username: normalizedEmail,
+        name: personName.name,
+        surname: personName.surname,
+        email: normalizedEmail,
+        phone: phoneNumber,
+        address: DEFAULT_ADDRESS,
+        rank: selectedRank,
+        bloodType: DEFAULT_BLOOD_TYPE,
+        sex: selectedGender as UserSex,
+        birthday,
+      },
+      update: {
+        name: personName.name,
+        surname: personName.surname,
+        email: normalizedEmail,
+        phone: phoneNumber,
+        rank: selectedRank,
+        sex: selectedGender as UserSex,
+        birthday,
+      },
+    });
+  }
+
+  if (role === "student") {
+    const { grade, classItem } = await ensureGradeAndClass(tx);
+    const parent = await ensureGuardianProfile(tx, authUserId, guardian);
+
+    await tx.muchacho.upsert({
+      where: { id: authUserId },
+      create: {
+        id: authUserId,
+        username: normalizedEmail,
+        name: personName.name,
+        surname: personName.surname,
+        email: normalizedEmail,
+        phone: phoneNumber,
+        address: DEFAULT_ADDRESS,
+        rank: selectedRank,
+        bloodType: DEFAULT_BLOOD_TYPE,
+        sex: selectedGender as UserSex,
+        parentId: parent.id,
+        classId: classItem.id,
+        gradeId: grade.id,
+        birthday,
+      },
+      update: {
+        name: personName.name,
+        surname: personName.surname,
+        email: normalizedEmail,
+        phone: phoneNumber,
+        rank: selectedRank,
+        sex: selectedGender as UserSex,
+        parentId: parent.id,
+        birthday,
+      },
+    });
+  }
+
+  if (role === "parent") {
+    await tx.parent.upsert({
+      where: { id: authUserId },
+      create: {
+        id: authUserId,
+        username: normalizedEmail,
+        name: personName.name,
+        surname: personName.surname,
+        email: normalizedEmail,
+        phone: phoneNumber,
+        address: DEFAULT_ADDRESS,
+      },
+      update: {
+        name: personName.name,
+        surname: personName.surname,
+        email: normalizedEmail,
+        phone: phoneNumber,
+      },
+    });
+  }
 };
 
 export async function POST(req: Request) {
@@ -142,132 +287,107 @@ export async function POST(req: Request) {
   }
 
   const existingUser = await prisma.authUser.findUnique({ where: { email: normalizedEmail } });
-  if (existingUser) {
-    return NextResponse.json({ message: "Ya existe una cuenta con ese correo." }, { status: 409 });
-  }
 
   const existingProfileId = await getExistingProfileId(role, normalizedEmail);
-  const personName = splitName(displayName, normalizedEmail);
+  const existingProfileByAuthId = existingUser ? await getProfileIdByAuthId(role, existingUser.id) : null;
   const birthday = birthdayFromAge(ageNumber);
 
-  await prisma.$transaction(async (tx) => {
-    const authUser = await tx.authUser.create({
-      data: {
-        ...(existingProfileId ? { id: existingProfileId } : {}),
-        email: normalizedEmail,
-        name: displayName || normalizedEmail,
-        age: ageNumber,
-        phone: phoneNumber,
-        guardianName: role === "student" ? guardian : null,
-        childrenNames: role === "parent" ? children : null,
-        rank: role === "teacher" || role === "student" ? selectedRank : null,
-        leaderGroup: role === "teacher" && selectedRank === "Lider de Grupo" ? selectedLeaderGroup : null,
-        sex: selectedGender as UserSex,
-        passwordHash: hashPassword(plainPassword),
-        provider: "credentials",
+  try {
+    await prisma.$transaction(async (tx) => {
+      if (existingUser) {
+        const samePassword = existingUser.passwordHash
+          ? verifyPassword(plainPassword, existingUser.passwordHash)
+          : false;
+        const missingRoleProfile = !existingProfileId && !existingProfileByAuthId;
+
+        if (existingUser.role !== role || (!samePassword && !missingRoleProfile)) {
+          throw new Error("EXISTING_USER_CONFLICT");
+        }
+
+        await tx.authUser.update({
+          where: { id: existingUser.id },
+          data: {
+            name: displayName || normalizedEmail,
+            age: ageNumber,
+            phone: phoneNumber,
+            guardianName: role === "student" ? guardian : null,
+            childrenNames: role === "parent" ? children : null,
+            rank: role === "teacher" || role === "student" ? selectedRank : null,
+            leaderGroup: role === "teacher" && selectedRank === "Lider de Grupo" ? selectedLeaderGroup : null,
+            sex: selectedGender as UserSex,
+            passwordHash: samePassword ? existingUser.passwordHash : hashPassword(plainPassword),
+            provider: "credentials",
+          },
+        });
+
+        await syncRoleProfile({
+          tx,
+          authUserId: existingUser.id,
+          role,
+          normalizedEmail,
+          displayName,
+          ageNumber,
+          phoneNumber,
+          guardian,
+          selectedRank,
+          selectedGender,
+          birthday,
+        });
+
+        return;
+      }
+
+      const authUser = await tx.authUser.create({
+        data: {
+          ...(existingProfileId ? { id: existingProfileId } : {}),
+          email: normalizedEmail,
+          name: displayName || normalizedEmail,
+          age: ageNumber,
+          phone: phoneNumber,
+          guardianName: role === "student" ? guardian : null,
+          childrenNames: role === "parent" ? children : null,
+          rank: role === "teacher" || role === "student" ? selectedRank : null,
+          leaderGroup: role === "teacher" && selectedRank === "Lider de Grupo" ? selectedLeaderGroup : null,
+          sex: selectedGender as UserSex,
+          passwordHash: hashPassword(plainPassword),
+          provider: "credentials",
+          role,
+        },
+      });
+
+      await syncRoleProfile({
+        tx,
+        authUserId: authUser.id,
         role,
-      },
+        normalizedEmail,
+        displayName,
+        ageNumber,
+        phoneNumber,
+        guardian,
+        selectedRank,
+        selectedGender,
+        birthday,
+      });
     });
 
-    if (role === "admin") {
-      await tx.admin.upsert({
-        where: { id: authUser.id },
-        create: {
-          id: authUser.id,
-          username: normalizedEmail,
-        },
-        update: {
-          username: normalizedEmail,
-        },
-      });
+    await consumeAccessCode(accessCode.id);
+  } catch (error) {
+    if (error instanceof Error && error.message === "EXISTING_USER_CONFLICT") {
+      return NextResponse.json(
+        { message: "Ya existe una cuenta con ese correo. Inicia sesion o usa otro correo." },
+        { status: 409 }
+      );
     }
 
-    if (role === "teacher") {
-      await tx.lider.upsert({
-        where: { id: authUser.id },
-        create: {
-          id: authUser.id,
-          username: normalizedEmail,
-          name: personName.name,
-          surname: personName.surname,
-          email: normalizedEmail,
-          phone: phoneNumber,
-          address: DEFAULT_ADDRESS,
-          rank: selectedRank,
-          bloodType: DEFAULT_BLOOD_TYPE,
-          sex: selectedGender as UserSex,
-          birthday,
-        },
-        update: {
-          name: personName.name,
-          surname: personName.surname,
-          email: normalizedEmail,
-          phone: phoneNumber,
-          rank: selectedRank,
-          sex: selectedGender as UserSex,
-          birthday,
-        },
-      });
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return NextResponse.json(
+        { message: "Ya existe una cuenta o perfil con ese correo, usuario o telefono." },
+        { status: 409 }
+      );
     }
 
-    if (role === "student") {
-      const { grade, classItem } = await ensureGradeAndClass(tx);
-      const parent = await ensureGuardianProfile(tx, authUser.id, guardian);
-
-      await tx.muchacho.upsert({
-        where: { id: authUser.id },
-        create: {
-          id: authUser.id,
-          username: normalizedEmail,
-          name: personName.name,
-          surname: personName.surname,
-          email: normalizedEmail,
-          phone: phoneNumber,
-          address: DEFAULT_ADDRESS,
-          rank: selectedRank,
-          bloodType: DEFAULT_BLOOD_TYPE,
-          sex: selectedGender as UserSex,
-          parentId: parent.id,
-          classId: classItem.id,
-          gradeId: grade.id,
-          birthday,
-        },
-        update: {
-          name: personName.name,
-          surname: personName.surname,
-          email: normalizedEmail,
-          phone: phoneNumber,
-          rank: selectedRank,
-          sex: selectedGender as UserSex,
-          parentId: parent.id,
-          birthday,
-        },
-      });
-    }
-
-    if (role === "parent") {
-      await tx.parent.upsert({
-        where: { id: authUser.id },
-        create: {
-          id: authUser.id,
-          username: normalizedEmail,
-          name: personName.name,
-          surname: personName.surname,
-          email: normalizedEmail,
-          phone: phoneNumber,
-          address: DEFAULT_ADDRESS,
-        },
-        update: {
-          name: personName.name,
-          surname: personName.surname,
-          email: normalizedEmail,
-          phone: phoneNumber,
-        },
-      });
-    }
-  });
-
-  await consumeAccessCode(accessCode.id);
+    throw error;
+  }
 
   return NextResponse.json({ ok: true });
 }
