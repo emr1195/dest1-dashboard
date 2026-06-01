@@ -36,15 +36,22 @@ const menuItems = [
   },
 ];
 
+const homeByRole = {
+  admin: "/admin",
+  teacher: "/teacher",
+  student: "/student",
+  parent: "/parent",
+} as const;
+
 const Menu = async () => {
   const user = await getCurrentUser();
   const role = user?.role;
   const evaluationActive = isEvaluationDay();
 
   return (
-    <div className="mt-4 text-sm">
+    <nav className="mt-4 text-sm">
       {menuItems.map((group) => (
-        <div className="flex flex-col gap-2" key={group.title}>
+        <div className="flex flex-col gap-1.5 lg:gap-2" key={group.title}>
           <span className="hidden lg:block text-gray-500 font-light my-4">
             {group.title}
           </span>
@@ -65,28 +72,30 @@ const Menu = async () => {
                 <div
                   key={item.label}
                   title="Activo solo el primer dia de marzo, junio, septiembre y diciembre"
-                  className="flex cursor-not-allowed items-center justify-center gap-4 rounded-md py-2 text-gray-500 md:px-2 lg:justify-start"
+                  className="flex cursor-not-allowed items-center justify-center gap-3 rounded-md px-1 py-2 text-gray-500 md:px-2 lg:justify-start lg:gap-4"
                 >
-                  <Image src={item.icon} alt="" width={20} height={20} className="opacity-40" />
+                  <Image src={item.icon} alt="" width={22} height={22} className="h-5 w-5 shrink-0 opacity-40 lg:h-[22px] lg:w-[22px]" />
                   <span className="hidden lg:block">{item.label}</span>
                 </div>
               );
             }
 
+            const href = item.href === "/" && role ? homeByRole[role] : item.href;
+
             return (
               <Link
-                href={item.href}
+                href={href}
                 key={item.label}
-                className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 md:px-2 rounded-md hover:bg-lamaSkyLight"
+                className="flex items-center justify-center gap-3 rounded-md px-1 py-2 text-gray-500 hover:bg-lamaSkyLight md:px-2 lg:justify-start lg:gap-4"
               >
-                <Image src={item.icon} alt="" width={20} height={20} />
+                <Image src={item.icon} alt="" width={22} height={22} className="h-5 w-5 shrink-0 lg:h-[22px] lg:w-[22px]" />
                 <span className="hidden lg:block">{item.label}</span>
               </Link>
             );
           })}
         </div>
       ))}
-    </div>
+    </nav>
   );
 };
 

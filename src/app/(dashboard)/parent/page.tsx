@@ -32,7 +32,7 @@ const ParentPage = async ({
 
         {students.length ? (
           students.map((student) => (
-            <section key={student.id} className="h-[720px] rounded-md bg-white p-4">
+            <section key={student.id} className="h-[620px] rounded-md bg-white p-4 sm:h-[720px]">
               <div className="mb-4">
                 <h2 className="text-lg font-semibold">
                   {student.name} {student.surname}

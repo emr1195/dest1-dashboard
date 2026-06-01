@@ -51,17 +51,17 @@ const ActivityPreview = ({
 
       {open && (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-2 sm:p-4"
           role="dialog"
           aria-modal="true"
           aria-label={activity.title}
           onClick={() => setOpen(false)}
         >
           <div
-            className="flex max-h-[96vh] w-full max-w-5xl flex-col overflow-hidden rounded-md bg-white shadow-2xl"
+            className="flex max-h-[94vh] w-full max-w-6xl flex-col overflow-hidden rounded-md bg-white shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex justify-end p-3 pb-0">
+            <div className="flex justify-end p-2 pb-0 sm:p-3 sm:pb-0">
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -71,7 +71,7 @@ const ActivityPreview = ({
                 x
               </button>
             </div>
-            <div className="relative mx-4 mt-2 min-h-[320px] flex-1 bg-gray-50 sm:min-h-[560px] lg:min-h-[640px]">
+            <div className="relative mx-3 mt-2 min-h-[260px] flex-1 bg-gray-50 sm:mx-4 sm:min-h-[560px] lg:min-h-[680px]">
               {activity.image ? (
                 <Image
                   src={activity.image}
@@ -86,7 +86,7 @@ const ActivityPreview = ({
                 </div>
               )}
             </div>
-            <div className="m-4 rounded-md border border-gray-100 bg-white p-4">
+            <div className="m-3 rounded-md border border-gray-100 bg-white p-3 sm:m-4 sm:p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <h2 className="text-xl font-semibold text-gray-800">{activity.title}</h2>
                 <span className="rounded-md bg-lamaSkyLight px-3 py-1 text-sm font-semibold text-lamaSky">

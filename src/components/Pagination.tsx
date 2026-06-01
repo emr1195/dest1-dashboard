@@ -15,17 +15,17 @@ const Pagination = ({ page, count }: { page: number; count: number }) => {
     router.push(`${window.location.pathname}?${params}`);
   };
   return (
-    <div className="p-4 flex items-center justify-between text-gray-500">
+    <div className="flex flex-wrap items-center justify-between gap-3 p-4 text-gray-500">
       <button
         disabled={!hasPrev}
-        className="py-2 px-4 rounded-md bg-slate-200 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+        className="rounded-md bg-slate-200 px-3 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
         onClick={() => {
           changePage(page - 1);
         }}
       >
         Anterior
       </button>
-      <div className="flex items-center gap-2 text-sm">
+      <div className="order-3 flex w-full items-center justify-center gap-2 overflow-x-auto text-sm sm:order-none sm:w-auto">
         {Array.from(
           { length: Math.ceil(count / ITEM_PER_PAGE) },
           (_, index) => {
@@ -49,7 +49,7 @@ const Pagination = ({ page, count }: { page: number; count: number }) => {
         )}
       </div>
       <button
-        className="py-2 px-4 rounded-md bg-slate-200 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+        className="rounded-md bg-slate-200 px-3 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50 sm:px-4"
         disabled={!hasNext}
         onClick={() => {
           changePage(page + 1);

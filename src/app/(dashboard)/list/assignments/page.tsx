@@ -281,8 +281,8 @@ const AssignmentListPage = async ({
 
   return (
     <div className="flex-1 p-4">
-      <div className="mb-4 flex items-center justify-between rounded-md bg-white p-4">
-        <h1 className="hidden text-lg font-semibold md:block">
+      <div className="mb-4 flex flex-col gap-4 rounded-md bg-white p-4 md:flex-row md:items-center md:justify-between">
+        <h1 className="text-lg font-semibold">
           {role === "parent" ? "Tareas" : "Todas las tareas"}
         </h1>
         <div className="flex w-full flex-col items-center gap-4 md:w-auto md:flex-row">

@@ -73,7 +73,7 @@ const Navbar = async () => {
   const avatarLetter = displayName.charAt(0).toUpperCase();
 
   return (
-    <div className="flex h-16 shrink-0 items-center justify-between px-4">
+    <div className="flex min-h-16 shrink-0 items-center justify-between gap-2 px-3 py-2 sm:px-4">
       <div className="hidden md:flex items-center gap-2 text-xs rounded-full ring-[1.5px] ring-gray-300 px-2">
         <Image src="/search.png" alt="" width={14} height={14} />
         <input
@@ -82,7 +82,7 @@ const Navbar = async () => {
           className="w-[200px] p-2 bg-transparent outline-none"
         />
       </div>
-      <div className="flex w-full items-center justify-end gap-6">
+      <div className="flex min-w-0 flex-1 items-center justify-end gap-3 sm:gap-6">
         <Link
           href="/list/assignments"
           aria-label={notificationLabel}
@@ -101,7 +101,7 @@ const Navbar = async () => {
         {user?.role ? (
           <Link
             href={profileHref}
-            className="flex w-28 shrink-0 flex-col overflow-hidden text-right hover:text-lamaSky"
+            className="flex min-w-0 max-w-[110px] shrink flex-col overflow-hidden text-right hover:text-lamaSky sm:w-28 sm:shrink-0"
           >
             <span className="truncate text-xs font-medium leading-3">
               {displayName}
@@ -111,7 +111,7 @@ const Navbar = async () => {
             </span>
           </Link>
         ) : (
-          <div className="flex w-28 shrink-0 flex-col overflow-hidden text-right">
+          <div className="flex min-w-0 max-w-[110px] shrink flex-col overflow-hidden text-right sm:w-28 sm:shrink-0">
             <span className="truncate text-xs font-medium leading-3">Usuario</span>
           </div>
         )}

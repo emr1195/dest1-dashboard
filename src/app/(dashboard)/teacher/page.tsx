@@ -126,7 +126,7 @@ const TeacherPage = async ({
           </div>
         </div>
 
-        <div className="mt-4 h-[800px] rounded-md bg-white p-4">
+        <div className="mt-4 h-[620px] rounded-md bg-white p-4 sm:h-[720px] lg:h-[800px]">
           <h1>Calendario del lider</h1>
           <BigCalendarContainer type="teacherId" id={teacher.id} />
         </div>

@@ -82,6 +82,7 @@ const createGoogleUserWithPendingCode = async (email: string, name?: string | nu
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
       name: "Correo y contrasena",

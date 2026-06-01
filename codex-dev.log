@@ -8,3 +8,11 @@
 
  ✓ Starting...
  ✓ Ready in 2.4s
+   Reload env: .env
+   Reload env: .env
+ ○ Compiling /src/middleware ...
+ ✓ Compiled /src/middleware in 530ms (174 modules)
+ ○ Compiling /[[...sign-in]] ...
+ ✓ Compiled /[[...sign-in]] in 1939ms (594 modules)
+ ✓ Compiled in 317ms (290 modules)
+ GET / 200 in 3027ms

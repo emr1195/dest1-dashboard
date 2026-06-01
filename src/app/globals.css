@@ -160,3 +160,35 @@
   color: gray !important;
   margin-bottom: 5px;
 }
+
+@media (max-width: 640px) {
+  .rbc-toolbar {
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  .rbc-toolbar-label {
+    padding: 0 !important;
+    text-align: left !important;
+  }
+
+  .rbc-btn-group:last-child {
+    display: flex !important;
+    width: 100% !important;
+  }
+
+  .rbc-btn-group:last-child button {
+    flex: 1 1 0 !important;
+    margin-left: 0 !important;
+    padding: 8px 6px !important;
+  }
+
+  .rbc-time-gutter.rbc-time-column .rbc-timeslot-group {
+    padding: 0 12px !important;
+  }
+
+  .rbc-event {
+    margin: 6px !important;
+    padding: 8px !important;
+  }
+}

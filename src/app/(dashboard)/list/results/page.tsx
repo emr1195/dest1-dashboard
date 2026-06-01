@@ -201,8 +201,8 @@ const ResultListPage = async ({
 
   return (
     <div className="m-4 mt-0 flex-1 rounded-md bg-white p-4">
-      <div className="flex items-center justify-between">
-        <h1 className="hidden text-lg font-semibold md:block">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <h1 className="text-lg font-semibold">
           {studentView
             ? "Mis resultados"
             : role === "parent"

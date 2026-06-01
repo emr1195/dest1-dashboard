@@ -125,8 +125,8 @@ const EventListPage = async ({
         </section>
       )}
       <section className="flex-1 rounded-md bg-white p-4">
-        <div className="flex items-center justify-between">
-          <h1 className="hidden text-lg font-semibold md:block">Todas las actividades</h1>
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <h1 className="text-lg font-semibold">Todas las actividades</h1>
           <div className="flex w-full flex-col items-center gap-4 md:w-auto md:flex-row">
             <TableSearch />
           </div>

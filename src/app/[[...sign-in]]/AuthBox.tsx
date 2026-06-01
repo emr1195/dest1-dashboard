@@ -49,36 +49,23 @@ const AuthBox = () => {
     setNotice("");
   };
 
-  const getDashboardFromSession = async (fallbackRole?: string) => {
-    for (let attempt = 0; attempt < 8; attempt += 1) {
-      const session = await fetch("/api/auth/session", {
-        cache: "no-store",
-        credentials: "same-origin",
-      })
-        .then((response) => response.json())
-        .catch(() => null);
-      const sessionRole = session?.user?.role;
+  const getSafeCallbackPath = () => {
+    const value = callbackUrl.trim();
 
-      if (dashboardPaths[sessionRole]) {
-        return dashboardPaths[sessionRole];
-      }
+    if (!value || value === "/") return "";
 
-      await new Promise((resolve) => setTimeout(resolve, 250));
+    try {
+      const url = value.startsWith("/")
+        ? new URL(value, window.location.origin)
+        : new URL(value);
+
+      if (url.origin !== window.location.origin) return "";
+      if (url.pathname === "/" || url.pathname.startsWith("/api/auth")) return "";
+
+      return `${url.pathname}${url.search}${url.hash}`;
+    } catch {
+      return "";
     }
-
-    return dashboardPaths[fallbackRole || ""] || "";
-  };
-
-  const goToDashboard = async (fallbackRole?: string) => {
-    const dashboardPath = await getDashboardFromSession(fallbackRole);
-    const target = callbackUrl !== "/" ? callbackUrl : dashboardPath;
-
-    if (!target) {
-      setError("Sesion iniciada, pero no se pudo leer el rol. Borra cookies e intenta de nuevo.");
-      return;
-    }
-
-    window.location.assign(target);
   };
 
   const handleSignIn = async (event: FormEvent<HTMLFormElement>) => {
@@ -86,21 +73,26 @@ const AuthBox = () => {
     resetMessages();
     setLoading(true);
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-      callbackUrl,
+    const targetResponse = await fetch("/api/auth/login-target", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
     });
+    const targetData = await targetResponse.json().catch(() => null);
 
-    setLoading(false);
-
-    if (result?.error) {
-      setError("Correo o contrasena incorrectos.");
+    if (!targetResponse.ok) {
+      setLoading(false);
+      setError(targetData?.message || "Correo o contrasena incorrectos.");
       return;
     }
 
-    await goToDashboard();
+    await signIn("credentials", {
+      email,
+      password,
+      callbackUrl: getSafeCallbackPath() || targetData?.dashboardPath || "/auth/redirect",
+    });
+
+    setLoading(false);
   };
 
   const handleRequestCode = async () => {
@@ -203,22 +195,13 @@ const AuthBox = () => {
       return;
     }
 
-    const result = await signIn("credentials", {
+    await signIn("credentials", {
       email,
       password,
-      redirect: false,
-      callbackUrl,
+      callbackUrl: getSafeCallbackPath() || dashboardPaths[role] || "/auth/redirect",
     });
 
     setLoading(false);
-
-    if (result?.error) {
-      setMode("signin");
-      setNotice("Cuenta creada. Inicia sesion para continuar.");
-      return;
-    }
-
-    await goToDashboard(role);
   };
 
   const handleGoogle = async () => {
@@ -243,20 +226,20 @@ const AuthBox = () => {
       }
     }
 
-    signIn("google", { callbackUrl });
+    signIn("google", { callbackUrl: getSafeCallbackPath() || "/auth/redirect" });
   };
 
   const inputClass = "p-3 rounded-md ring-1 ring-gray-300 outline-none focus:ring-lamaSky text-base";
 
   return (
-    <div className="bg-white p-10 md:px-16 md:py-14 rounded-md shadow-2xl flex flex-col justify-center gap-6 w-full md:w-[80vw] max-w-[780px] min-w-[360px] min-h-[80vh]">
+    <div className="flex max-h-[92vh] min-h-[80vh] w-full max-w-[780px] flex-col justify-center gap-6 overflow-y-auto rounded-md bg-white p-6 shadow-2xl sm:p-10 md:w-[80vw] md:px-16 md:py-14">
       <Image
         src="/logo-catedral-de-vida.png"
         alt="Logo Catedral de Vida"
         width={132}
         height={132}
         priority
-        className="h-12 w-12 md:h-80  md:w-80 object-contain self-center mb-2"
+        className="mb-2 h-24 w-24 self-center object-contain sm:h-40 sm:w-40 md:h-80 md:w-80"
       />
       <div>
         <h1 className="text-2xl md:text-3xl font-bold text-center">{mode === "signin" ? "Iniciar sesion" : "Crear cuenta"}</h1>

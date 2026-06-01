@@ -36,30 +36,30 @@ const ProfileInfoCard = ({
 
   return (
     <div
-      className="relative z-40 flex flex-1 gap-4 rounded-md bg-lamaSky px-4 py-6 text-white"
+      className="relative z-40 flex min-w-0 flex-1 flex-col items-center gap-4 rounded-md bg-lamaSky px-4 py-6 text-white sm:flex-row sm:items-start"
       style={studentBackgroundColor ? { backgroundColor: studentBackgroundColor } : undefined}
     >
-      <div className="flex w-1/3 min-w-[150px] justify-center">
+      <div className="flex w-full justify-center sm:w-[180px] sm:min-w-[180px]">
         <div className="relative h-[184px] w-36 shrink-0">
           <ProfileImageUpload id={id} type={type} src={img} canUpload={canUpload} />
           <ProfileRankEditor id={id} type={type} rank={rank} canEdit={canUpload} />
         </div>
       </div>
 
-      <div className="flex w-2/3 flex-col gap-4 py-1 pl-5">
-        <h1 className="text-xl font-semibold">{name}</h1>
+      <div className="flex min-w-0 w-full flex-col gap-4 py-1 text-center sm:flex-1 sm:pl-4 sm:text-left md:pl-5">
+        <h1 className="break-words text-xl font-semibold">{name}</h1>
 
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-3 text-xs font-medium">
-          <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-4 gap-y-3 text-xs font-medium sm:justify-start">
+          <div className="flex min-w-0 items-center gap-2">
             <Image src="/mail.png" alt="" width={14} height={14} />
-            <span>{email || "-"}</span>
+            <span className="min-w-0 break-all">{email || "-"}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <Image src="/phone.png" alt="" width={14} height={14} />
-            <span>{phone || "-"}</span>
+            <span className="min-w-0 break-all">{phone || "-"}</span>
           </div>
           {type === "teacher" || studentGroup !== "Navegantes" ? (
-            <div className="w-full">
+            <div className="w-full min-w-0">
               <BadgeBox
                 userId={id}
                 userType={type}

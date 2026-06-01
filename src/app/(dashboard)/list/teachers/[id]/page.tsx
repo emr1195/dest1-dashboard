@@ -123,7 +123,7 @@ const role = currentUser?.role;
           {/* SMALL CARDS */}
           <div className="flex-1 flex gap-4 justify-between flex-wrap">
             {/* Tarjetas de asistencia, lecciones y grupos ocultas temporalmente. */}
-            <div className="bg-white p-4 rounded-md flex min-h-[160px] w-full items-center gap-4 md:flex-col md:justify-center md:gap-2 md:text-center">
+            <div className="flex min-h-[160px] w-full flex-col items-center justify-center gap-2 rounded-md bg-white p-4 text-center">
               <Image
                 src={leaderGroups[0]?.icon || "/singleBranch.png"}
                 alt={leaderGroups[0]?.name || "Grupo"}
@@ -131,17 +131,15 @@ const role = currentUser?.role;
                 height={56}
                 className="h-14 w-14 object-contain"
               />
-              <div className="md:flex md:flex-col md:items-center">
-                <h1 className="text-xl font-semibold">
-                  {leaderGroups.map((group) => group.name).join(", ") || "Sin grupo"}
-                </h1>
-              </div>
+              <h1 className="text-xl font-semibold">
+                {leaderGroups.map((group) => group.name).join(", ") || "Sin grupo"}
+              </h1>
             </div>
           </div>
           </div>
 
         {/* BOTTOM */}
-        <div className="mt-4 bg-white rounded-md p-4 h-[800px]">
+        <div className="mt-4 h-[620px] rounded-md bg-white p-4 sm:h-[720px] lg:h-[800px]">
           <h1>Calendario del lider</h1>
           <BigCalendarContainer type="teacherId" id={teacher.id} />
         </div>
