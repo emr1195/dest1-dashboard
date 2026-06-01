@@ -50,6 +50,15 @@ const AuthBox = () => {
     setNotice("");
   };
 
+  const getDashboardFromSession = async (fallbackRole?: string) => {
+    const session = await fetch("/api/auth/session", { cache: "no-store" })
+      .then((response) => response.json())
+      .catch(() => null);
+    const sessionRole = session?.user?.role;
+
+    return dashboardPaths[sessionRole] || dashboardPaths[fallbackRole || ""] || "/";
+  };
+
   const handleSignIn = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     resetMessages();
@@ -69,7 +78,8 @@ const AuthBox = () => {
       return;
     }
 
-    router.push(result?.url || callbackUrl);
+    const dashboardPath = await getDashboardFromSession();
+    router.push(callbackUrl !== "/" ? callbackUrl : dashboardPath);
     router.refresh();
   };
 
@@ -188,7 +198,8 @@ const AuthBox = () => {
       return;
     }
 
-    router.push(dashboardPaths[role] || result?.url || callbackUrl);
+    const dashboardPath = await getDashboardFromSession(role);
+    router.push(callbackUrl !== "/" ? callbackUrl : dashboardPath);
     router.refresh();
   };
 
