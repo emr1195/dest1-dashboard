@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -48,7 +48,7 @@ const SubjectForm = ({
 
   useEffect(() => {
     if (state.success) {
-      toast(`Subject has been ${type === "create" ? "created" : "updated"}!`);
+      toast(`AS ${type === "create" ? "creada" : "actualizada"}!`);
       setOpen(false);
       router.refresh();
     }
@@ -59,12 +59,12 @@ const SubjectForm = ({
   return (
     <form className="flex flex-col gap-8" onSubmit={onSubmit}>
       <h1 className="text-xl font-semibold">
-        {type === "create" ? "Create a new subject" : "Update the subject"}
+        {type === "create" ? "Crear nueva AS" : "Actualizar AS"}
       </h1>
 
       <div className="flex justify-between flex-wrap gap-4">
         <InputField
-          label="Subject name"
+          label="Nombre de AS"
           name="name"
           defaultValue={data?.name}
           register={register}
@@ -81,7 +81,7 @@ const SubjectForm = ({
           />
         )}
         <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-xs text-gray-500">Teachers</label>
+          <label className="text-xs text-gray-500">Lideres</label>
           <select
             multiple
             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
@@ -97,20 +97,21 @@ const SubjectForm = ({
             )}
           </select>
           {errors.teachers?.message && (
-            <p className="text-xs text-red-400">
+            <p className="text-xs text-lamaPurple">
               {errors.teachers.message.toString()}
             </p>
           )}
         </div>
       </div>
       {state.error && (
-        <span className="text-red-500">Something went wrong!</span>
+        <span className="text-lamaPurple">Algo salio mal!</span>
       )}
-      <button className="bg-blue-400 text-white p-2 rounded-md">
-        {type === "create" ? "Create" : "Update"}
+      <button className="bg-lamaSky text-white p-2 rounded-md">
+        {type === "create" ? "Crear" : "Actualizar"}
       </button>
     </form>
   );
 };
 
 export default SubjectForm;
+

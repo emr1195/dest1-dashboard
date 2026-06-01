@@ -20,7 +20,7 @@ const EventCalendar = () => {
     }
   }, [value, router]);
 
-  return <Calendar onChange={onChange} value={value} />;
+  return <Calendar locale="es-ES" onChange={onChange} value={value} />;
 };
 
 export default EventCalendar;

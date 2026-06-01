@@ -23,7 +23,7 @@ const Pagination = ({ page, count }: { page: number; count: number }) => {
           changePage(page - 1);
         }}
       >
-        Prev
+        Anterior
       </button>
       <div className="flex items-center gap-2 text-sm">
         {Array.from(
@@ -33,8 +33,10 @@ const Pagination = ({ page, count }: { page: number; count: number }) => {
             return (
               <button
                 key={pageIndex}
-                className={`px-2 rounded-sm ${
-                  page === pageIndex ? "bg-lamaSky" : ""
+                className={`px-2 text-sm ${
+                  page === pageIndex
+                    ? "font-semibold text-gray-500"
+                    : "text-gray-500 hover:text-gray-600"
                 }`}
                 onClick={() => {
                   changePage(pageIndex);
@@ -53,7 +55,7 @@ const Pagination = ({ page, count }: { page: number; count: number }) => {
           changePage(page + 1);
         }}
       >
-        Next
+        Siguiente
       </button>
     </div>
   );

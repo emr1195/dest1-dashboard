@@ -1,201 +1,135 @@
-import Announcements from "@/components/Announcements";
-import BigCalendarContainer from "@/components/BigCalendarContainer";
-import FormContainer from "@/components/FormContainer";
-import Performance from "@/components/Performance";
-import StudentAttendanceCard from "@/components/StudentAttendanceCard";
-import prisma from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
-import { Class, Student } from "@prisma/client";
-import Image from "next/image";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { Suspense } from "react";
+import Announcements from "@/components/Announcements";
+import BigCalendarContainer from "@/components/BigCalendarContainer";
+import ProfileInfoCard from "@/components/ProfileInfoCard";
+import prisma from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
+import { Class, Muchacho } from "@prisma/client";
+import Image from "next/image";
+import { notFound, redirect } from "next/navigation";
+
+const getStudentAge = (birthday: Date) => {
+  const today = new Date();
+  let age = today.getFullYear() - birthday.getFullYear();
+  const birthdayThisYear = new Date(
+    today.getFullYear(),
+    birthday.getMonth(),
+    birthday.getDate()
+  );
+
+  if (today < birthdayThisYear) age -= 1;
+
+  return age;
+};
+
+const getStudentGroup = (age: number) => {
+  if (age >= 5 && age <= 7) return { name: "Navegantes", icon: "/navegantes-card.png" };
+  if (age >= 8 && age <= 10) return { name: "Pioneros", icon: "/pioneros-card.png" };
+  if (age >= 11 && age <= 14) return { name: "Seguidores", icon: "/seguidores-card.png" };
+  if (age >= 15 && age <= 17) return { name: "Exploradores", icon: "/exploradores-card.png" };
+
+  return { name: "Sin grupo", icon: "/singleBranch.png" };
+};
 
 const SingleStudentPage = async ({
   params: { id },
 }: {
-  params: { id: string };
-}) => {
-  const { sessionClaims } = auth();
-  const role = (sessionClaims?.metadata as { role?: string })?.role;
+  params: { id: string };
+}) => {
+  const currentUser = await getCurrentUser();
+const role = currentUser?.role;
 
-  const student:
-    | (Student & {
-        class: Class & { _count: { lessons: number } };
-      })
-    | null = await prisma.student.findUnique({
-    where: { id },
-    include: {
-      class: { include: { _count: { select: { lessons: true } } } },
-    },
-  });
+  if (currentUser?.role === "student" && currentUser.id !== id) {
+    redirect(`/list/students/${currentUser.id}`);
+  }
 
+  const student:
+    | (Muchacho & {
+        class: Class & { _count: { lessons: number } };
+      })
+    | null = await prisma.muchacho.findUnique({
+    where: { id },
+    include: {
+      class: { include: { _count: { select: { lessons: true } } } },
+    },
+  });
+
   if (!student) {
     return notFound();
   }
 
+  const studentAccount = await prisma.authUser.findFirst({
+    where: {
+      role: "student",
+      OR: [{ id: student.id }, ...(student.email ? [{ email: student.email }] : [])],
+    },
+    select: { rank: true },
+  });
+  const studentAge = getStudentAge(student.birthday);
+  const studentGroup = getStudentGroup(studentAge);
+  const studentRank = student.rank || studentAccount?.rank || null;
+
   return (
-    <div className="flex-1 p-4 flex flex-col gap-4 xl:flex-row">
-      {/* LEFT */}
-      <div className="w-full xl:w-2/3">
-        {/* TOP */}
+    <div className="flex-1 p-4 flex flex-col gap-4 xl:flex-row">
+      {/* LEFT */}
+      <div className="w-full xl:w-2/3">
+        {/* TOP */}
         <div className="flex flex-col lg:flex-row gap-4">
           {/* USER INFO CARD */}
-          <div className="bg-lamaSky py-6 px-4 rounded-md flex-1 flex gap-4">
-            <div className="w-1/3">
-              <Image
-                src={student.img || "/noAvatar.png"}
-                alt=""
-                width={144}
-                height={144}
-                className="w-36 h-36 rounded-full object-cover"
-              />
-            </div>
-            <div className="w-2/3 flex flex-col justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <h1 className="text-xl font-semibold">
-                  {student.name + " " + student.surname}
-                </h1>
-                {role === "admin" && (
-                  <FormContainer table="student" type="update" data={student} />
-                )}
-              </div>
-              <p className="text-sm text-gray-500">
-                Lorem ipsum, dolor sit amet consectetur adipisicing elit.
-              </p>
-              <div className="flex items-center justify-between gap-2 flex-wrap text-xs font-medium">
-                <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
-                  <Image src="/blood.png" alt="" width={14} height={14} />
-                  <span>{student.bloodType}</span>
-                </div>
-                <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
-                  <Image src="/date.png" alt="" width={14} height={14} />
-                  <span>
-                    {new Intl.DateTimeFormat("en-GB").format(student.birthday)}
-                  </span>
-                </div>
-                <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
-                  <Image src="/mail.png" alt="" width={14} height={14} />
-                  <span>{student.email || "-"}</span>
-                </div>
-                <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
-                  <Image src="/phone.png" alt="" width={14} height={14} />
-                  <span>{student.phone || "-"}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          {/* SMALL CARDS */}
+          <ProfileInfoCard
+            id={student.id}
+            type="student"
+            img={student.img}
+            name={`${student.name} ${student.surname}`}
+            email={student.email}
+            phone={student.phone}
+            rank={studentRank}
+            canUpload={role === "admin" || (role === "student" && currentUser?.id === student.id)}
+            studentGroup={studentGroup.name}
+          />
+          {/* SMALL CARDS */}
           <div className="flex-1 flex gap-4 justify-between flex-wrap">
-            {/* CARD */}
-            <div className="bg-white p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
-              <Image
-                src="/singleAttendance.png"
-                alt=""
-                width={24}
-                height={24}
-                className="w-6 h-6"
-              />
-              <Suspense fallback="loading...">
-                <StudentAttendanceCard id={student.id} />
-              </Suspense>
-            </div>
-            {/* CARD */}
-            <div className="bg-white p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
-              <Image
-                src="/singleBranch.png"
-                alt=""
-                width={24}
-                height={24}
-                className="w-6 h-6"
-              />
-              <div className="">
-                <h1 className="text-xl font-semibold">
-                  {student.class.name.charAt(0)}th
-                </h1>
-                <span className="text-sm text-gray-400">Grade</span>
+            {/* Tarjetas de patrulla, ascenso de la senda y premios de liderazgo ocultas temporalmente. */}
+            <div className="bg-white p-4 rounded-md flex min-h-[160px] w-full items-center gap-4 md:flex-col md:justify-center md:gap-2 md:text-center">
+              <Image
+                src={studentGroup.icon}
+                alt={studentGroup.name}
+                width={56}
+                height={56}
+                className="h-14 w-14 object-contain"
+              />
+              <div className="md:flex md:flex-col md:items-center">
+                <h1 className="text-xl font-semibold">{studentGroup.name}</h1>
               </div>
             </div>
-            {/* CARD */}
-            <div className="bg-white p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
-              <Image
-                src="/singleLesson.png"
-                alt=""
-                width={24}
-                height={24}
-                className="w-6 h-6"
-              />
-              <div className="">
-                <h1 className="text-xl font-semibold">
-                  {student.class._count.lessons}
-                </h1>
-                <span className="text-sm text-gray-400">Lessons</span>
-              </div>
-            </div>
-            {/* CARD */}
-            <div className="bg-white p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
-              <Image
-                src="/singleClass.png"
-                alt=""
-                width={24}
-                height={24}
-                className="w-6 h-6"
-              />
-              <div className="">
-                <h1 className="text-xl font-semibold">{student.class.name}</h1>
-                <span className="text-sm text-gray-400">Class</span>
-              </div>
-            </div>
+          </div>
           </div>
-        </div>
-        {/* BOTTOM */}
-        <div className="mt-4 bg-white rounded-md p-4 h-[800px]">
-          <h1>Student&apos;s Schedule</h1>
-          <BigCalendarContainer type="classId" id={student.class.id} />
-        </div>
-      </div>
-      {/* RIGHT */}
-      <div className="w-full xl:w-1/3 flex flex-col gap-4">
-        <div className="bg-white p-4 rounded-md">
-          <h1 className="text-xl font-semibold">Shortcuts</h1>
-          <div className="mt-4 flex gap-4 flex-wrap text-xs text-gray-500">
-            <Link
-              className="p-3 rounded-md bg-lamaSkyLight"
-              href={`/list/lessons?classId=${student.class.id}`}
-            >
-              Student&apos;s Lessons
-            </Link>
-            <Link
-              className="p-3 rounded-md bg-lamaPurpleLight"
-              href={`/list/teachers?classId=${student.class.id}`}
-            >
-              Student&apos;s Teachers
-            </Link>
-            <Link
-              className="p-3 rounded-md bg-pink-50"
-              href={`/list/exams?classId=${student.class.id}`}
-            >
-              Student&apos;s Exams
-            </Link>
-            <Link
-              className="p-3 rounded-md bg-lamaSkyLight"
-              href={`/list/assignments?classId=${student.class.id}`}
-            >
-              Student&apos;s Assignments
-            </Link>
-            <Link
-              className="p-3 rounded-md bg-lamaYellowLight"
-              href={`/list/results?studentId=${student.id}`}
-            >
-              Student&apos;s Results
-            </Link>
-          </div>
-        </div>
-        <Performance />
-        <Announcements />
-      </div>
-    </div>
-  );
-};
 
-export default SingleStudentPage;
+        {/* BOTTOM */}
+        <div className="mt-4 bg-white rounded-md p-4 h-[800px]">
+          <h1>Calendario del muchacho</h1>
+          <BigCalendarContainer type="classId" id={student.class.id} />
+        </div>
+      </div>
+      {/* RIGHT */}
+      <div className="w-full xl:w-1/3 flex flex-col gap-4">
+        {/* Atajos ocultos temporalmente para cuentas tipo muchacho. */}
+
+        {/* Evaluacion oculta temporalmente para perfiles tipo muchacho. */}
+        <Announcements />
+      </div>
+    </div>
+  );
+};
+
+export default SingleStudentPage;
+
+
+
+
+
+
+
+
+
+
+

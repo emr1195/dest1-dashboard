@@ -11,29 +11,43 @@ const AttendanceChartContainer = async () => {
 
   lastMonday.setDate(today.getDate() - daysSinceMonday);
 
-  const resData = await prisma.attendance.findMany({
-    where: {
-      date: {
-        gte: lastMonday,
+  const [studentAttendance, leaderAttendance] = await Promise.all([
+    prisma.attendance.findMany({
+      where: {
+        date: {
+          gte: lastMonday,
+        },
       },
-    },
-    select: {
-      date: true,
-      present: true,
-    },
-  });
+      select: {
+        date: true,
+        present: true,
+      },
+    }),
+    prisma.liderAttendance.findMany({
+      where: {
+        date: {
+          gte: lastMonday,
+        },
+      },
+      select: {
+        date: true,
+        present: true,
+      },
+    }),
+  ]);
+  const resData = [...studentAttendance, ...leaderAttendance];
 
   // console.log(data)
 
-  const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+  const daysOfWeek = ["Lun", "Mar", "Mie", "Jue", "Vie"];
 
   const attendanceMap: { [key: string]: { present: number; absent: number } } =
     {
-      Mon: { present: 0, absent: 0 },
-      Tue: { present: 0, absent: 0 },
-      Wed: { present: 0, absent: 0 },
-      Thu: { present: 0, absent: 0 },
-      Fri: { present: 0, absent: 0 },
+      Lun: { present: 0, absent: 0 },
+      Mar: { present: 0, absent: 0 },
+      Mie: { present: 0, absent: 0 },
+      Jue: { present: 0, absent: 0 },
+      Vie: { present: 0, absent: 0 },
     };
 
   resData.forEach((item) => {
@@ -60,7 +74,7 @@ const AttendanceChartContainer = async () => {
   return (
     <div className="bg-white rounded-lg p-4 h-full">
       <div className="flex justify-between items-center">
-        <h1 className="text-lg font-semibold">Attendance</h1>
+        <h1 className="text-lg font-semibold">Asistencia</h1>
         <Image src="/moreDark.png" alt="" width={20} height={20} />
       </div>
       <AttendanceChart data={data}/>

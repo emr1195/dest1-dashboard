@@ -4,12 +4,21 @@ import CountChartContainer from "@/components/CountChartContainer";
 import EventCalendarContainer from "@/components/EventCalendarContainer";
 import FinanceChart from "@/components/FinanceChart";
 import UserCard from "@/components/UserCard";
+import { currentFinanceYearRange, getFinanceChartData } from "@/lib/finances";
+import prisma from "@/lib/prisma";
 
-const AdminPage = ({
+const AdminPage = async ({
   searchParams,
 }: {
   searchParams: { [keys: string]: string | undefined };
 }) => {
+  const { from, to } = currentFinanceYearRange();
+  const financeTransactions = await prisma.financeTransaction.findMany({
+    where: { date: { gte: from, lt: to } },
+    select: { type: true, amount: true, date: true },
+  });
+  const financeData = getFinanceChartData(financeTransactions);
+
   return (
     <div className="p-4 flex gap-4 flex-col md:flex-row">
       {/* LEFT */}
@@ -34,7 +43,7 @@ const AdminPage = ({
         </div>
         {/* BOTTOM CHART */}
         <div className="w-full h-[500px]">
-          <FinanceChart />
+          <FinanceChart data={financeData} />
         </div>
       </div>
       {/* RIGHT */}

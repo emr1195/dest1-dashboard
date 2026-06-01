@@ -1,6 +1,6 @@
+import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import FormModal from "./FormModal";
-import { auth } from "@clerk/nextjs/server";
 
 export type FormContainerProps = {
   table:
@@ -19,70 +19,85 @@ export type FormContainerProps = {
   type: "create" | "update" | "delete";
   data?: any;
   id?: number | string;
+  triggerLabel?: string;
+  triggerClassName?: string;
 };
 
-const FormContainer = async ({ table, type, data, id }: FormContainerProps) => {
+const FormContainer = async ({
+  table,
+  type,
+  data,
+  id,
+  triggerLabel,
+  triggerClassName,
+}: FormContainerProps) => {
   let relatedData = {};
-
-  const { userId, sessionClaims } = auth();
-  const role = (sessionClaims?.metadata as { role?: string })?.role;
-  const currentUserId = userId;
+  const currentUser = await getCurrentUser();
+  const role = currentUser?.role;
+  const currentUserId = currentUser?.id;
 
   if (type !== "delete") {
     switch (table) {
-      case "subject":
-        const subjectTeachers = await prisma.teacher.findMany({
+      case "subject": {
+        const teachers = await prisma.lider.findMany({
           select: { id: true, name: true, surname: true },
         });
-        relatedData = { teachers: subjectTeachers };
+        relatedData = { teachers };
         break;
-      case "class":
-        const classGrades = await prisma.grade.findMany({
+      }
+      case "class": {
+        const grades = await prisma.grade.findMany({
           select: { id: true, level: true },
         });
-        const classTeachers = await prisma.teacher.findMany({
+        const teachers = await prisma.lider.findMany({
           select: { id: true, name: true, surname: true },
         });
-        relatedData = { teachers: classTeachers, grades: classGrades };
+        relatedData = { teachers, grades };
         break;
-      case "teacher":
-        const teacherSubjects = await prisma.subject.findMany({
+      }
+      case "teacher": {
+        const subjects = await prisma.subject.findMany({
           select: { id: true, name: true },
         });
-        relatedData = { subjects: teacherSubjects };
+        relatedData = { subjects };
         break;
-      case "student":
-        const studentGrades = await prisma.grade.findMany({
+      }
+      case "student": {
+        const grades = await prisma.grade.findMany({
           select: { id: true, level: true },
         });
-        const studentClasses = await prisma.class.findMany({
+        const classes = await prisma.class.findMany({
           include: { _count: { select: { students: true } } },
         });
-        relatedData = { classes: studentClasses, grades: studentGrades };
+        relatedData = { classes, grades };
         break;
+      }
       case "exam":
-        const examLessons = await prisma.lesson.findMany({
+      case "assignment": {
+        const lessons = await prisma.lesson.findMany({
           where: {
             ...(role === "teacher" ? { teacherId: currentUserId! } : {}),
           },
           select: { id: true, name: true },
         });
-        relatedData = { lessons: examLessons };
+        relatedData = { lessons };
         break;
-
+      }
       default:
         break;
     }
   }
 
   return (
-    <div className="">
+    <div>
       <FormModal
         table={table}
         type={type}
         data={data}
         id={id}
         relatedData={relatedData}
+        triggerLabel={triggerLabel}
+        triggerClassName={triggerClassName}
       />
     </div>
   );

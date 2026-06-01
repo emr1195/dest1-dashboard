@@ -61,7 +61,7 @@ const StudentForm = ({
 
   useEffect(() => {
     if (state.success) {
-      toast(`Student has been ${type === "create" ? "created" : "updated"}!`);
+      toast(`Muchacho ${type === "create" ? "creado" : "actualizado"}!`);
       setOpen(false);
       router.refresh();
     }
@@ -72,28 +72,28 @@ const StudentForm = ({
   return (
     <form className="flex flex-col gap-8" onSubmit={onSubmit}>
       <h1 className="text-xl font-semibold">
-        {type === "create" ? "Create a new student" : "Update the student"}
+        {type === "create" ? "Crear nuevo muchacho" : "Actualizar muchacho"}
       </h1>
-      <span className="text-xs text-gray-400 font-medium">
-        Authentication Information
+      <span className="text-xs text-gray-500 font-medium">
+        Informacion de autenticacion
       </span>
       <div className="flex justify-between flex-wrap gap-4">
         <InputField
-          label="Username"
+          label="Usuario"
           name="username"
           defaultValue={data?.username}
           register={register}
           error={errors?.username}
         />
         <InputField
-          label="Email"
+          label="Correo"
           name="email"
           defaultValue={data?.email}
           register={register}
           error={errors?.email}
         />
         <InputField
-          label="Password"
+          label="Contrasena"
           name="password"
           type="password"
           defaultValue={data?.password}
@@ -101,8 +101,8 @@ const StudentForm = ({
           error={errors?.password}
         />
       </div>
-      <span className="text-xs text-gray-400 font-medium">
-        Personal Information
+      <span className="text-xs text-gray-500 font-medium">
+        Informacion personal
       </span>
       <CldUploadWidget
         uploadPreset="school"
@@ -118,49 +118,49 @@ const StudentForm = ({
               onClick={() => open()}
             >
               <Image src="/upload.png" alt="" width={28} height={28} />
-              <span>Upload a photo</span>
+              <span>Subir foto</span>
             </div>
           );
         }}
       </CldUploadWidget>
       <div className="flex justify-between flex-wrap gap-4">
         <InputField
-          label="First Name"
+          label="Nombre"
           name="name"
           defaultValue={data?.name}
           register={register}
           error={errors.name}
         />
         <InputField
-          label="Last Name"
+          label="Apellido"
           name="surname"
           defaultValue={data?.surname}
           register={register}
           error={errors.surname}
         />
         <InputField
-          label="Phone"
+          label="Telefono"
           name="phone"
           defaultValue={data?.phone}
           register={register}
           error={errors.phone}
         />
         <InputField
-          label="Address"
+          label="Direccion"
           name="address"
           defaultValue={data?.address}
           register={register}
           error={errors.address}
         />
         <InputField
-          label="Blood Type"
+          label="Tipo de sangre"
           name="bloodType"
           defaultValue={data?.bloodType}
           register={register}
           error={errors.bloodType}
         />
         <InputField
-          label="Birthday"
+          label="Fecha de nacimiento"
           name="birthday"
           defaultValue={data?.birthday.toISOString().split("T")[0]}
           register={register}
@@ -168,7 +168,7 @@ const StudentForm = ({
           type="date"
         />
         <InputField
-          label="Parent Id"
+          label="ID del padre"
           name="parentId"
           defaultValue={data?.parentId}
           register={register}
@@ -185,23 +185,23 @@ const StudentForm = ({
           />
         )}
         <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-xs text-gray-500">Sex</label>
+          <label className="text-xs text-gray-500">Sexo</label>
           <select
             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
             {...register("sex")}
             defaultValue={data?.sex}
           >
-            <option value="MALE">Male</option>
-            <option value="FEMALE">Female</option>
+            <option value="MALE">Masculino</option>
+            <option value="FEMALE">Femenino</option>
           </select>
           {errors.sex?.message && (
-            <p className="text-xs text-red-400">
+            <p className="text-xs text-lamaPurple">
               {errors.sex.message.toString()}
             </p>
           )}
         </div>
         <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-xs text-gray-500">Grade</label>
+          <label className="text-xs text-gray-500">Grado</label>
           <select
             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
             {...register("gradeId")}
@@ -214,13 +214,13 @@ const StudentForm = ({
             ))}
           </select>
           {errors.gradeId?.message && (
-            <p className="text-xs text-red-400">
+            <p className="text-xs text-lamaPurple">
               {errors.gradeId.message.toString()}
             </p>
           )}
         </div>
         <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-xs text-gray-500">Class</label>
+          <label className="text-xs text-gray-500">Grupo</label>
           <select
             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
             {...register("classId")}
@@ -236,26 +236,29 @@ const StudentForm = ({
                 <option value={classItem.id} key={classItem.id}>
                   ({classItem.name} -{" "}
                   {classItem._count.students + "/" + classItem.capacity}{" "}
-                  Capacity)
+                  capacidad)
                 </option>
               )
             )}
           </select>
           {errors.classId?.message && (
-            <p className="text-xs text-red-400">
+            <p className="text-xs text-lamaPurple">
               {errors.classId.message.toString()}
             </p>
           )}
         </div>
       </div>
       {state.error && (
-        <span className="text-red-500">Something went wrong!</span>
+        <span className="text-lamaPurple">Algo salio mal!</span>
       )}
-      <button type="submit" className="bg-blue-400 text-white p-2 rounded-md">
-        {type === "create" ? "Create" : "Update"}
+      <button type="submit" className="bg-lamaSky text-white p-2 rounded-md">
+        {type === "create" ? "Crear" : "Actualizar"}
       </button>
     </form>
   );
 };
 
 export default StudentForm;
+
+
+

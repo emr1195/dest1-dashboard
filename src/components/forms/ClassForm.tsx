@@ -58,7 +58,7 @@ const ClassForm = ({
 
   useEffect(() => {
     if (state.success) {
-      toast(`Subject has been ${type === "create" ? "created" : "updated"}!`);
+      toast(`Grupo ${type === "create" ? "creado" : "actualizado"}!`);
       setOpen(false);
       router.refresh();
     }
@@ -69,19 +69,19 @@ const ClassForm = ({
   return (
     <form className="flex flex-col gap-8" onSubmit={onSubmit}>
       <h1 className="text-xl font-semibold">
-        {type === "create" ? "Create a new class" : "Update the class"}
+        {type === "create" ? "Crear nuevo Grupo" : "Actualizar Grupo"}
       </h1>
 
       <div className="flex justify-between flex-wrap gap-4">
         <InputField
-          label="Class name"
+          label="Nombre del Grupo"
           name="name"
           defaultValue={data?.name}
           register={register}
           error={errors?.name}
         />
         <InputField
-          label="Capacity"
+          label="Capacidad"
           name="capacity"
           defaultValue={data?.capacity}
           register={register}
@@ -117,13 +117,13 @@ const ClassForm = ({
             )}
           </select>
           {errors.supervisorId?.message && (
-            <p className="text-xs text-red-400">
+            <p className="text-xs text-lamaPurple">
               {errors.supervisorId.message.toString()}
             </p>
           )}
         </div>
         <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-xs text-gray-500">Grade</label>
+          <label className="text-xs text-gray-500">Grado</label>
           <select
             className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
             {...register("gradeId")}
@@ -140,20 +140,21 @@ const ClassForm = ({
             ))}
           </select>
           {errors.gradeId?.message && (
-            <p className="text-xs text-red-400">
+            <p className="text-xs text-lamaPurple">
               {errors.gradeId.message.toString()}
             </p>
           )}
         </div>
       </div>
       {state.error && (
-        <span className="text-red-500">Something went wrong!</span>
+        <span className="text-lamaPurple">Algo salio mal!</span>
       )}
-      <button className="bg-blue-400 text-white p-2 rounded-md">
-        {type === "create" ? "Create" : "Update"}
+      <button className="bg-lamaSky text-white p-2 rounded-md">
+        {type === "create" ? "Crear" : "Actualizar"}
       </button>
     </form>
   );
 };
 
 export default ClassForm;
+

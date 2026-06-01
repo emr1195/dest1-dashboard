@@ -1,0 +1,2 @@
+ALTER TABLE "Joven" ADD COLUMN "rank" TEXT;
+ALTER TABLE "Lider" ADD COLUMN "rank" TEXT;

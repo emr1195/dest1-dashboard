@@ -2,6 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html {
+    font-size: 17px;
+  }
+
+  img[width="14"],
+  img[height="14"] {
+    width: 16px;
+    height: 16px;
+  }
+
+  img[width="16"],
+  img[height="16"] {
+    width: 18px;
+    height: 18px;
+  }
+
+  img[width="20"],
+  img[height="20"] {
+    width: 22px;
+    height: 22px;
+  }
+
+  img[width="24"],
+  img[height="24"] {
+    width: 27px;
+    height: 27px;
+  }
+
+  img[width="32"],
+  img[height="32"] {
+    width: 36px;
+    height: 36px;
+  }
+
+  img[width="40"],
+  img[height="40"] {
+    width: 44px;
+    height: 44px;
+  }
+
+  img[width="48"],
+  img[height="48"] {
+    width: 54px;
+    height: 54px;
+  }
+
+  img[width="50"],
+  img[height="50"] {
+    width: 56px;
+    height: 56px;
+  }
+}
+
 .react-calendar {
   width: 100% !important;
   border: none !important;
@@ -13,8 +67,8 @@
 }
 
 .react-calendar__tile--active {
-  background-color: #c3ebfa !important;
-  color: black !important;
+  background-color: #003b7a !important;
+  color: white !important;
 }
 
 .rbc-btn-group:first-child {
@@ -32,12 +86,12 @@
 
 .rbc-btn-group:last-child button {
   border: none !important;
-  background-color: #f1f0ff !important;
+  background-color: #e6eef7 !important;
   margin-left: 2px !important;
 }
 
 .rbc-toolbar button.rbc-active {
-  background-color: #dbdafe !important;
+  background-color: #ffc20a !important;
   box-shadow: none !important;
 }
 
@@ -62,7 +116,7 @@
 }
 
 .rbc-timeslot-group {
-  background-color: #f7fdff !important;
+  background-color: #f7f8fa !important;
 }
 
 .rbc-day-slot {
@@ -78,28 +132,28 @@
 }
 
 .rbc-event:nth-child(1) {
-  background-color: #e2f8ff !important;
+  background-color: #e6eef7 !important;
 }
 .rbc-event:nth-child(2) {
-  background-color: #fefce8 !important;
+  background-color: #fff4c2 !important;
 }
 .rbc-event:nth-child(3) {
-  background-color: #f2f1ff !important;
+  background-color: #fde8ea !important;
 }
 .rbc-event:nth-child(4) {
-  background-color: #fdf2fb !important;
+  background-color: #f3e7dc !important;
 }
 .rbc-event:nth-child(5) {
-  background-color: #e2f8ff !important;
+  background-color: #e6eef7 !important;
 }
 .rbc-event:nth-child(6) {
-  background-color: #fefce8 !important;
+  background-color: #fff4c2 !important;
 }
 .rbc-event:nth-child(7) {
-  background-color: #f2f1ff !important;
+  background-color: #fde8ea !important;
 }
 .rbc-event:nth-child(8) {
-  background-color: #fdf2fb !important;
+  background-color: #f3e7dc !important;
 }
 
 .rbc-event-label{

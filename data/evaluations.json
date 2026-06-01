@@ -1,0 +1,35 @@
+[
+  {
+    "id": "47e52881-ca42-4488-972a-91dc6224ed82",
+    "userId": "muchacho-prueba-001",
+    "userType": "student",
+    "score": 0.7285714285714285,
+    "aspectScores": {
+      "Asistencia": 8,
+      "Uniforme": 3,
+      "Tareas": 6,
+      "Comportamiento": 10,
+      "Biblia": 7,
+      "Cuaderno": 9,
+      "Puntualidad": 8
+    },
+    "notes": "",
+    "createdBy": "admin1",
+    "createdAt": "2026-05-28T02:30:35.768Z"
+  },
+  {
+    "id": "c54259e5-e497-4736-a24b-166676db161e",
+    "userId": "lider-prueba-001",
+    "userType": "teacher",
+    "score": 0.85,
+    "aspectScores": {
+      "Asistencia": 10,
+      "Accesibilidad del lider": 9,
+      "Desarrollo de Ascenso de la senda": 6,
+      "Puntualidad": 9
+    },
+    "notes": "",
+    "createdBy": "admin1",
+    "createdAt": "2026-05-28T13:41:06.176Z"
+  }
+]

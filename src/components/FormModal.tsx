@@ -1,19 +1,31 @@
-"use client";
+﻿"use client";
 
 import {
+  deleteAnnouncement,
+  deleteAttendance,
   deleteClass,
+  deleteEvent,
   deleteExam,
+  deleteAssignment,
+  deleteLesson,
+  deleteParent,
+  deleteResult,
   deleteStudent,
   deleteSubject,
   deleteTeacher,
 } from "@/lib/actions";
-import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { useFormState } from "react-dom";
 import { toast } from "react-toastify";
 import { FormContainerProps } from "./FormContainer";
+import AssignmentForm from "./forms/AssignmentForm";
+import ClassForm from "./forms/ClassForm";
+import ExamForm from "./forms/ExamForm";
+import StudentForm from "./forms/StudentForm";
+import SubjectForm from "./forms/SubjectForm";
+import TeacherForm from "./forms/TeacherForm";
 
 const deleteActionMap = {
   subject: deleteSubject,
@@ -21,37 +33,14 @@ const deleteActionMap = {
   teacher: deleteTeacher,
   student: deleteStudent,
   exam: deleteExam,
-// TODO: OTHER DELETE ACTIONS
-  parent: deleteSubject,
-  lesson: deleteSubject,
-  assignment: deleteSubject,
-  result: deleteSubject,
-  attendance: deleteSubject,
-  event: deleteSubject,
-  announcement: deleteSubject,
+  assignment: deleteAssignment,
+  parent: deleteParent,
+  lesson: deleteLesson,
+  result: deleteResult,
+  attendance: deleteAttendance,
+  event: deleteEvent,
+  announcement: deleteAnnouncement,
 };
-
-// USE LAZY LOADING
-
-// import TeacherForm from "./forms/TeacherForm";
-// import StudentForm from "./forms/StudentForm";
-
-const TeacherForm = dynamic(() => import("./forms/TeacherForm"), {
-  loading: () => <h1>Loading...</h1>,
-});
-const StudentForm = dynamic(() => import("./forms/StudentForm"), {
-  loading: () => <h1>Loading...</h1>,
-});
-const SubjectForm = dynamic(() => import("./forms/SubjectForm"), {
-  loading: () => <h1>Loading...</h1>,
-});
-const ClassForm = dynamic(() => import("./forms/ClassForm"), {
-  loading: () => <h1>Loading...</h1>,
-});
-const ExamForm = dynamic(() => import("./forms/ExamForm"), {
-  loading: () => <h1>Loading...</h1>,
-});
-// TODO: OTHER FORMS
 
 const forms: {
   [key: string]: (
@@ -100,7 +89,14 @@ const forms: {
       setOpen={setOpen}
       relatedData={relatedData}
     />
-    // TODO OTHER LIST ITEMS
+  ),
+  assignment: (setOpen, type, data, relatedData) => (
+    <AssignmentForm
+      type={type}
+      data={data}
+      setOpen={setOpen}
+      relatedData={relatedData}
+    />
   ),
 };
 
@@ -110,14 +106,57 @@ const FormModal = ({
   data,
   id,
   relatedData,
+  triggerLabel,
+  triggerClassName,
 }: FormContainerProps & { relatedData?: any }) => {
   const size = type === "create" ? "w-8 h-8" : "w-7 h-7";
-  const bgColor =
+  const buttonClass =
     type === "create"
-      ? "bg-lamaYellow"
-      : type === "update"
-      ? "bg-lamaSky"
-      : "bg-lamaPurple";
+      ? `${size} flex items-center justify-center rounded-full bg-lamaYellow`
+      : `${size} flex items-center justify-center rounded-full bg-transparent transition hover:bg-gray-100`;
+
+  const TriggerIcon = () => {
+    if (type === "update") {
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-5 w-5 text-lamaSky"
+          aria-hidden="true"
+        >
+          <path d="M12 20h9" />
+          <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+        </svg>
+      );
+    }
+
+    if (type === "delete") {
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-5 w-5 text-red-600"
+          aria-hidden="true"
+        >
+          <path d="M3 6h18" />
+          <path d="M8 6V4h8v2" />
+          <path d="M19 6l-1 14H6L5 6" />
+          <path d="M10 11v6" />
+          <path d="M14 11v6" />
+        </svg>
+      );
+    }
+
+    return <Image src={`/${type}.png`} alt="" width={16} height={16} />;
+  };
 
   const [open, setOpen] = useState(false);
 
@@ -131,36 +170,43 @@ const FormModal = ({
 
     useEffect(() => {
       if (state.success) {
-        toast(`${table} has been deleted!`);
+        toast("Registro eliminado!");
         setOpen(false);
         router.refresh();
+      }
+
+      if (state.error) {
+        toast.error("No se pudo eliminar el registro.");
       }
     }, [state, router]);
 
     return type === "delete" && id ? (
       <form action={formAction} className="p-4 flex flex-col gap-4">
-        <input type="text | number" name="id" value={id} hidden />
+        <input type="hidden" name="id" value={id} readOnly />
         <span className="text-center font-medium">
-          All data will be lost. Are you sure you want to delete this {table}?
+          Se perderan todos los datos. Seguro que quieres eliminar este registro?
         </span>
-        <button className="bg-red-700 text-white py-2 px-4 rounded-md border-none w-max self-center">
-          Delete
+        <button className="bg-lamaPurple text-white py-2 px-4 rounded-md border-none w-max self-center">
+          Eliminar
         </button>
       </form>
     ) : type === "create" || type === "update" ? (
       forms[table](setOpen, type, data, relatedData)
     ) : (
-      "Form not found!"
+      "Formulario no encontrado!"
     );
   };
 
   return (
     <>
       <button
-        className={`${size} flex items-center justify-center rounded-full ${bgColor}`}
+        className={
+          triggerClassName ||
+          buttonClass
+        }
         onClick={() => setOpen(true)}
       >
-        <Image src={`/${type}.png`} alt="" width={16} height={16} />
+        {triggerLabel || <TriggerIcon />}
       </button>
       {open && (
         <div className="w-screen h-screen absolute left-0 top-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">

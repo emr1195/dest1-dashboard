@@ -1,32 +1,97 @@
 import Announcements from "@/components/Announcements";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
-import BigCalendar from "@/components/BigCalender";
-import EventCalendar from "@/components/EventCalendar";
+import EventCalendarContainer from "@/components/EventCalendarContainer";
+import ProfileInfoCard from "@/components/ProfileInfoCard";
+import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
+import Image from "next/image";
+import { notFound, redirect } from "next/navigation";
 
-const StudentPage = async () => {
-  const { userId } = auth();
+const getStudentAge = (birthday: Date) => {
+  const today = new Date();
+  let age = today.getFullYear() - birthday.getFullYear();
+  const birthdayThisYear = new Date(
+    today.getFullYear(),
+    birthday.getMonth(),
+    birthday.getDate()
+  );
 
-  const classItem = await prisma.class.findMany({
-    where: {
-      students: { some: { id: userId! } },
+  if (today < birthdayThisYear) age -= 1;
+
+  return age;
+};
+
+const getStudentGroup = (age: number) => {
+  if (age >= 5 && age <= 7) return { name: "Navegantes", icon: "/navegantes-card.png" };
+  if (age >= 8 && age <= 10) return { name: "Pioneros", icon: "/pioneros-card.png" };
+  if (age >= 11 && age <= 14) return { name: "Seguidores", icon: "/seguidores-card.png" };
+  if (age >= 15 && age <= 17) return { name: "Exploradores", icon: "/exploradores-card.png" };
+
+  return { name: "Sin grupo", icon: "/singleBranch.png" };
+};
+
+const StudentPage = async ({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | undefined };
+}) => {
+  const currentUser = await getCurrentUser();
+
+  if (!currentUser) redirect("/");
+
+  const student = await prisma.muchacho.findUnique({
+    where: { id: currentUser.id },
+    include: {
+      class: { include: { _count: { select: { lessons: true } } } },
     },
   });
 
-  console.log(classItem);
+  if (!student) notFound();
+
+  const studentAccount = await prisma.authUser.findFirst({
+    where: {
+      role: "student",
+      OR: [{ id: student.id }, ...(student.email ? [{ email: student.email }] : [])],
+    },
+    select: { rank: true },
+  });
+  const studentGroup = getStudentGroup(getStudentAge(student.birthday));
+  const studentRank = student.rank || studentAccount?.rank || null;
+
   return (
-    <div className="p-4 flex gap-4 flex-col xl:flex-row">
-      {/* LEFT */}
+    <div className="flex flex-1 flex-col gap-4 p-4 xl:flex-row">
       <div className="w-full xl:w-2/3">
-        <div className="h-full bg-white p-4 rounded-md">
-          <h1 className="text-xl font-semibold">Schedule (4A)</h1>
-          <BigCalendarContainer type="classId" id={classItem[0].id} />
+        <div className="flex flex-col gap-4 lg:flex-row">
+          <ProfileInfoCard
+            id={student.id}
+            type="student"
+            img={student.img}
+            name={`${student.name} ${student.surname}`}
+            email={student.email}
+            phone={student.phone}
+            rank={studentRank}
+            canUpload={true}
+            studentGroup={studentGroup.name}
+          />
+
+          <div className="flex flex-1 flex-wrap justify-between gap-4">
+            {/* Tarjetas de patrulla, ascenso de la senda y premios de liderazgo ocultas temporalmente. */}
+            <div className="flex min-h-[160px] w-full flex-col items-center justify-center gap-2 rounded-md bg-white p-4 text-center">
+              <Image src={studentGroup.icon} alt={studentGroup.name} width={56} height={56} className="h-14 w-14 object-contain" />
+              <h1 className="text-xl font-semibold">{studentGroup.name}</h1>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 h-[800px] rounded-md bg-white p-4">
+          <h1>Calendario del muchacho</h1>
+          <BigCalendarContainer type="classId" id={student.class.id} />
         </div>
       </div>
-      {/* RIGHT */}
-      <div className="w-full xl:w-1/3 flex flex-col gap-8">
-        <EventCalendar />
+
+      <div className="flex w-full flex-col gap-4 xl:w-1/3">
+        <EventCalendarContainer searchParams={searchParams} />
+        {/* Evaluacion oculta temporalmente para cuentas tipo muchacho. */}
         <Announcements />
       </div>
     </div>

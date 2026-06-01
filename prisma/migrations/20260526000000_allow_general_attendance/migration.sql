@@ -1,0 +1,1 @@
+ALTER TABLE "Attendance" ALTER COLUMN "lessonId" DROP NOT NULL;

@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import BigCalendar from "./BigCalender";
 import { adjustScheduleToCurrentWeek } from "@/lib/utils";
+import { translateDisplayText } from "@/lib/displayText";
 
 const BigCalendarContainer = async ({
   type,
@@ -18,7 +19,7 @@ const BigCalendarContainer = async ({
   });
 
   const data = dataRes.map((lesson) => ({
-    title: lesson.name,
+    title: translateDisplayText(lesson.name),
     start: lesson.startTime,
     end: lesson.endTime,
   }));

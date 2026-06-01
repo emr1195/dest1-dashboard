@@ -1,30 +1,55 @@
-import Announcements from "@/components/Announcements";
-import BigCalendarContainer from "@/components/BigCalendarContainer";
-import BigCalendar from "@/components/BigCalender";
-import FormContainer from "@/components/FormContainer";
-import Performance from "@/components/Performance";
-import prisma from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
-import { Teacher } from "@prisma/client";
-import Image from "next/image";
-import Link from "next/link";
+import Announcements from "@/components/Announcements";
+import BigCalendarContainer from "@/components/BigCalendarContainer";
+import BigCalendar from "@/components/BigCalender";
+import ProfileInfoCard from "@/components/ProfileInfoCard";
+import prisma from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
+import { Lider } from "@prisma/client";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 
-const SingleTeacherPage = async ({
-  params: { id },
-}: {
-  params: { id: string };
-}) => {
-  const { sessionClaims } = auth();
-  const role = (sessionClaims?.metadata as { role?: string })?.role;
+const getStudentAge = (birthday: Date) => {
+  const today = new Date();
+  let age = today.getFullYear() - birthday.getFullYear();
+  const birthdayThisYear = new Date(
+    today.getFullYear(),
+    birthday.getMonth(),
+    birthday.getDate()
+  );
 
-  const teacher:
-    | (Teacher & {
+  if (today < birthdayThisYear) age -= 1;
+
+  return age;
+};
+
+const getStudentGroup = (birthday: Date) => {
+  const age = getStudentAge(birthday);
+
+  if (age >= 5 && age <= 7) return { name: "Navegantes", icon: "/navegantes-card.png" };
+  if (age >= 8 && age <= 10) return { name: "Pioneros", icon: "/pioneros-card.png" };
+  if (age >= 11 && age <= 14) return { name: "Seguidores", icon: "/seguidores-card.png" };
+  if (age >= 15 && age <= 17) return { name: "Exploradores", icon: "/exploradores-card.png" };
+
+  return null;
+};
+
+const SingleTeacherPage = async ({
+  params: { id },
+}: {
+  params: { id: string };
+}) => {
+  const currentUser = await getCurrentUser();
+const role = currentUser?.role;
+
+  const teacher:
+    | (Lider & {
         _count: { subjects: number; lessons: number; classes: number };
-      })
-    | null = await prisma.teacher.findUnique({
-    where: { id },
-    include: {
+        classes: { students: { birthday: Date }[] }[];
+        lessons: { class: { students: { birthday: Date }[] } }[];
+      })
+    | null = await prisma.lider.findUnique({
+    where: { id },
+    include: {
       _count: {
         select: {
           subjects: true,
@@ -32,177 +57,115 @@ const SingleTeacherPage = async ({
           classes: true,
         },
       },
+      classes: {
+        select: {
+          students: {
+            select: { birthday: true },
+          },
+        },
+      },
+      lessons: {
+        select: {
+          class: {
+            select: {
+              students: {
+                select: { birthday: true },
+              },
+            },
+          },
+        },
+      },
     },
   });
-
+
   if (!teacher) {
     return notFound();
   }
+
+  const teacherAccount = await prisma.authUser.findFirst({
+    where: {
+      role: "teacher",
+      OR: [{ id: teacher.id }, ...(teacher.email ? [{ email: teacher.email }] : [])],
+    },
+    select: { rank: true },
+  });
+  const teacherRank = teacher.rank || teacherAccount?.rank || null;
+
+  const leaderGroups = Array.from(
+    new Map(
+      [
+        ...teacher.classes.flatMap((classItem) => classItem.students),
+        ...teacher.lessons.flatMap((lesson) => lesson.class.students),
+      ]
+        .map((student) => getStudentGroup(student.birthday))
+        .filter((group): group is { name: string; icon: string } => Boolean(group))
+        .map((group) => [group.name, group])
+    ).values()
+  );
+
   return (
-    <div className="flex-1 p-4 flex flex-col gap-4 xl:flex-row">
-      {/* LEFT */}
-      <div className="w-full xl:w-2/3">
-        {/* TOP */}
+    <div className="flex-1 p-4 flex flex-col gap-4 xl:flex-row">
+      {/* LEFT */}
+      <div className="w-full xl:w-2/3">
+        {/* TOP */}
         <div className="flex flex-col lg:flex-row gap-4">
           {/* USER INFO CARD */}
-          <div className="bg-lamaSky py-6 px-4 rounded-md flex-1 flex gap-4">
-            <div className="w-1/3">
-              <Image
-                src={teacher.img || "/noAvatar.png"}
-                alt=""
-                width={144}
-                height={144}
-                className="w-36 h-36 rounded-full object-cover"
-              />
-            </div>
-            <div className="w-2/3 flex flex-col justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <h1 className="text-xl font-semibold">
-                  {teacher.name + " " + teacher.surname}
-                </h1>
-                {role === "admin" && (
-                  <FormContainer table="teacher" type="update" data={teacher} />
-                )}
-              </div>
-              <p className="text-sm text-gray-500">
-                Lorem ipsum, dolor sit amet consectetur adipisicing elit.
-              </p>
-              <div className="flex items-center justify-between gap-2 flex-wrap text-xs font-medium">
-                <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
-                  <Image src="/blood.png" alt="" width={14} height={14} />
-                  <span>{teacher.bloodType}</span>
-                </div>
-                <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
-                  <Image src="/date.png" alt="" width={14} height={14} />
-                  <span>
-                    {new Intl.DateTimeFormat("en-GB").format(teacher.birthday)}
-                  </span>
-                </div>
-                <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
-                  <Image src="/mail.png" alt="" width={14} height={14} />
-                  <span>{teacher.email || "-"}</span>
-                </div>
-                <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
-                  <Image src="/phone.png" alt="" width={14} height={14} />
-                  <span>{teacher.phone || "-"}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          {/* SMALL CARDS */}
+          <ProfileInfoCard
+            id={teacher.id}
+            type="teacher"
+            img={teacher.img}
+            name={`${teacher.name} ${teacher.surname}`}
+            email={teacher.email}
+            phone={teacher.phone}
+            rank={teacherRank}
+            canUpload={role === "admin" || (role === "teacher" && currentUser?.id === teacher.id)}
+          />
+          {/* SMALL CARDS */}
           <div className="flex-1 flex gap-4 justify-between flex-wrap">
-            {/* CARD */}
-            <div className="bg-white p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
-              <Image
-                src="/singleAttendance.png"
-                alt=""
-                width={24}
-                height={24}
-                className="w-6 h-6"
-              />
-              <div className="">
-                <h1 className="text-xl font-semibold">90%</h1>
-                <span className="text-sm text-gray-400">Attendance</span>
-              </div>
-            </div>
-            {/* CARD */}
-            <div className="bg-white p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
-              <Image
-                src="/singleBranch.png"
-                alt=""
-                width={24}
-                height={24}
-                className="w-6 h-6"
-              />
-              <div className="">
+            {/* Tarjetas de asistencia, lecciones y grupos ocultas temporalmente. */}
+            <div className="bg-white p-4 rounded-md flex min-h-[160px] w-full items-center gap-4 md:flex-col md:justify-center md:gap-2 md:text-center">
+              <Image
+                src={leaderGroups[0]?.icon || "/singleBranch.png"}
+                alt={leaderGroups[0]?.name || "Grupo"}
+                width={56}
+                height={56}
+                className="h-14 w-14 object-contain"
+              />
+              <div className="md:flex md:flex-col md:items-center">
                 <h1 className="text-xl font-semibold">
-                  {teacher._count.subjects}
+                  {leaderGroups.map((group) => group.name).join(", ") || "Sin grupo"}
                 </h1>
-                <span className="text-sm text-gray-400">Branches</span>
-              </div>
+              </div>
             </div>
-            {/* CARD */}
-            <div className="bg-white p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
-              <Image
-                src="/singleLesson.png"
-                alt=""
-                width={24}
-                height={24}
-                className="w-6 h-6"
-              />
-              <div className="">
-                <h1 className="text-xl font-semibold">
-                  {teacher._count.lessons}
-                </h1>
-                <span className="text-sm text-gray-400">Lessons</span>
-              </div>
-            </div>
-            {/* CARD */}
-            <div className="bg-white p-4 rounded-md flex gap-4 w-full md:w-[48%] xl:w-[45%] 2xl:w-[48%]">
-              <Image
-                src="/singleClass.png"
-                alt=""
-                width={24}
-                height={24}
-                className="w-6 h-6"
-              />
-              <div className="">
-                <h1 className="text-xl font-semibold">
-                  {teacher._count.classes}
-                </h1>
-                <span className="text-sm text-gray-400">Classes</span>
-              </div>
-            </div>
+          </div>
           </div>
-        </div>
-        {/* BOTTOM */}
-        <div className="mt-4 bg-white rounded-md p-4 h-[800px]">
-          <h1>Teacher&apos;s Schedule</h1>
-          <BigCalendarContainer type="teacherId" id={teacher.id} />
-        </div>
-      </div>
-      {/* RIGHT */}
-      <div className="w-full xl:w-1/3 flex flex-col gap-4">
-        <div className="bg-white p-4 rounded-md">
-          <h1 className="text-xl font-semibold">Shortcuts</h1>
-          <div className="mt-4 flex gap-4 flex-wrap text-xs text-gray-500">
-           <Link
-              className="p-3 rounded-md bg-lamaSkyLight"
-              href={`/list/classes?supervisorId=${teacher.id}`}
-            >
-              Teacher&apos;s Classes
-            </Link>
-            <Link
-              className="p-3 rounded-md bg-lamaPurpleLight"
-              href={`/list/students?teacherId=${teacher.id}`}
-            >
-              Teacher&apos;s Students
-            </Link>
-            <Link
-              className="p-3 rounded-md bg-lamaYellowLight"
-              href={`/list/lessons?teacherId=${teacher.id}`}
-            >
-              Teacher&apos;s Lessons
-            </Link>
-            <Link
-              className="p-3 rounded-md bg-pink-50"
-              href={`/list/exams?teacherId=${teacher.id}`}
-            >
-              Teacher&apos;s Exams
-            </Link>
-            <Link
-              className="p-3 rounded-md bg-lamaSkyLight"
-              href={`/list/assignments?teacherId=${teacher.id}`}
-            >
-              Teacher&apos;s Assignments
-            </Link>
-          </div>
-        </div>
-        <Performance />
-        <Announcements />
-      </div>
-    </div>
-  );
-};
 
-export default SingleTeacherPage;
+        {/* BOTTOM */}
+        <div className="mt-4 bg-white rounded-md p-4 h-[800px]">
+          <h1>Calendario del lider</h1>
+          <BigCalendarContainer type="teacherId" id={teacher.id} />
+        </div>
+      </div>
+      {/* RIGHT */}
+      <div className="w-full xl:w-1/3 flex flex-col gap-4">
+        {/* Atajos ocultos temporalmente para cuentas tipo lider. */}
+
+        {/* Evaluacion oculta temporalmente para perfiles tipo lider. */}
+        <Announcements />
+      </div>
+    </div>
+  );
+};
+
+export default SingleTeacherPage;
+
+
+
+
+
+
+
+
+
+
+

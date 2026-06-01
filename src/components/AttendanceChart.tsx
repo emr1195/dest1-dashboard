@@ -1,5 +1,4 @@
 "use client";
-import Image from "next/image";
 import {
   BarChart,
   Bar,
@@ -19,15 +18,22 @@ const AttendanceChart = ({
 }) => {
   return (
     <ResponsiveContainer width="100%" height="90%">
-      <BarChart width={500} height={300} data={data} barSize={20}>
-        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ddd" />
+      <BarChart
+        width={500}
+        height={300}
+        data={data}
+        barSize={18}
+        barGap={12}
+        barCategoryGap="32%"
+      >
+        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#6B7280" />
         <XAxis
           dataKey="name"
           axisLine={false}
-          tick={{ fill: "#d1d5db" }}
+          tick={{ fill: "#6B7280" }}
           tickLine={false}
         />
-        <YAxis axisLine={false} tick={{ fill: "#d1d5db" }} tickLine={false} />
+        <YAxis axisLine={false} tick={{ fill: "#6B7280" }} tickLine={false} />
         <Tooltip
           contentStyle={{ borderRadius: "10px", borderColor: "lightgray" }}
         />
@@ -38,13 +44,15 @@ const AttendanceChart = ({
         />
         <Bar
           dataKey="present"
-          fill="#FAE27C"
+          name="Asistencia"
+          fill="#003B7A"
           legendType="circle"
           radius={[10, 10, 0, 0]}
         />
         <Bar
           dataKey="absent"
-          fill="#C3EBFA"
+          name="Ausencia"
+          fill="#BC0E0D"
           legendType="circle"
           radius={[10, 10, 0, 0]}
         />

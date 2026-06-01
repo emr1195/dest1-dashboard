@@ -1,36 +1,59 @@
 import Announcements from "@/components/Announcements";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
+import EventCalendarContainer from "@/components/EventCalendarContainer";
+import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
+const ParentPage = async ({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | undefined };
+}) => {
+  const currentUser = await getCurrentUser();
 
-const ParentPage = async () => {
-  const { userId } = auth();
-  const currentUserId = userId;
-  
-  const students = await prisma.student.findMany({
-    where: {
-      parentId: currentUserId!,
-    },
+  if (!currentUser) redirect("/");
+
+  const students = await prisma.muchacho.findMany({
+    where: { parentId: currentUser.id },
+    include: { class: true },
+    orderBy: [{ name: "asc" }, { surname: "asc" }],
   });
 
   return (
-    <div className="flex-1 p-4 flex gap-4 flex-col xl:flex-row">
-      {/* LEFT */}
-      <div className="">
-        {students.map((student) => (
-          <div className="w-full xl:w-2/3" key={student.id}>
-            <div className="h-full bg-white p-4 rounded-md">
-              <h1 className="text-xl font-semibold">
-                Schedule ({student.name + " " + student.surname})
-              </h1>
-              <BigCalendarContainer type="classId" id={student.classId} />
-            </div>
+    <div className="flex flex-1 flex-col gap-4 p-4 xl:flex-row">
+      <div className="flex w-full flex-col gap-4 xl:w-2/3">
+        <div className="rounded-md bg-white p-4">
+          <h1 className="text-xl font-semibold">Calendario</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Actividades programadas para cada muchacho vinculado.
+          </p>
+        </div>
+
+        {students.length ? (
+          students.map((student) => (
+            <section key={student.id} className="h-[720px] rounded-md bg-white p-4">
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold">
+                  {student.name} {student.surname}
+                </h2>
+                <span className="text-sm text-gray-500">{student.class.name}</span>
+              </div>
+              <BigCalendarContainer type="classId" id={student.class.id} />
+            </section>
+          ))
+        ) : (
+          <div className="rounded-md bg-white p-8 text-sm text-gray-500">
+            No hay muchachos vinculados a esta cuenta.
           </div>
-        ))}
+        )}
       </div>
-      {/* RIGHT */}
-      <div className="w-full xl:w-1/3 flex flex-col gap-8">
+
+      <div className="flex w-full flex-col gap-4 xl:w-1/3">
+        <EventCalendarContainer searchParams={searchParams} />
+
+        {/* Evaluacion de muchachos oculta temporalmente para cuentas tipo padre. */}
+
         <Announcements />
       </div>
     </div>
