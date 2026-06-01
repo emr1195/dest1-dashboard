@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { leaderGroupOptions, rankOptionsByRole, roleOptions } from "@/lib/roles";
 import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 
 const roles = [
@@ -37,7 +37,6 @@ const AuthBox = () => {
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
   const [requestingCode, setRequestingCode] = useState(false);
-  const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
   const availableRanks = rankOptionsByRole[role as "teacher" | "student"] || [];
@@ -51,12 +50,35 @@ const AuthBox = () => {
   };
 
   const getDashboardFromSession = async (fallbackRole?: string) => {
-    const session = await fetch("/api/auth/session", { cache: "no-store" })
-      .then((response) => response.json())
-      .catch(() => null);
-    const sessionRole = session?.user?.role;
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const session = await fetch("/api/auth/session", {
+        cache: "no-store",
+        credentials: "same-origin",
+      })
+        .then((response) => response.json())
+        .catch(() => null);
+      const sessionRole = session?.user?.role;
 
-    return dashboardPaths[sessionRole] || dashboardPaths[fallbackRole || ""] || "/";
+      if (dashboardPaths[sessionRole]) {
+        return dashboardPaths[sessionRole];
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+
+    return dashboardPaths[fallbackRole || ""] || "";
+  };
+
+  const goToDashboard = async (fallbackRole?: string) => {
+    const dashboardPath = await getDashboardFromSession(fallbackRole);
+    const target = callbackUrl !== "/" ? callbackUrl : dashboardPath;
+
+    if (!target) {
+      setError("Sesion iniciada, pero no se pudo leer el rol. Borra cookies e intenta de nuevo.");
+      return;
+    }
+
+    window.location.assign(target);
   };
 
   const handleSignIn = async (event: FormEvent<HTMLFormElement>) => {
@@ -78,9 +100,7 @@ const AuthBox = () => {
       return;
     }
 
-    const dashboardPath = await getDashboardFromSession();
-    router.push(callbackUrl !== "/" ? callbackUrl : dashboardPath);
-    router.refresh();
+    await goToDashboard();
   };
 
   const handleRequestCode = async () => {
@@ -198,9 +218,7 @@ const AuthBox = () => {
       return;
     }
 
-    const dashboardPath = await getDashboardFromSession(role);
-    router.push(callbackUrl !== "/" ? callbackUrl : dashboardPath);
-    router.refresh();
+    await goToDashboard(role);
   };
 
   const handleGoogle = async () => {
