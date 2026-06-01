@@ -30,10 +30,6 @@ export default async function middleware(req: NextRequest) {
     isAppRole(role) ? dashboardPaths[role] || "/" : "/";
 
   if (pathname === "/") {
-    if (isAppRole(token?.role)) {
-      return redirectTo(getDashboardPath(token.role));
-    }
-
     return NextResponse.next();
   }
 
