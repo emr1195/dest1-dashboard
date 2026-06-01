@@ -47,7 +47,14 @@ const ProfileInfoCard = ({
       </div>
 
       <div className="flex min-w-0 w-full flex-col gap-4 py-1 text-center sm:flex-1 sm:pl-4 sm:text-left md:pl-5">
-        <h1 className="break-words text-xl font-semibold">{name}</h1>
+        <div>
+          <h1 className="break-words text-xl font-semibold">{name}</h1>
+          {rank && (
+            <p className="mt-1 break-words text-sm font-semibold text-white/80">
+              {rank}
+            </p>
+          )}
+        </div>
 
         <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-4 gap-y-3 text-xs font-medium sm:justify-start">
           <div className="flex min-w-0 items-center gap-2">

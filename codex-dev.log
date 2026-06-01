@@ -16,3 +16,13 @@
  ✓ Compiled /[[...sign-in]] in 1939ms (594 modules)
  ✓ Compiled in 317ms (290 modules)
  GET / 200 in 3027ms
+ GET / 200 in 189ms
+ GET / 200 in 53ms
+ ○ Compiling /favicon.ico ...
+ ✓ Compiled /favicon.ico in 551ms (334 modules)
+ GET /favicon.ico 200 in 639ms
+ ✓ Compiled /api/auth/[...nextauth] in 389ms (565 modules)
+ GET /api/auth/providers 200 in 775ms
+ GET /api/auth/csrf 200 in 17ms
+ POST /api/auth/signin/google 200 in 593ms
+ GET / 200 in 158ms
