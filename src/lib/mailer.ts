@@ -75,6 +75,7 @@ export const sendAccessCodeRequestEmail = async ({
 
   const lines = [
     "Nueva solicitud de codigo de acceso.",
+    "Revisa esta solicitud. Si la apruebas, envia el codigo al correo del solicitante.",
     "Nombre: " + (requesterName || "No indicado"),
     "Edad: " + (requesterAge || "No indicada"),
     "Telefono: " + (requesterPhone || "No indicado"),
@@ -85,19 +86,20 @@ export const sendAccessCodeRequestEmail = async ({
     requesterLeaderGroup ? "Grupo que atiende: " + requesterLeaderGroup : "",
     "Correo: " + requesterEmail,
     "Tipo de cuenta: " + roleLabel,
-    "Codigo para enviar: " + code,
+    "Codigo aprobado para enviar: " + code,
     "El codigo vence en 24 horas.",
   ].filter(Boolean);
 
   await transporter.sendMail({
     from: config.from,
     to: config.to,
-    subject: "Solicitud de codigo " + roleLabel,
+    subject: "Solicitud pendiente de codigo - " + roleLabel,
     text: lines.join("\n"),
     html: `
       <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111827">
-        <h2>Solicitud de codigo de acceso</h2>
+        <h2>Solicitud pendiente de codigo de acceso</h2>
         <p>Se solicito un codigo para crear una cuenta en el sistema.</p>
+        <p><strong>Si apruebas esta solicitud, envia el codigo al correo del solicitante.</strong></p>
         <table style="border-collapse:collapse;width:100%;max-width:640px">
           ${lines
             .slice(1)

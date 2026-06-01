@@ -1,4 +1,5 @@
 import { routeAccessMap } from "./lib/settings";
+import { isAppRole, roleOptions } from "./lib/roles";
 import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
@@ -7,25 +8,43 @@ const protectedRoutes = Object.entries(routeAccessMap).map(([route, roles]) => (
   roles,
 }));
 
+const dashboardPaths = Object.fromEntries(
+  roleOptions.map((role) => [role.value, role.dashboardPath])
+);
+
 export default async function middleware(req: NextRequest) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
   const { pathname } = req.nextUrl;
 
-  if (pathname === "/") {
-    if (token?.role) {
-      return NextResponse.redirect(new URL(`/${token.role}`, req.url));
+  const redirectTo = (path: string) => {
+    const url = new URL(path, req.url);
+
+    if (url.pathname === pathname) {
+      return NextResponse.next();
     }
+
+    return NextResponse.redirect(url);
+  };
+
+  const getDashboardPath = (role: unknown) =>
+    isAppRole(role) ? dashboardPaths[role] || "/" : "/";
+
+  if (pathname === "/") {
+    if (isAppRole(token?.role)) {
+      return redirectTo(getDashboardPath(token.role));
+    }
+
     return NextResponse.next();
   }
 
   if (!token) {
-    return NextResponse.redirect(new URL("/", req.url));
+    return redirectTo("/");
   }
 
   const matchedRoute = protectedRoutes.find(({ regex }) => regex.test(pathname));
 
-  if (matchedRoute && !matchedRoute.roles.includes(token.role as string)) {
-    return NextResponse.redirect(new URL(token.role ? `/${token.role}` : "/", req.url));
+  if (matchedRoute && !matchedRoute.roles.includes(String(token.role))) {
+    return redirectTo(getDashboardPath(token.role));
   }
 
   return NextResponse.next();

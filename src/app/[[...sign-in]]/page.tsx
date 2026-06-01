@@ -1,12 +1,17 @@
-﻿import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
+import { isAppRole, roleOptions } from "@/lib/roles";
 import { redirect } from "next/navigation";
 import AuthBox from "./AuthBox";
+
+const dashboardPaths = Object.fromEntries(
+  roleOptions.map((role) => [role.value, role.dashboardPath])
+);
 
 const LoginPage = async () => {
   const user = await getCurrentUser();
 
-  if (user?.role) {
-    redirect(`/${user.role}`);
+  if (isAppRole(user?.role)) {
+    redirect(dashboardPaths[user.role] || "/");
   }
 
   return (
@@ -17,5 +22,3 @@ const LoginPage = async () => {
 };
 
 export default LoginPage;
-
-

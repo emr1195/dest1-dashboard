@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { leaderGroupOptions, rankOptionsByRole } from "@/lib/roles";
+import { leaderGroupOptions, rankOptionsByRole, roleOptions } from "@/lib/roles";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
@@ -12,6 +12,10 @@ const roles = [
   { value: "student", label: "Muchacho", hint: "Codigo j + 5 numeros" },
   { value: "parent", label: "Padre", hint: "Codigo p + 5 numeros" },
 ];
+
+const dashboardPaths = Object.fromEntries(
+  roleOptions.map((role) => [role.value, role.dashboardPath])
+);
 
 const AuthBox = () => {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -184,7 +188,7 @@ const AuthBox = () => {
       return;
     }
 
-    router.push(result?.url || callbackUrl);
+    router.push(dashboardPaths[role] || result?.url || callbackUrl);
     router.refresh();
   };
 
