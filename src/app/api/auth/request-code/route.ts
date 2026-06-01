@@ -46,6 +46,14 @@ export async function POST(req: Request) {
   const code = generateAccessCode(role);
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
+  await prisma.accessCode.deleteMany({
+    where: {
+      email: normalizedEmail,
+      role,
+      used: false,
+    },
+  });
+
   await prisma.accessCode.create({
     data: {
       email: normalizedEmail,
@@ -55,27 +63,39 @@ export async function POST(req: Request) {
     },
   });
 
-  const result = await sendAccessCodeRequestEmail({
-    requesterEmail: normalizedEmail,
-    requesterName: displayName,
-    requesterAge: ageText,
-    requesterPhone: phoneText,
-    requesterGender: selectedGender === "MALE" ? "Masculino" : "Femenino",
-    guardianName: role === "student" ? guardian : undefined,
-    childrenNames: role === "parent" ? children : undefined,
-    requesterRank: role === "teacher" || role === "student" ? selectedRank : undefined,
-    requesterLeaderGroup:
-      role === "teacher" && selectedRank === "Lider de Grupo"
-        ? leaderGroupOptions.find((group) => group.value === selectedLeaderGroup)?.label
-        : undefined,
-    roleLabel: roleLabels[role],
-    code,
-  });
+  try {
+    const result = await sendAccessCodeRequestEmail({
+      requesterEmail: normalizedEmail,
+      requesterName: displayName,
+      requesterAge: ageText,
+      requesterPhone: phoneText,
+      requesterGender: selectedGender === "MALE" ? "Masculino" : "Femenino",
+      guardianName: role === "student" ? guardian : undefined,
+      childrenNames: role === "parent" ? children : undefined,
+      requesterRank: role === "teacher" || role === "student" ? selectedRank : undefined,
+      requesterLeaderGroup:
+        role === "teacher" && selectedRank === "Lider de Grupo"
+          ? leaderGroupOptions.find((group) => group.value === selectedLeaderGroup)?.label
+          : undefined,
+      roleLabel: roleLabels[role],
+      code,
+    });
 
-  return NextResponse.json({
-    ok: true,
-    message: result.sent
-      ? "Solicitud enviada. Espera el codigo por correo."
-      : "Codigo generado. Configura SMTP para que llegue a tu correo.",
-  });
+    return NextResponse.json({
+      ok: true,
+      message: result.sent
+        ? "Solicitud enviada. Espera el codigo por correo."
+        : "Codigo generado, pero falta configurar SMTP para enviarlo por correo.",
+    });
+  } catch (error) {
+    console.error("No se pudo enviar el correo de codigo:", error);
+
+    return NextResponse.json(
+      {
+        message:
+          "Codigo generado, pero no se pudo enviar el correo. Revisa la configuracion SMTP.",
+      },
+      { status: 500 }
+    );
+  }
 }
