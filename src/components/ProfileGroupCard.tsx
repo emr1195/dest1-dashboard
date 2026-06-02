@@ -70,7 +70,7 @@ const ProfileGroupCard = ({
   };
 
   return (
-    <div className="relative flex min-h-[160px] w-full flex-col items-center justify-center gap-2 rounded-md bg-white p-4 text-center">
+    <div className="relative flex min-h-[200px] w-full flex-col items-center justify-center gap-3 rounded-md bg-white p-4 text-center">
       {canEdit && (
         <button
           type="button"
@@ -84,9 +84,9 @@ const ProfileGroupCard = ({
       <Image
         src={displayedGroup.icon}
         alt={displayedGroup.name}
-        width={64}
-        height={64}
-        className="h-16 w-16 object-contain"
+        width={96}
+        height={96}
+        className="h-24 w-24 object-contain"
       />
       <h1 className="text-xl font-semibold">{displayedGroup.name}</h1>
 

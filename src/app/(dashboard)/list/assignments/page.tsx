@@ -268,12 +268,13 @@ const AssignmentListPage = async ({
         <div className="flex w-full flex-col items-center gap-4 md:w-auto md:flex-row">
           <TableSearch />
           <div className="flex items-center gap-4 self-end">
-            <button className="flex h-8 w-8 items-center justify-center rounded-full bg-lamaYellow">
+            {/* Botones de filtro y orden ocultos temporalmente. */}
+            {/* <button className="flex h-8 w-8 items-center justify-center rounded-full bg-lamaYellow">
               <Image src="/filter.png" alt="" width={14} height={14} />
             </button>
             <button className="flex h-8 w-8 items-center justify-center rounded-full bg-lamaYellow">
               <Image src="/sort.png" alt="" width={14} height={14} />
-            </button>
+            </button> */}
             {(role === "admin" || role === "teacher") && (
               <FormContainer table="assignment" type="create" />
             )}

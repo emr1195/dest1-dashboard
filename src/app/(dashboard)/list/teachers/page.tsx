@@ -8,7 +8,7 @@ import TableSearch from "@/components/TableSearch";
 
 import prisma from "@/lib/prisma";
 
-import { Prisma, Subject, Lider } from "@prisma/client";
+import { Prisma, Lider } from "@prisma/client";
 
 import Image from "next/image";
 
@@ -21,7 +21,6 @@ import { getRankOption, leaderGroupOptions } from "@/lib/roles";
 
 
 type TeacherList = Lider & {
-  subjects: Subject[];
   displayedRank?: string | null;
   displayedGroup?: { name: string; icon: string } | null;
 };
@@ -95,14 +94,6 @@ const role = currentUser?.role;
 
     },
 
-    {
-
-      header: "AS",
-      accessor: "subjects",
-
-      className: "hidden md:table-cell",
-
-    },
     {
       header: "Grupo",
       accessor: "group",
@@ -195,11 +186,6 @@ const role = currentUser?.role;
         ) : (
           <span className="text-gray-500">Sin rango</span>
         )}
-      </td>
-      <td className="hidden md:table-cell">
-
-        {item.subjects.map((subject) => subject.name).join(",")}
-
       </td>
       <td className="hidden md:table-cell">
         {item.displayedGroup ? (
@@ -335,7 +321,6 @@ const role = currentUser?.role;
 
       include: {
 
-        subjects: true,
         classes: {
           select: {
             students: {

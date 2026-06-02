@@ -4,11 +4,8 @@ import {
   EvaluationUserType,
   getLatestEvaluation,
   isEvaluationDay,
-  readEvaluations,
-  writeEvaluations,
 } from "@/lib/evaluations";
 import prisma from "@/lib/prisma";
-import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 
 export const GET = async (req: Request) => {
@@ -149,29 +146,26 @@ export const POST = async (req: Request) => {
   }
 
   const calculatedEvaluation = calculateEvaluationScore(userType, aspectScores);
-  const records = await readEvaluations();
-  const nextRecords = records.filter(
-    (record) =>
-      !(
-        record.userId === userId &&
-        record.userType === userType &&
-        record.createdBy === currentUser.id
-      )
-  );
+  const evaluation = await prisma.$transaction(async (tx) => {
+    await tx.evaluation.deleteMany({
+      where: {
+        userId,
+        userType,
+        createdBy: currentUser.id,
+      },
+    });
 
-  const evaluation = {
-    id: randomUUID(),
-    userId,
-    userType,
-    score: calculatedEvaluation.score,
-    aspectScores: calculatedEvaluation.aspectScores,
-    notes: typeof notes === "string" ? notes : "",
-    createdBy: currentUser.id,
-    createdAt: new Date().toISOString(),
-  };
-
-  nextRecords.push(evaluation);
-  await writeEvaluations(nextRecords);
+    return tx.evaluation.create({
+      data: {
+        userId,
+        userType,
+        score: calculatedEvaluation.score,
+        aspectScores: calculatedEvaluation.aspectScores,
+        notes: typeof notes === "string" ? notes : "",
+        createdBy: currentUser.id,
+      },
+    });
+  });
 
   return NextResponse.json({
     score: evaluation.score,

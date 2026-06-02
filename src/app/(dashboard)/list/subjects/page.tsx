@@ -201,7 +201,8 @@ const SubjectListPage = async ({
         <div className="flex flex-col items-stretch gap-4 md:w-auto md:flex-row md:items-center">
           <TableSearch />
           <div className="flex items-center gap-4 self-end">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
+            {/* Botones de filtro, orden y agregar ocultos temporalmente. */}
+            {/* <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
               <Image src="/filter.png" alt="" width={14} height={14} />
             </button>
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
@@ -215,7 +216,7 @@ const SubjectListPage = async ({
               >
                 <Image src="/plus.png" alt="" width={14} height={14} />
               </Link>
-            )}
+            )} */}
           </div>
         </div>
       </div>

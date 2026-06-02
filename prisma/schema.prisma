@@ -232,6 +232,20 @@ model BadgeCertificate {
   @@index([userId, userType])
 }
 
+model Evaluation {
+  id           String   @id @default(uuid())
+  userId       String
+  userType     String
+  score        Float
+  aspectScores Json?
+  notes        String?
+  createdBy    String
+  createdAt    DateTime @default(now())
+
+  @@index([userId, userType])
+  @@index([createdBy])
+}
+
 model Muchacho {
   id         String       @id
   username   String       @unique

@@ -1,5 +1,4 @@
-import { mkdir, readFile, writeFile } from "fs/promises";
-import path from "path";
+import prisma from "@/lib/prisma";
 
 export type EvaluationUserType = "student" | "teacher";
 
@@ -15,26 +14,50 @@ export type EvaluationRecord = {
   createdAt: string;
 };
 
-const dataDir = path.join(process.cwd(), "data");
-const dataPath = path.join(dataDir, "evaluations.json");
-
 export const isEvaluationDay = (date = new Date()) => {
   const activeMonths = [2, 5, 8, 11];
 
   return date.getDate() === 1 && activeMonths.includes(date.getMonth());
 };
 
+const toAspectScores = (value: unknown) =>
+  value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, number>)
+    : undefined;
+
 export const readEvaluations = async (): Promise<EvaluationRecord[]> => {
-  try {
-    return JSON.parse(await readFile(dataPath, "utf8")) as EvaluationRecord[];
-  } catch {
-    return [];
-  }
+  const records = await prisma.evaluation.findMany({
+    orderBy: { createdAt: "asc" },
+  });
+
+  return records.map((record) => ({
+    id: record.id,
+    userId: record.userId,
+    userType: record.userType as EvaluationUserType,
+    score: record.score,
+    aspectScores: toAspectScores(record.aspectScores),
+    notes: record.notes || "",
+    createdBy: record.createdBy,
+    createdAt: record.createdAt.toISOString(),
+  }));
 };
 
 export const writeEvaluations = async (records: EvaluationRecord[]) => {
-  await mkdir(dataDir, { recursive: true });
-  await writeFile(dataPath, JSON.stringify(records, null, 2));
+  await prisma.$transaction([
+    prisma.evaluation.deleteMany(),
+    prisma.evaluation.createMany({
+      data: records.map((record) => ({
+        id: record.id,
+        userId: record.userId,
+        userType: record.userType,
+        score: record.score,
+        aspectScores: record.aspectScores,
+        notes: record.notes || "",
+        createdBy: record.createdBy,
+        createdAt: new Date(record.createdAt),
+      })),
+    }),
+  ]);
 };
 
 export const getLatestEvaluation = async (
