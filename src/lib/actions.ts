@@ -709,6 +709,14 @@ export const deleteAnnouncement = async (
 const deleteAssignmentsById = async (assignmentIds: number[]) => {
   if (!assignmentIds.length) return;
 
+  const assignments = await prisma.assignment.findMany({
+    where: { id: { in: assignmentIds } },
+    select: { lessonId: true },
+  });
+  const lessonIds = Array.from(
+    new Set(assignments.map((assignment) => assignment.lessonId))
+  );
+
   await prisma.result.deleteMany({
     where: { assignmentId: { in: assignmentIds } },
   });
@@ -721,6 +729,24 @@ const deleteAssignmentsById = async (assignmentIds: number[]) => {
   await prisma.assignment.deleteMany({
     where: { id: { in: assignmentIds } },
   });
+
+  if (lessonIds.length) {
+    const orphanLessons = await prisma.lesson.findMany({
+      where: {
+        id: { in: lessonIds },
+        assignments: { none: {} },
+        exams: { none: {} },
+        attendances: { none: {} },
+      },
+      select: { id: true },
+    });
+
+    if (orphanLessons.length) {
+      await prisma.lesson.deleteMany({
+        where: { id: { in: orphanLessons.map((lesson) => lesson.id) } },
+      });
+    }
+  }
 };
 
 const deleteLessonsById = async (lessonIds: number[]) => {

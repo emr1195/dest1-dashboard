@@ -30,7 +30,7 @@ const menuItems = [
     title: "OTROS",
     items: [
       { icon: "/profile.png", label: "Perfil", href: "/profile", visible: ["admin"] },
-      { icon: "/setting.png", label: "Configuracion", href: "/settings", visible: ["admin"] },
+      // { icon: "/setting.png", label: "Configuracion", href: "/settings", visible: ["admin"] },
       { icon: "/logout.png", label: "Cerrar sesion", href: "/logout", visible: ["admin", "teacher", "student", "parent"] },
     ],
   },

@@ -222,7 +222,8 @@ const renderRow = (item: ParentList) => (
 
           <div className="flex items-center gap-4 self-end">
 
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
+            {/* Botones de filtro y orden ocultos temporalmente. */}
+            {/* <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow">
 
               <Image src="/filter.png" alt="" width={14} height={14} />
 
@@ -232,7 +233,7 @@ const renderRow = (item: ParentList) => (
 
               <Image src="/sort.png" alt="" width={14} height={14} />
 
-            </button>
+            </button> */}
 
             {role === "admin" && <FormContainer table="parent" type="create" />}
 
