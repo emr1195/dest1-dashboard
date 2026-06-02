@@ -54,6 +54,9 @@ export const leaderGroupOptions: LeaderGroupOption[] = [
   { label: "Exploradores", value: "exploradores", image: "/exploradores-card.png" },
 ];
 
+export const getLeaderGroupOption = (group?: string | null) =>
+  leaderGroupOptions.find((option) => option.value === group) || null;
+
 export const isValidLeaderGroup = (group: unknown) => {
   const value = String(group || "").trim();
   return leaderGroupOptions.some((option) => option.value === value);

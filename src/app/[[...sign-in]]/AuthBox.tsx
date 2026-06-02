@@ -22,8 +22,9 @@ const AuthBox = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  const [age, setAge] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
   const [guardianName, setGuardianName] = useState("");
   const [childrenNames, setChildrenNames] = useState("");
   const [role, setRole] = useState("student");
@@ -113,6 +114,16 @@ const AuthBox = () => {
       return;
     }
 
+    if (!birthDate) {
+      setError("Selecciona tu fecha de nacimiento antes de pedir el codigo.");
+      return;
+    }
+
+    if (!address.trim()) {
+      setError("Escribe tu direccion de residencia antes de pedir el codigo.");
+      return;
+    }
+
     if (!gender) {
       setError("Selecciona un genero antes de pedir el codigo.");
       return;
@@ -126,8 +137,9 @@ const AuthBox = () => {
       body: JSON.stringify({
         email,
         name,
-        age,
+        birthDate,
         phone,
+        address,
         guardianName: role === "student" ? guardianName : "",
         childrenNames: role === "parent" ? childrenNames : "",
         rank: role === "teacher" || role === "student" ? rank : "",
@@ -162,6 +174,16 @@ const AuthBox = () => {
       return;
     }
 
+    if (!birthDate) {
+      setError("Selecciona tu fecha de nacimiento para crear la cuenta.");
+      return;
+    }
+
+    if (!address.trim()) {
+      setError("Escribe tu direccion de residencia para crear la cuenta.");
+      return;
+    }
+
     if (!gender) {
       setError("Selecciona un genero para crear la cuenta.");
       return;
@@ -176,8 +198,9 @@ const AuthBox = () => {
         email,
         password,
         name,
-        age,
+        birthDate,
         phone,
+        address,
         guardianName: role === "student" ? guardianName : "",
         childrenNames: role === "parent" ? childrenNames : "",
         rank: role === "teacher" || role === "student" ? rank : "",
@@ -413,15 +436,12 @@ const AuthBox = () => {
             </label>
             <div className="grid gap-4 md:grid-cols-2">
               <label className="flex flex-col gap-2 text-sm text-gray-500">
-                Edad
+                Fecha de nacimiento
                 <input
-                  value={age}
-                  onChange={(event) => setAge(event.target.value)}
+                  value={birthDate}
+                  onChange={(event) => setBirthDate(event.target.value)}
                   className={inputClass}
-                  placeholder="Tu edad"
-                  type="number"
-                  min={1}
-                  max={120}
+                  type="date"
                   required
                 />
               </label>
@@ -437,6 +457,17 @@ const AuthBox = () => {
                 />
               </label>
             </div>
+            <label className="flex flex-col gap-2 text-sm text-gray-500">
+              Direccion de residencia
+              <input
+                value={address}
+                onChange={(event) => setAddress(event.target.value)}
+                className={inputClass}
+                placeholder="Tu direccion"
+                type="text"
+                required
+              />
+            </label>
             {role === "student" && (
               <label className="flex flex-col gap-2 text-sm text-gray-500">
                 Nombre del padre o madre

@@ -18,11 +18,34 @@ const splitName = (value: string, fallback: string) => {
   };
 };
 
-const birthdayFromAge = (age: number) => {
-  const birthday = new Date();
-  birthday.setFullYear(birthday.getFullYear() - age);
-  birthday.setHours(12, 0, 0, 0);
+const parseBirthDate = (value: unknown) => {
+  const raw = String(value || "").trim();
+  const parts = raw.split("-").map(Number);
+
+  if (parts.length !== 3 || parts.some((part) => !Number.isInteger(part))) return null;
+
+  const [year, month, day] = parts;
+  const birthday = new Date(year, month - 1, day, 12, 0, 0, 0);
+
+  if (
+    birthday.getFullYear() !== year ||
+    birthday.getMonth() !== month - 1 ||
+    birthday.getDate() !== day
+  ) {
+    return null;
+  }
+
   return birthday;
+};
+
+const getAgeFromBirthday = (birthday: Date) => {
+  const today = new Date();
+  let age = today.getFullYear() - birthday.getFullYear();
+  const birthdayThisYear = new Date(today.getFullYear(), birthday.getMonth(), birthday.getDate());
+
+  if (today < birthdayThisYear) age -= 1;
+
+  return age;
 };
 
 const getExistingProfileId = async (role: AppRole, email: string) => {
@@ -122,6 +145,7 @@ const syncRoleProfile = async ({
   selectedRank,
   selectedGender,
   birthday,
+  addressText,
 }: {
   tx: Prisma.TransactionClient;
   authUserId: string;
@@ -134,6 +158,7 @@ const syncRoleProfile = async ({
   selectedRank: string;
   selectedGender: string;
   birthday: Date;
+  addressText: string;
 }) => {
   const personName = splitName(displayName, normalizedEmail);
 
@@ -160,7 +185,7 @@ const syncRoleProfile = async ({
         surname: personName.surname,
         email: normalizedEmail,
         phone: phoneNumber,
-        address: DEFAULT_ADDRESS,
+        address: addressText || DEFAULT_ADDRESS,
         rank: selectedRank,
         bloodType: DEFAULT_BLOOD_TYPE,
         sex: selectedGender as UserSex,
@@ -171,6 +196,7 @@ const syncRoleProfile = async ({
         surname: personName.surname,
         email: normalizedEmail,
         phone: phoneNumber,
+        address: addressText || DEFAULT_ADDRESS,
         rank: selectedRank,
         sex: selectedGender as UserSex,
         birthday,
@@ -191,7 +217,7 @@ const syncRoleProfile = async ({
         surname: personName.surname,
         email: normalizedEmail,
         phone: phoneNumber,
-        address: DEFAULT_ADDRESS,
+        address: addressText || DEFAULT_ADDRESS,
         rank: selectedRank,
         bloodType: DEFAULT_BLOOD_TYPE,
         sex: selectedGender as UserSex,
@@ -205,6 +231,7 @@ const syncRoleProfile = async ({
         surname: personName.surname,
         email: normalizedEmail,
         phone: phoneNumber,
+        address: addressText || DEFAULT_ADDRESS,
         rank: selectedRank,
         sex: selectedGender as UserSex,
         parentId: parent.id,
@@ -223,25 +250,28 @@ const syncRoleProfile = async ({
         surname: personName.surname,
         email: normalizedEmail,
         phone: phoneNumber,
-        address: DEFAULT_ADDRESS,
+        address: addressText || DEFAULT_ADDRESS,
       },
       update: {
         name: personName.name,
         surname: personName.surname,
         email: normalizedEmail,
         phone: phoneNumber,
+        address: addressText || DEFAULT_ADDRESS,
       },
     });
   }
 };
 
 export async function POST(req: Request) {
-  const { email, password, name, age, phone, guardianName, childrenNames, rank, leaderGroup, gender, role, code } = await req.json();
+  const { email, password, name, birthDate, phone, address, guardianName, childrenNames, rank, leaderGroup, gender, role, code } = await req.json();
   const normalizedEmail = String(email || "").toLowerCase().trim();
   const plainPassword = String(password || "");
   const displayName = String(name || "").trim();
-  const ageNumber = Number(age);
+  const birthday = parseBirthDate(birthDate);
+  const ageNumber = birthday ? getAgeFromBirthday(birthday) : NaN;
   const phoneNumber = String(phone || "").trim();
+  const addressText = String(address || "").trim();
   const guardian = String(guardianName || "").trim();
   const children = String(childrenNames || "").trim();
   const selectedRank = String(rank || "").trim();
@@ -253,8 +283,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "Correo, contrasena y tipo de cuenta son requeridos." }, { status: 400 });
   }
 
-  if (!Number.isInteger(ageNumber) || ageNumber < 1 || ageNumber > 120 || !phoneNumber) {
-    return NextResponse.json({ message: "Edad y numero de telefono son requeridos." }, { status: 400 });
+  if (!birthday || !Number.isInteger(ageNumber) || ageNumber < 1 || ageNumber > 120 || !phoneNumber || !addressText) {
+    return NextResponse.json(
+      { message: "Fecha de nacimiento, numero de telefono y direccion son requeridos." },
+      { status: 400 }
+    );
   }
 
   if (selectedGender !== "MALE" && selectedGender !== "FEMALE") {
@@ -290,8 +323,6 @@ export async function POST(req: Request) {
 
   const existingProfileId = await getExistingProfileId(role, normalizedEmail);
   const existingProfileByAuthId = existingUser ? await getProfileIdByAuthId(role, existingUser.id) : null;
-  const birthday = birthdayFromAge(ageNumber);
-
   try {
     await prisma.$transaction(async (tx) => {
       if (existingUser) {
@@ -310,6 +341,8 @@ export async function POST(req: Request) {
             name: displayName || normalizedEmail,
             age: ageNumber,
             phone: phoneNumber,
+            birthday,
+            address: addressText,
             guardianName: role === "student" ? guardian : null,
             childrenNames: role === "parent" ? children : null,
             rank: role === "teacher" || role === "student" ? selectedRank : null,
@@ -331,7 +364,8 @@ export async function POST(req: Request) {
           guardian,
           selectedRank,
           selectedGender,
-          birthday,
+            birthday,
+            addressText,
         });
 
         return;
@@ -344,6 +378,8 @@ export async function POST(req: Request) {
           name: displayName || normalizedEmail,
           age: ageNumber,
           phone: phoneNumber,
+          birthday,
+          address: addressText,
           guardianName: role === "student" ? guardian : null,
           childrenNames: role === "parent" ? children : null,
           rank: role === "teacher" || role === "student" ? selectedRank : null,
@@ -367,6 +403,7 @@ export async function POST(req: Request) {
         selectedRank,
         selectedGender,
         birthday,
+        addressText,
       });
     });
 

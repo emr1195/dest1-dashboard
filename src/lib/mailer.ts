@@ -23,7 +23,9 @@ export const sendAccessCodeRequestEmail = async ({
   requesterEmail,
   requesterName,
   requesterAge,
+  requesterBirthDate,
   requesterPhone,
+  requesterAddress,
   requesterGender,
   guardianName,
   childrenNames,
@@ -35,7 +37,9 @@ export const sendAccessCodeRequestEmail = async ({
   requesterEmail: string;
   requesterName?: string;
   requesterAge?: string;
+  requesterBirthDate?: string;
   requesterPhone?: string;
+  requesterAddress?: string;
   requesterGender?: string;
   guardianName?: string;
   childrenNames?: string;
@@ -51,7 +55,9 @@ export const sendAccessCodeRequestEmail = async ({
       requesterEmail,
       requesterName,
       requesterAge,
+      requesterBirthDate,
       requesterPhone,
+      requesterAddress,
       requesterGender,
       guardianName,
       childrenNames,
@@ -77,8 +83,10 @@ export const sendAccessCodeRequestEmail = async ({
     "Nueva solicitud de codigo de acceso.",
     "Revisa esta solicitud. Si la apruebas, envia el codigo al correo del solicitante.",
     "Nombre: " + (requesterName || "No indicado"),
+    "Fecha de nacimiento: " + (requesterBirthDate || "No indicada"),
     "Edad: " + (requesterAge || "No indicada"),
     "Telefono: " + (requesterPhone || "No indicado"),
+    "Direccion: " + (requesterAddress || "No indicada"),
     "Genero: " + (requesterGender || "No indicado"),
     guardianName ? "Padre o madre: " + guardianName : "",
     childrenNames ? "Hijos: " + childrenNames : "",

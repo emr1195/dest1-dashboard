@@ -1,10 +1,13 @@
-import Announcements from "@/components/Announcements";
-import BigCalendarContainer from "@/components/BigCalendarContainer";
+import Announcements from "@/components/Announcements";
+import BigCalendarContainer from "@/components/BigCalendarContainer";
+import EventCalendarContainer from "@/components/EventCalendarContainer";
+import Performance from "@/components/Performance";
+import ProfileGroupCard from "@/components/ProfileGroupCard";
 import ProfileInfoCard from "@/components/ProfileInfoCard";
-import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { getLeaderGroupOption } from "@/lib/roles";
+import prisma from "@/lib/prisma";
 import { Class, Muchacho } from "@prisma/client";
-import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 
 const getStudentAge = (birthday: Date) => {
@@ -32,49 +35,50 @@ const getStudentGroup = (age: number) => {
 
 const SingleStudentPage = async ({
   params: { id },
+  searchParams,
 }: {
-  params: { id: string };
-}) => {
+  params: { id: string };
+  searchParams: { [key: string]: string | undefined };
+}) => {
   const currentUser = await getCurrentUser();
-const role = currentUser?.role;
+  const role = currentUser?.role;
 
   if (currentUser?.role === "student" && currentUser.id !== id) {
     redirect(`/list/students/${currentUser.id}`);
   }
 
-  const student:
+  const student:
     | (Muchacho & {
-        class: Class & { _count: { lessons: number } };
-      })
+        class: Class & { _count: { lessons: number } };
+      })
     | null = await prisma.muchacho.findUnique({
-    where: { id },
-    include: {
-      class: { include: { _count: { select: { lessons: true } } } },
-    },
-  });
-
-  if (!student) {
-    return notFound();
-  }
+    where: { id },
+    include: {
+      class: { include: { _count: { select: { lessons: true } } } },
+    },
+  });
+
+  if (!student) return notFound();
 
   const studentAccount = await prisma.authUser.findFirst({
     where: {
       role: "student",
       OR: [{ id: student.id }, ...(student.email ? [{ email: student.email }] : [])],
     },
-    select: { rank: true },
+    select: { rank: true, leaderGroup: true },
   });
   const studentAge = getStudentAge(student.birthday);
-  const studentGroup = getStudentGroup(studentAge);
+  const savedStudentGroup = studentAccount?.leaderGroup || null;
+  const savedStudentGroupOption = getLeaderGroupOption(savedStudentGroup);
+  const studentGroup = savedStudentGroupOption
+    ? { name: savedStudentGroupOption.label, icon: savedStudentGroupOption.image }
+    : getStudentGroup(studentAge);
   const studentRank = student.rank || studentAccount?.rank || null;
 
   return (
-    <div className="flex-1 p-4 flex flex-col gap-4 xl:flex-row">
-      {/* LEFT */}
-      <div className="w-full xl:w-2/3">
-        {/* TOP */}
+    <div className="flex-1 p-4 flex flex-col gap-4 xl:flex-row">
+      <div className="w-full xl:w-2/3">
         <div className="flex flex-col lg:flex-row gap-4">
-          {/* USER INFO CARD */}
           <ProfileInfoCard
             id={student.id}
             type="student"
@@ -87,48 +91,31 @@ const role = currentUser?.role;
             canEditRank={role === "admin"}
             studentGroup={studentGroup.name}
           />
-          {/* SMALL CARDS */}
-          <div className="flex-1 flex gap-4 justify-between flex-wrap">
-            {/* Tarjetas de patrulla, ascenso de la senda y premios de liderazgo ocultas temporalmente. */}
-            <div className="flex min-h-[160px] w-full flex-col items-center justify-center gap-2 rounded-md bg-white p-4 text-center">
-              <Image
-                src={studentGroup.icon}
-                alt={studentGroup.name}
-                width={56}
-                height={56}
-                className="h-14 w-14 object-contain"
-              />
-              <h1 className="text-xl font-semibold">{studentGroup.name}</h1>
-            </div>
-          </div>
-          </div>
 
-        {/* BOTTOM */}
+          <div className="flex-1 flex gap-4 justify-between flex-wrap">
+            <ProfileGroupCard
+              id={student.id}
+              type="student"
+              groupValue={savedStudentGroup}
+              fallbackGroup={getStudentGroup(studentAge)}
+              canEdit={role === "admin"}
+            />
+          </div>
+        </div>
+
         <div className="mt-4 h-[620px] rounded-md bg-white p-4 sm:h-[720px] lg:h-[800px]">
           <h1>Calendario del muchacho</h1>
-          <BigCalendarContainer type="classId" id={student.class.id} />
-        </div>
-      </div>
-      {/* RIGHT */}
-      <div className="w-full xl:w-1/3 flex flex-col gap-4">
-        {/* Atajos ocultos temporalmente para cuentas tipo muchacho. */}
+          <BigCalendarContainer type="classId" id={student.class.id} />
+        </div>
+      </div>
 
-        {/* Evaluacion oculta temporalmente para perfiles tipo muchacho. */}
-        <Announcements />
-      </div>
-    </div>
-  );
-};
-
-export default SingleStudentPage;
+      <div className="w-full xl:w-1/3 flex flex-col gap-4">
+        <EventCalendarContainer searchParams={searchParams} />
+        <Performance userId={student.id} userType="student" />
+        <Announcements />
+      </div>
+    </div>
+  );
+};
 
-
-
-
-
-
-
-
-
-
-
+export default SingleStudentPage;

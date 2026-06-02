@@ -11,7 +11,7 @@ import TableSearch from "@/components/TableSearch";
 import prisma from "@/lib/prisma";
 
 import { ITEM_PER_PAGE } from "@/lib/settings";
-import { getRankOption } from "@/lib/roles";
+import { getLeaderGroupOption, getRankOption } from "@/lib/roles";
 import { Class, Parent, Prisma, Muchacho } from "@prisma/client";
 
 import Image from "next/image";
@@ -27,6 +27,14 @@ type StudentList = Muchacho & {
   class: Class;
   parent: Parent;
   displayedRank?: string | null;
+  displayedGroupValue?: string | null;
+};
+
+const groupIconMap: Record<string, { name: string; icon: string }> = {
+  navegantes: { name: "Navegantes", icon: "/navegantes.png" },
+  pioneros: { name: "Pioneros", icon: "/pioneros.png" },
+  seguidores: { name: "Seguidores", icon: "/seguidores.png" },
+  exploradores: { name: "Exploradores", icon: "/exploradores.png" },
 };
 
 const getStudentAge = (birthday: Date) => {
@@ -46,12 +54,21 @@ const getStudentAge = (birthday: Date) => {
 const getStudentGroup = (birthday: Date) => {
   const age = getStudentAge(birthday);
 
-  if (age >= 5 && age <= 7) return { name: "Navegantes", icon: "/navegantes.png" };
-  if (age >= 8 && age <= 10) return { name: "Pioneros", icon: "/pioneros.png" };
-  if (age >= 11 && age <= 14) return { name: "Seguidores", icon: "/seguidores.png" };
-  if (age >= 15 && age <= 17) return { name: "Exploradores", icon: "/exploradores.png" };
+  if (age >= 5 && age <= 7) return groupIconMap.navegantes;
+  if (age >= 8 && age <= 10) return groupIconMap.pioneros;
+  if (age >= 11 && age <= 14) return groupIconMap.seguidores;
+  if (age >= 15 && age <= 17) return groupIconMap.exploradores;
 
   return { name: "Sin grupo", icon: "" };
+};
+
+const getDisplayedGroup = (savedGroup: string | null | undefined, birthday: Date) => {
+  const option = getLeaderGroupOption(savedGroup);
+
+  if (option?.value === "sin-grupo") return { name: option.label, icon: "" };
+  if (option) return groupIconMap[option.value] || { name: option.label, icon: option.image };
+
+  return getStudentGroup(birthday);
 };
 
 
@@ -134,7 +151,7 @@ const role = currentUser?.role;
 
 
   const renderRow = (item: StudentList) => {
-    const group = getStudentGroup(item.birthday);
+    const group = getDisplayedGroup(item.displayedGroupValue, item.birthday);
     const rank = getRankOption("student", item.displayedRank ?? item.rank);
 
     return (
@@ -343,15 +360,19 @@ const role = currentUser?.role;
       role: "student",
       email: { in: data.flatMap((item) => (item.email ? [item.email] : [])) },
     },
-    select: { email: true, rank: true },
+    select: { email: true, rank: true, leaderGroup: true },
   });
   const rankByEmail = new Map(
     rankAccounts.map((account) => [account.email, account.rank])
+  );
+  const groupByEmail = new Map(
+    rankAccounts.map((account) => [account.email, account.leaderGroup])
   );
   const displayedData: StudentList[] = data.map((item) => ({
     ...item,
     displayedRank:
       item.rank || (item.email ? rankByEmail.get(item.email) : null) || null,
+    displayedGroupValue: item.email ? groupByEmail.get(item.email) || null : null,
   }));
 
   return (

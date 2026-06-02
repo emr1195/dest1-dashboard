@@ -28,6 +28,8 @@ model AuthUser {
   childrenNames String?
   rank         String?
   leaderGroup  String?
+  birthday     DateTime?
+  address      String?
   sex          UserSex?
   passwordHash String?
   provider     String   @default("credentials")

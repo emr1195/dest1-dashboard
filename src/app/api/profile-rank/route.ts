@@ -20,12 +20,8 @@ export const PATCH = async (req: Request) => {
     return NextResponse.json({ message: "Datos invalidos." }, { status: 400 });
   }
 
-  const canUpdate =
-    currentUser.role === "admin" ||
-    (currentUser.role === type && currentUser.id === id);
-
-  if (!canUpdate) {
-    return NextResponse.json({ message: "No autorizado." }, { status: 403 });
+  if (currentUser.role !== "admin") {
+    return NextResponse.json({ message: "Solo el admin puede cambiar rangos." }, { status: 403 });
   }
 
   const normalizedRank = rank.trim();

@@ -1,10 +1,12 @@
 import Announcements from "@/components/Announcements";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
 import EventCalendarContainer from "@/components/EventCalendarContainer";
+import Performance from "@/components/Performance";
+import ProfileGroupCard from "@/components/ProfileGroupCard";
 import ProfileInfoCard from "@/components/ProfileInfoCard";
 import { getCurrentUser } from "@/lib/auth";
+import { getLeaderGroupOption } from "@/lib/roles";
 import prisma from "@/lib/prisma";
-import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 
 const getStudentAge = (birthday: Date) => {
@@ -78,10 +80,11 @@ const TeacherPage = async ({
       role: "teacher",
       OR: [{ id: teacher.id }, ...(teacher.email ? [{ email: teacher.email }] : [])],
     },
-    select: { rank: true },
+    select: { rank: true, leaderGroup: true },
   });
 
   const teacherRank = teacher.rank || teacherAccount?.rank || null;
+  const savedLeaderGroup = teacherAccount?.leaderGroup || null;
   const leaderGroups = Array.from(
     new Map(
       [
@@ -93,6 +96,8 @@ const TeacherPage = async ({
         .map((group) => [group.name, group])
     ).values()
   );
+  const savedLeaderGroupOption = getLeaderGroupOption(savedLeaderGroup);
+  const fallbackLeaderGroup = leaderGroups[0] || { name: "Sin grupo", icon: "/singleBranch.png" };
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 xl:flex-row">
@@ -112,18 +117,17 @@ const TeacherPage = async ({
 
           <div className="flex flex-1 flex-wrap justify-between gap-4">
             {/* Tarjetas de asistencia, lecciones y grupos ocultas temporalmente. */}
-            <div className="flex min-h-[160px] w-full items-center gap-4 rounded-md bg-white p-4 md:flex-col md:justify-center md:gap-2 md:text-center">
-              <Image
-                src={leaderGroups[0]?.icon || "/singleBranch.png"}
-                alt={leaderGroups[0]?.name || "Grupo"}
-                width={56}
-                height={56}
-                className="h-14 w-14 object-contain"
-              />
-              <h1 className="text-xl font-semibold">
-                {leaderGroups.map((group) => group.name).join(", ") || "Sin grupo"}
-              </h1>
-            </div>
+            <ProfileGroupCard
+              id={teacher.id}
+              type="teacher"
+              groupValue={savedLeaderGroup}
+              fallbackGroup={
+                savedLeaderGroupOption
+                  ? { name: savedLeaderGroupOption.label, icon: savedLeaderGroupOption.image }
+                  : fallbackLeaderGroup
+              }
+              canEdit={currentUser.role === "admin"}
+            />
           </div>
         </div>
 
@@ -135,7 +139,7 @@ const TeacherPage = async ({
 
       <div className="flex w-full flex-col gap-4 xl:w-1/3">
         <EventCalendarContainer searchParams={searchParams} />
-        {/* Evaluacion oculta temporalmente para cuentas tipo lider. */}
+        <Performance userId={teacher.id} userType="teacher" />
         <Announcements />
       </div>
     </div>

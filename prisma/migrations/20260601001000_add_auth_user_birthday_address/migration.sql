@@ -1,0 +1,2 @@
+ALTER TABLE "AuthUser" ADD COLUMN "birthday" TIMESTAMP(3);
+ALTER TABLE "AuthUser" ADD COLUMN "address" TEXT;

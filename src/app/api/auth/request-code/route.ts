@@ -3,12 +3,46 @@ import { sendAccessCodeRequestEmail } from "@/lib/mailer";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
+const parseBirthDate = (value: unknown) => {
+  const raw = String(value || "").trim();
+  const parts = raw.split("-").map(Number);
+
+  if (parts.length !== 3 || parts.some((part) => !Number.isInteger(part))) return null;
+
+  const [year, month, day] = parts;
+  const birthday = new Date(year, month - 1, day, 12, 0, 0, 0);
+
+  if (
+    birthday.getFullYear() !== year ||
+    birthday.getMonth() !== month - 1 ||
+    birthday.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return birthday;
+};
+
+const getAgeFromBirthday = (birthday: Date) => {
+  const today = new Date();
+  let age = today.getFullYear() - birthday.getFullYear();
+  const birthdayThisYear = new Date(today.getFullYear(), birthday.getMonth(), birthday.getDate());
+
+  if (today < birthdayThisYear) age -= 1;
+
+  return age;
+};
+
 export async function POST(req: Request) {
-  const { email, name, age, phone, guardianName, childrenNames, rank, leaderGroup, gender, role } = await req.json();
+  const { email, name, birthDate, phone, address, guardianName, childrenNames, rank, leaderGroup, gender, role } = await req.json();
   const normalizedEmail = String(email || "").toLowerCase().trim();
   const displayName = String(name || "").trim();
-  const ageText = String(age || "").trim();
+  const birthday = parseBirthDate(birthDate);
+  const ageNumber = birthday ? getAgeFromBirthday(birthday) : NaN;
+  const ageText = Number.isInteger(ageNumber) ? String(ageNumber) : "";
+  const birthDateText = String(birthDate || "").trim();
   const phoneText = String(phone || "").trim();
+  const addressText = String(address || "").trim();
   const guardian = String(guardianName || "").trim();
   const children = String(childrenNames || "").trim();
   const selectedRank = String(rank || "").trim();
@@ -19,8 +53,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "Correo y tipo de cuenta son requeridos." }, { status: 400 });
   }
 
-  if (!ageText || !phoneText) {
-    return NextResponse.json({ message: "Edad y numero de telefono son requeridos." }, { status: 400 });
+  if (!birthday || !Number.isInteger(ageNumber) || ageNumber < 1 || ageNumber > 120 || !phoneText || !addressText) {
+    return NextResponse.json(
+      { message: "Fecha de nacimiento, numero de telefono y direccion son requeridos." },
+      { status: 400 }
+    );
   }
 
   if (selectedGender !== "MALE" && selectedGender !== "FEMALE") {
@@ -68,7 +105,9 @@ export async function POST(req: Request) {
       requesterEmail: normalizedEmail,
       requesterName: displayName,
       requesterAge: ageText,
+      requesterBirthDate: birthDateText,
       requesterPhone: phoneText,
+      requesterAddress: addressText,
       requesterGender: selectedGender === "MALE" ? "Masculino" : "Femenino",
       guardianName: role === "student" ? guardian : undefined,
       childrenNames: role === "parent" ? children : undefined,

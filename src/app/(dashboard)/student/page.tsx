@@ -1,10 +1,12 @@
 import Announcements from "@/components/Announcements";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
 import EventCalendarContainer from "@/components/EventCalendarContainer";
+import Performance from "@/components/Performance";
+import ProfileGroupCard from "@/components/ProfileGroupCard";
 import ProfileInfoCard from "@/components/ProfileInfoCard";
 import { getCurrentUser } from "@/lib/auth";
+import { getLeaderGroupOption } from "@/lib/roles";
 import prisma from "@/lib/prisma";
-import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 
 const getStudentAge = (birthday: Date) => {
@@ -53,9 +55,14 @@ const StudentPage = async ({
       role: "student",
       OR: [{ id: student.id }, ...(student.email ? [{ email: student.email }] : [])],
     },
-    select: { rank: true },
+    select: { rank: true, leaderGroup: true },
   });
-  const studentGroup = getStudentGroup(getStudentAge(student.birthday));
+  const studentAge = getStudentAge(student.birthday);
+  const savedStudentGroup = studentAccount?.leaderGroup || null;
+  const savedStudentGroupOption = getLeaderGroupOption(savedStudentGroup);
+  const studentGroup = savedStudentGroupOption
+    ? { name: savedStudentGroupOption.label, icon: savedStudentGroupOption.image }
+    : getStudentGroup(studentAge);
   const studentRank = student.rank || studentAccount?.rank || null;
 
   return (
@@ -77,10 +84,13 @@ const StudentPage = async ({
 
           <div className="flex flex-1 flex-wrap justify-between gap-4">
             {/* Tarjetas de patrulla, ascenso de la senda y premios de liderazgo ocultas temporalmente. */}
-            <div className="flex min-h-[160px] w-full flex-col items-center justify-center gap-2 rounded-md bg-white p-4 text-center">
-              <Image src={studentGroup.icon} alt={studentGroup.name} width={56} height={56} className="h-14 w-14 object-contain" />
-              <h1 className="text-xl font-semibold">{studentGroup.name}</h1>
-            </div>
+            <ProfileGroupCard
+              id={student.id}
+              type="student"
+              groupValue={savedStudentGroup}
+              fallbackGroup={getStudentGroup(studentAge)}
+              canEdit={currentUser.role === "admin"}
+            />
           </div>
         </div>
 
@@ -92,7 +102,7 @@ const StudentPage = async ({
 
       <div className="flex w-full flex-col gap-4 xl:w-1/3">
         <EventCalendarContainer searchParams={searchParams} />
-        {/* Evaluacion oculta temporalmente para cuentas tipo muchacho. */}
+        <Performance userId={student.id} userType="student" />
         <Announcements />
       </div>
     </div>
