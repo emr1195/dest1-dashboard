@@ -118,7 +118,7 @@ const role = currentUser?.role;
 
     },
 
-    ...(role === "admin"
+    ...(role === "admin" || role === "teacher"
 
       ? [
 

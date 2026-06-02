@@ -65,7 +65,7 @@ const Navbar = async () => {
   const roleLabelMap: Record<string, string> = {
     admin: "Admin",
     teacher: "Lider",
-    student: "Muchacho",
+    student: "Tropa",
     parent: "Padre",
   };
   const profileHref = user?.role ? profileHrefMap[user.role] || "/profile" : "/profile";
@@ -73,7 +73,7 @@ const Navbar = async () => {
   const avatarLetter = displayName.charAt(0).toUpperCase();
 
   return (
-    <div className="flex min-h-16 shrink-0 items-center justify-between gap-2 px-3 py-2 sm:px-4">
+    <div className="flex min-h-16 shrink-0 items-center justify-between gap-2 px-3 py-2 pl-16 sm:px-4 md:pl-4">
       <div className="hidden md:flex items-center gap-2 text-xs rounded-full ring-[1.5px] ring-gray-300 px-2">
         <Image src="/search.png" alt="" width={14} height={14} />
         <input

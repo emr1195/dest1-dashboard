@@ -238,12 +238,12 @@ const AssignmentDocumentsList = ({
       files.map((file) => (
         <div
           key={file.id}
-          className="flex items-center gap-3 border border-gray-200 bg-white p-3"
+          className="flex flex-wrap items-center gap-3 border border-gray-200 bg-white p-3 sm:flex-nowrap"
         >
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-lamaSky text-[10px] font-bold text-white">
             {assignmentFileIcon(file.fileName)}
           </span>
-          <span className="min-w-0 flex-1">
+          <span className="min-w-0 flex-1 basis-[calc(100%-3.5rem)] sm:basis-auto">
             <span className="block truncate text-sm text-gray-600">
               {file.fileName}
             </span>
@@ -251,7 +251,7 @@ const AssignmentDocumentsList = ({
               {file.ownerName || "Completado"}
             </span>
           </span>
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="ml-auto flex shrink-0 items-center gap-3 sm:ml-0">
             <Link
               href={`/list/assignments/${assignment.id}?file=${file.id}`}
               className="text-xs font-semibold text-lamaBrown hover:underline"

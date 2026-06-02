@@ -43,12 +43,12 @@ const UploadedFilesList = ({
           target={file.href ? undefined : "_blank"}
           rel={file.href ? undefined : "noreferrer"}
           title={file.fileName}
-          className="flex items-center gap-3 border border-gray-200 bg-white p-3 hover:border-lamaSky"
+          className="flex flex-wrap items-center gap-3 border border-gray-200 bg-white p-3 hover:border-lamaSky sm:flex-nowrap"
         >
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-lamaSky text-[10px] font-bold text-white">
             {fileIcon(file.fileName)}
           </span>
-          <span className="min-w-0 flex-1">
+          <span className="min-w-0 flex-1 basis-[calc(100%-3.5rem)] sm:basis-auto">
             <span className="block truncate text-sm text-gray-600">{file.fileName}</span>
             <span className="block truncate text-xs text-gray-500">
               {file.ownerName || "Completado"}
@@ -68,7 +68,7 @@ const UploadedFilesList = ({
               {file.statusLabel}
             </span>
           )}
-          <span className="text-xs text-lamaBrown">Ver</span>
+          <span className="ml-auto text-xs text-lamaBrown sm:ml-0">Ver</span>
         </a>
       ))
     ) : (

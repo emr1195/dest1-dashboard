@@ -71,7 +71,7 @@ const columns = [
 
   },
 
-  ...(role === "admin"
+  ...(role === "admin" || role === "teacher"
 
     ? [
 
@@ -102,6 +102,13 @@ const renderRow = (item: ParentList) => (
 
     <td className="flex items-center gap-4 p-4">
 
+      <Image
+        src="/noAvatar.png"
+        alt=""
+        width={40}
+        height={40}
+        className="h-10 w-10 shrink-0 rounded-full object-cover"
+      />
       <div className="flex flex-col">
         <Link href={`/list/parents/${item.id}`} className="font-semibold hover:text-lamaSky hover:underline">
           {item.name}
@@ -118,25 +125,38 @@ const renderRow = (item: ParentList) => (
 
     <td className="hidden md:table-cell">{item.address}</td>
 
+    {(role === "admin" || role === "teacher") && (
     <td>
 
       <div className="flex items-center gap-2">
 
+        <Link href={`/list/parents/${item.id}`}>
+          <button className="flex h-7 w-7 items-center justify-center rounded-full bg-transparent text-lamaSky transition hover:bg-gray-100" aria-label="Ver padre">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-5 w-5"
+              aria-hidden="true"
+            >
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          </button>
+        </Link>
+
         {role === "admin" && (
-
-          <>
-
-            <FormContainer table="parent" type="update" data={item} />
-
             <FormContainer table="parent" type="delete" id={item.id} />
-
-          </>
 
         )}
 
       </div>
 
     </td>
+    )}
 
   </tr>
 

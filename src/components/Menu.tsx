@@ -43,7 +43,7 @@ const homeByRole = {
   parent: "/parent",
 } as const;
 
-const Menu = async () => {
+const Menu = async ({ forceLabels = false }: { forceLabels?: boolean }) => {
   const user = await getCurrentUser();
   const role = user?.role;
   const evaluationActive = isEvaluationDay();
@@ -52,14 +52,16 @@ const Menu = async () => {
     <nav className="mt-4 text-sm">
       {menuItems.map((group) => (
         <div className="flex flex-col gap-1.5 lg:gap-2" key={group.title}>
-          <span className="hidden lg:block text-gray-500 font-light my-4">
+          <span
+            className={`${forceLabels ? "block" : "hidden lg:block"} text-gray-500 font-light my-4`}
+          >
             {group.title}
           </span>
           {group.items.map((item) => {
             if (!role || !item.visible.includes(role)) return null;
 
             if (item.href === "/logout") {
-              return <SignOutButton key={item.label} />;
+              return <SignOutButton key={item.label} forceLabels={forceLabels} />;
             }
 
             if (
@@ -72,10 +74,12 @@ const Menu = async () => {
                 <div
                   key={item.label}
                   title="Activo solo el primer dia de marzo, junio, septiembre y diciembre"
-                  className="flex cursor-not-allowed items-center justify-center gap-3 rounded-md px-1 py-2 text-gray-500 md:px-2 lg:justify-start lg:gap-4"
+                  className={`flex cursor-not-allowed items-center gap-3 rounded-md px-1 py-2 text-gray-500 md:px-2 lg:gap-4 ${forceLabels ? "justify-start" : "justify-center lg:justify-start"}`}
                 >
                   <Image src={item.icon} alt="" width={22} height={22} className="h-5 w-5 shrink-0 opacity-40 lg:h-[22px] lg:w-[22px]" />
-                  <span className="hidden lg:block">{item.label}</span>
+                  <span className={forceLabels ? "block" : "hidden lg:block"}>
+                    {item.label}
+                  </span>
                 </div>
               );
             }
@@ -86,10 +90,12 @@ const Menu = async () => {
               <Link
                 href={href}
                 key={item.label}
-                className="flex items-center justify-center gap-3 rounded-md px-1 py-2 text-gray-500 hover:bg-lamaSkyLight md:px-2 lg:justify-start lg:gap-4"
+                className={`flex items-center gap-3 rounded-md px-1 py-2 text-gray-500 hover:bg-lamaSkyLight md:px-2 lg:gap-4 ${forceLabels ? "justify-start" : "justify-center lg:justify-start"}`}
               >
                 <Image src={item.icon} alt="" width={22} height={22} className="h-5 w-5 shrink-0 lg:h-[22px] lg:w-[22px]" />
-                <span className="hidden lg:block">{item.label}</span>
+                <span className={forceLabels ? "block" : "hidden lg:block"}>
+                  {item.label}
+                </span>
               </Link>
             );
           })}

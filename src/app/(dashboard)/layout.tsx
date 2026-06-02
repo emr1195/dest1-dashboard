@@ -1,4 +1,5 @@
 import Menu from "@/components/Menu";
+import MobileMenuDrawer from "@/components/MobileMenuDrawer";
 import Navbar from "@/components/Navbar";
 import Image from "next/image";
 import Link from "next/link";
@@ -10,7 +11,26 @@ export default function DashboardLayout({
 }>) {
   return (
     <div className="flex h-screen min-w-0 overflow-hidden">
-      <aside className="w-16 shrink-0 overflow-y-auto overflow-x-hidden p-2 md:w-[8%] md:p-4 lg:w-[16%] xl:w-[14%]">
+      <MobileMenuDrawer>
+        <Link
+          href="/auth/redirect"
+          className="mb-5 flex min-w-0 items-center gap-3 pr-10"
+        >
+          <Image
+            src="/logo-catedral-de-vida.png"
+            alt="logo"
+            width={82}
+            height={82}
+            className="h-14 w-14 shrink-0 object-contain"
+          />
+          <span className="min-w-0 text-wrap font-bold leading-tight">
+            Exploradores del Rey Destacamento #1
+          </span>
+        </Link>
+        <Menu forceLabels />
+      </MobileMenuDrawer>
+
+      <aside className="hidden shrink-0 overflow-y-auto overflow-x-hidden p-2 md:block md:w-[8%] md:p-4 lg:w-[16%] xl:w-[14%]">
         <Link
           href="/auth/redirect"
           className="flex min-w-0 items-center justify-center gap-2 lg:justify-start"
