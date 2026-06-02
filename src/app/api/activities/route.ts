@@ -1,25 +1,15 @@
-import { randomUUID } from "crypto";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
 import { NextResponse } from "next/server";
 
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { fileToDataUrl } from "@/lib/uploadStorage";
 
 const savePoster = async (file: File) => {
   if (!file.type.startsWith("image/")) {
     throw new Error("El afiche debe ser una imagen.");
   }
 
-  const extension = path.extname(file.name) || ".jpg";
-  const fileName = `actividad-${randomUUID()}${extension}`;
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "activities");
-  const imagePath = `/uploads/activities/${fileName}`;
-
-  await mkdir(uploadDir, { recursive: true });
-  await writeFile(path.join(uploadDir, fileName), Buffer.from(await file.arrayBuffer()));
-
-  return imagePath;
+  return fileToDataUrl(file, { allowedMimePrefixes: ["image/"] });
 };
 
 const activityInput = async (formData: FormData, requireImage: boolean) => {

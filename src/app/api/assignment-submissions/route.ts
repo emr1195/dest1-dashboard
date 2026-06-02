@@ -1,9 +1,8 @@
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { mkdir, writeFile } from "fs/promises";
+import { fileToDataUrl, sanitizeFileName } from "@/lib/uploadStorage";
 import { NextResponse } from "next/server";
 import path from "path";
-import { randomUUID } from "crypto";
 
 export const POST = async (request: Request) => {
   const currentUser = await getCurrentUser();
@@ -46,13 +45,8 @@ export const POST = async (request: Request) => {
   }
 
   const extension = path.extname(file.name) || ".dat";
-  const safeName = file.name.replace(/[^\w.\- ]/g, "").trim() || `respuesta${extension}`;
-  const fileName = `tarea-${assignmentId}-${currentUser.id}-${randomUUID()}${extension}`;
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "assignments");
-  const filePath = `/uploads/assignments/${fileName}`;
-
-  await mkdir(uploadDir, { recursive: true });
-  await writeFile(path.join(uploadDir, fileName), Buffer.from(await file.arrayBuffer()));
+  const safeName = sanitizeFileName(file.name, `respuesta${extension}`);
+  const filePath = await fileToDataUrl(file);
 
   const submission = await prisma.assignmentSubmission.upsert({
     where: {

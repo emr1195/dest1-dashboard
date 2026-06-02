@@ -1,9 +1,7 @@
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { fileToDataUrl } from "@/lib/uploadStorage";
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
 
 export const POST = async (req: Request) => {
   const currentUser = await getCurrentUser();
@@ -38,13 +36,9 @@ export const POST = async (req: Request) => {
     return NextResponse.json({ message: "El archivo debe ser una imagen." }, { status: 400 });
   }
 
-  const extension = path.extname(file.name) || ".jpg";
-  const fileName = `${type}-${id}-${randomUUID()}${extension}`;
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "profiles");
-  const imagePath = `/uploads/profiles/${fileName}`;
-
-  await mkdir(uploadDir, { recursive: true });
-  await writeFile(path.join(uploadDir, fileName), Buffer.from(await file.arrayBuffer()));
+  const imagePath = await fileToDataUrl(file, {
+    allowedMimePrefixes: ["image/"],
+  });
 
   if (type === "student") {
     const user = await prisma.muchacho.update({

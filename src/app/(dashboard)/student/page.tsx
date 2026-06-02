@@ -71,6 +71,7 @@ const StudentPage = async ({
             phone={student.phone}
             rank={studentRank}
             canUpload={true}
+            canEditRank={currentUser.role === "admin"}
             studentGroup={studentGroup.name}
           />
 

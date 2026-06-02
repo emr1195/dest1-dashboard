@@ -30,3 +30,18 @@
  ✓ Compiled in 147ms (290 modules)
  ✓ Compiled in 879ms (290 modules)
  ✓ Compiled in 139ms (290 modules)
+   Reload env: .env
+ ✓ Compiled in 1948ms (768 modules)
+   Reload env: .env
+ ✓ Compiled in 1471ms (768 modules)
+ ✓ Compiled in 12.9s (768 modules)
+ ✓ Compiled in 450ms (290 modules)
+ GET / 200 in 2594ms
+ ✓ Compiled in 5.7s (290 modules)
+ ✓ Compiled in 739ms (290 modules)
+ ✓ Compiled in 875ms (290 modules)
+ ✓ Compiled in 997ms (290 modules)
+ ✓ Compiled in 535ms (290 modules)
+ ✓ Compiled in 444ms (290 modules)
+ ✓ Compiled in 2.3s (290 modules)
+ ✓ Compiled in 2s (754 modules)

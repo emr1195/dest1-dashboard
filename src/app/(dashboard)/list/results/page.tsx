@@ -7,7 +7,6 @@ import { getAccessibleStudentProfileIdsForParent } from "@/lib/guardianLinks";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import { Prisma } from "@prisma/client";
-import Image from "next/image";
 
 type ResultList = {
   id: number;
@@ -211,7 +210,8 @@ const ResultListPage = async ({
         </h1>
         <div className="flex w-full flex-col items-center gap-4 md:w-auto md:flex-row">
           <TableSearch />
-          <div className="flex items-center gap-4 self-end">
+          {/* Botones de filtro, orden y crear resultado ocultos temporalmente. */}
+          {/* <div className="flex items-center gap-4 self-end">
             <button className="flex h-8 w-8 items-center justify-center rounded-full bg-lamaYellow">
               <Image src="/filter.png" alt="" width={14} height={14} />
             </button>
@@ -221,7 +221,7 @@ const ResultListPage = async ({
             {(role === "admin" || role === "teacher") && (
               <FormContainer table="result" type="create" />
             )}
-          </div>
+          </div> */}
         </div>
       </div>
       <Table columns={columns} renderRow={renderRow} data={data} />

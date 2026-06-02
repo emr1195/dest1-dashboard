@@ -84,6 +84,7 @@ const role = currentUser?.role;
             phone={student.phone}
             rank={studentRank}
             canUpload={role === "admin" || (role === "student" && currentUser?.id === student.id)}
+            canEditRank={role === "admin"}
             studentGroup={studentGroup.name}
           />
           {/* SMALL CARDS */}

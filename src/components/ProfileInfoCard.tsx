@@ -19,6 +19,7 @@ const ProfileInfoCard = ({
   phone,
   rank,
   canUpload,
+  canEditRank,
   studentGroup,
 }: {
   id: string;
@@ -29,6 +30,7 @@ const ProfileInfoCard = ({
   phone?: string | null;
   rank?: string | null;
   canUpload: boolean;
+  canEditRank?: boolean;
   studentGroup?: string;
 }) => {
   const studentBackgroundColor =
@@ -42,7 +44,7 @@ const ProfileInfoCard = ({
       <div className="flex w-full justify-center sm:w-[180px] sm:min-w-[180px]">
         <div className="relative h-[200px] w-40 shrink-0 pt-3">
           <ProfileImageUpload id={id} type={type} src={img} canUpload={canUpload} />
-          <ProfileRankEditor id={id} type={type} rank={rank} canEdit={canUpload} />
+          <ProfileRankEditor id={id} type={type} rank={rank} canEdit={Boolean(canEditRank)} />
         </div>
       </div>
 

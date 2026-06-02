@@ -110,11 +110,9 @@ const assignmentFileIcon = (fileName: string) => {
 const AssignmentDocumentsList = ({
   assignment,
   files,
-  canEdit,
 }: {
   assignment: any;
   files: UploadedAssignmentFile[];
-  canEdit: boolean;
 }) => (
   <div className="flex flex-col gap-3">
     <h3 className="text-base font-semibold">Documentos subidos</h3>
@@ -142,30 +140,12 @@ const AssignmentDocumentsList = ({
             >
               Ver
             </Link>
-            {canEdit && (
-              <FormContainer
-                table="assignment"
-                type="update"
-                data={assignment}
-                triggerLabel="Editar"
-                triggerClassName="text-xs font-semibold text-lamaSky hover:underline"
-              />
-            )}
           </div>
         </div>
       ))
     ) : (
       <div className="flex items-center justify-between gap-3 border border-dashed border-gray-200 p-4 text-sm text-gray-500">
         <span>No hay documentos subidos.</span>
-        {canEdit && (
-          <FormContainer
-            table="assignment"
-            type="update"
-            data={assignment}
-            triggerLabel="Editar"
-            triggerClassName="text-xs font-semibold text-lamaSky hover:underline"
-          />
-        )}
       </div>
     )}
   </div>
@@ -348,7 +328,10 @@ const AssignmentListPage = async ({
                     </div>
                   )}
                   {canManageAssignment && (
-                    <FormContainer table="assignment" type="delete" id={assignment.id} />
+                    <div className="flex items-center gap-2">
+                      <FormContainer table="assignment" type="update" data={assignment} />
+                      <FormContainer table="assignment" type="delete" id={assignment.id} />
+                    </div>
                   )}
                 </div>
               </div>
@@ -377,7 +360,6 @@ const AssignmentListPage = async ({
                   <AssignmentDocumentsList
                     assignment={assignment}
                     files={taskFiles}
-                    canEdit={canManageAssignment}
                   />
                   <UploadedFilesList
                     title="Respuestas de muchachos"

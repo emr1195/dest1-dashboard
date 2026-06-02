@@ -107,6 +107,7 @@ const TeacherPage = async ({
             phone={teacher.phone}
             rank={teacherRank}
             canUpload={true}
+            canEditRank={currentUser.role === "admin"}
           />
 
           <div className="flex flex-1 flex-wrap justify-between gap-4">

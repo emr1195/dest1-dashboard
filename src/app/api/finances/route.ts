@@ -1,26 +1,16 @@
-import { randomUUID } from "crypto";
-import { mkdir, writeFile } from "fs/promises";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
-import path from "path";
 
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { fileToDataUrl } from "@/lib/uploadStorage";
 
 const saveReceipt = async (file: File) => {
   if (!file.type.startsWith("image/")) {
     throw new Error("El comprobante debe ser una imagen.");
   }
 
-  const extension = path.extname(file.name) || ".jpg";
-  const fileName = `factura-${randomUUID()}${extension}`;
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "finances");
-  const filePath = `/uploads/finances/${fileName}`;
-
-  await mkdir(uploadDir, { recursive: true });
-  await writeFile(path.join(uploadDir, fileName), Buffer.from(await file.arrayBuffer()));
-
-  return filePath;
+  return fileToDataUrl(file, { allowedMimePrefixes: ["image/"] });
 };
 
 export const POST = async (req: Request) => {

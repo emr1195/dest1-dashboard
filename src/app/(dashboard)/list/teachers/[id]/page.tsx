@@ -119,6 +119,7 @@ const role = currentUser?.role;
             phone={teacher.phone}
             rank={teacherRank}
             canUpload={role === "admin" || (role === "teacher" && currentUser?.id === teacher.id)}
+            canEditRank={role === "admin"}
           />
           {/* SMALL CARDS */}
           <div className="flex-1 flex gap-4 justify-between flex-wrap">

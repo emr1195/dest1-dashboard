@@ -1,7 +1,6 @@
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { randomUUID } from "crypto";
-import { mkdir, writeFile } from "fs/promises";
+import { fileToDataUrl, sanitizeFileName } from "@/lib/uploadStorage";
 import { NextResponse } from "next/server";
 import path from "path";
 
@@ -42,13 +41,8 @@ export const POST = async (request: Request) => {
   }
 
   const extension = path.extname(file.name) || ".dat";
-  const safeName = file.name.replace(/[^\w.\- ]/g, "").trim() || `documento${extension}`;
-  const fileName = `documento-${assignmentId}-${currentUser.id}-${randomUUID()}${extension}`;
-  const uploadDir = path.join(process.cwd(), "public", "uploads", "assignment-files");
-  const filePath = `/uploads/assignment-files/${fileName}`;
-
-  await mkdir(uploadDir, { recursive: true });
-  await writeFile(path.join(uploadDir, fileName), Buffer.from(await file.arrayBuffer()));
+  const safeName = sanitizeFileName(file.name, `documento${extension}`);
+  const filePath = await fileToDataUrl(file);
 
   const assignmentFile = await prisma.assignmentFile.create({
     data: {
