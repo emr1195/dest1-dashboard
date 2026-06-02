@@ -614,6 +614,8 @@ export const deleteParent = async (
     await prisma.authUser.deleteMany({ where: { id } });
 
     revalidatePath("/list/parents");
+    revalidatePath("/admin");
+    revalidatePath("/");
     return { success: true, error: false };
   } catch (err) {
     console.log(err);

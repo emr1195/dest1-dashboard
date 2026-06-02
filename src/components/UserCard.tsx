@@ -25,7 +25,17 @@ const UserCard = async ({
     parent: "bg-[#BC0E0D] text-white",
   };
 
-  const data = await modelMap[type].count();
+  const parentVisibleFilter =
+    type === "parent"
+      ? {
+          NOT: [
+            { username: { startsWith: "guardian-" } },
+            { username: "guardian-placeholder" },
+          ],
+        }
+      : undefined;
+
+  const data = await modelMap[type].count({ where: parentVisibleFilter });
 
   return (
     <div className={`rounded-2xl ${colorMap[type]} p-4 flex-1 min-w-[130px]`}>
