@@ -30,19 +30,19 @@ export default function DashboardLayout({
         <Menu forceLabels />
       </MobileMenuDrawer>
 
-      <aside className="hidden shrink-0 overflow-y-auto overflow-x-hidden p-2 md:block md:w-[8%] md:p-4 lg:w-[16%] xl:w-[14%]">
+      <aside className="hidden shrink-0 overflow-y-auto overflow-x-hidden p-2 md:block md:w-[8%] md:p-4 lg:w-56 xl:w-60 2xl:w-[14%]">
         <Link
           href="/auth/redirect"
-          className="flex min-w-0 items-center justify-center gap-2 lg:justify-start"
+          className="flex min-w-0 items-center justify-center gap-2 lg:flex-col lg:items-start 2xl:flex-row 2xl:items-center 2xl:justify-start"
         >
           <Image
             src="/logo-catedral-de-vida.png"
             alt="logo"
             width={82}
             height={82}
-            className="h-12 w-12 shrink-0 object-contain lg:h-20 lg:w-20"
+            className="h-12 w-12 shrink-0 object-contain lg:h-16 lg:w-16 xl:h-20 xl:w-20"
           />
-          <span className="hidden min-w-0 text-wrap font-bold leading-tight lg:block">
+          <span className="hidden min-w-0 max-w-full break-words text-sm font-bold leading-tight lg:block xl:text-base">
             Exploradores del Rey Destacamento #1
           </span>
         </Link>

@@ -58,10 +58,10 @@ const ActivityPreview = ({
           onClick={() => setOpen(false)}
         >
           <div
-            className="flex max-h-[94vh] w-full max-w-6xl flex-col overflow-hidden rounded-md bg-white shadow-2xl"
+            className="flex max-h-[88dvh] w-full max-w-5xl flex-col overflow-y-auto rounded-md bg-white shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex justify-end p-2 pb-0 sm:p-3 sm:pb-0">
+            <div className="sticky top-0 z-10 flex justify-end bg-white p-2 pb-0 sm:p-3 sm:pb-0">
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -71,7 +71,7 @@ const ActivityPreview = ({
                 x
               </button>
             </div>
-            <div className="relative mx-3 mt-2 min-h-[260px] flex-1 bg-gray-50 sm:mx-4 sm:min-h-[560px] lg:min-h-[680px]">
+            <div className="relative mx-3 mt-2 h-[46dvh] min-h-[240px] max-h-[560px] shrink-0 bg-gray-50 sm:mx-4 md:h-[52dvh] lg:h-[58dvh]">
               {activity.image ? (
                 <Image
                   src={activity.image}

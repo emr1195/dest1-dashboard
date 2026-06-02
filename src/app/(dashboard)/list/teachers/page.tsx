@@ -165,11 +165,13 @@ const role = currentUser?.role;
 
         />
 
-        <div className="flex flex-col">
+        <div className="flex min-w-0 flex-col">
           <Link href={`/list/teachers/${item.id}`} className="font-semibold hover:text-lamaSky hover:underline">
             {item.name}
           </Link>
-          <p className="text-xs text-gray-500">{item?.email}</p>
+          <p className="max-w-[150px] truncate text-xs text-gray-500 xl:max-w-[220px]">
+            {item?.email}
+          </p>
         </div>
       </td>
 
@@ -202,9 +204,9 @@ const role = currentUser?.role;
         )}
       </td>
 
-      <td className="hidden md:table-cell">{item.phone}</td>
+      <td className="hidden lg:table-cell">{item.phone}</td>
 
-      <td className="hidden md:table-cell">{item.address}</td>
+      <td className="hidden lg:table-cell">{item.address}</td>
 
       <td>
 

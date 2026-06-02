@@ -177,11 +177,13 @@ const role = currentUser?.role;
 
         />
 
-        <div className="flex flex-col">
+        <div className="flex min-w-0 flex-col">
           <Link href={`/list/students/${item.id}`} className="font-semibold hover:text-lamaSky hover:underline">
             {item.name}
           </Link>
-          <p className="text-xs text-gray-500">{item.class.name}</p>
+          <p className="max-w-[150px] truncate text-xs text-gray-500 xl:max-w-[220px]">
+            {item.class.name}
+          </p>
         </div>
       </td>
       <td className="hidden md:table-cell">
@@ -212,7 +214,7 @@ const role = currentUser?.role;
           <span className="text-gray-500">{group.name}</span>
         )}
       </td>
-      <td className="hidden md:table-cell">{item.phone}</td>
+      <td className="hidden lg:table-cell">{item.phone}</td>
       <td className="hidden lg:table-cell">
         {item.displayedGuardianName ||
           (item.parent.username === "guardian-placeholder" ||
@@ -220,7 +222,7 @@ const role = currentUser?.role;
             ? "No indicado"
             : `${item.parent.name} ${item.parent.surname}`)}
       </td>
-      <td className="hidden md:table-cell">{item.address}</td>
+      <td className="hidden lg:table-cell">{item.address}</td>
       <td>
 
         <div className="flex items-center gap-2">
