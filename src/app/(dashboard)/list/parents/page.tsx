@@ -156,7 +156,12 @@ const renderRow = (item: ParentList) => (
 
 
 
-  const query: Prisma.ParentWhereInput = {};
+  const query: Prisma.ParentWhereInput = {
+    NOT: [
+      { username: { startsWith: "guardian-" } },
+      { username: "guardian-placeholder" },
+    ],
+  };
 
 
 

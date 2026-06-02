@@ -255,14 +255,22 @@ const AuthBox = () => {
   const inputClass = "p-3 rounded-md ring-1 ring-gray-300 outline-none focus:ring-lamaSky text-base";
 
   return (
-    <div className="flex max-h-[92vh] min-h-[80vh] w-full max-w-[780px] flex-col justify-center gap-6 overflow-y-auto rounded-md bg-white p-6 shadow-2xl sm:p-10 md:w-[80vw] md:px-16 md:py-14">
+    <div
+      className={`flex w-full max-w-[780px] flex-col rounded-md bg-white p-5 shadow-2xl sm:p-8 md:w-[80vw] md:px-16 ${
+        mode === "signin" ? "min-h-[80vh] justify-center gap-4 md:py-8" : "gap-5 md:py-10"
+      }`}
+    >
       <Image
         src="/logo-catedral-de-vida.png"
         alt="Logo Catedral de Vida"
         width={132}
         height={132}
         priority
-        className="mb-2 h-24 w-24 self-center object-contain sm:h-40 sm:w-40 md:h-80 md:w-80"
+        className={`mb-1 self-center object-contain ${
+          mode === "signin"
+            ? "h-28 w-28 sm:h-36 sm:w-36 md:h-56 md:w-56"
+            : "h-24 w-24 sm:h-32 sm:w-32 md:h-40 md:w-40"
+        }`}
       />
       <div>
         <h1 className="text-2xl md:text-3xl font-bold text-center">{mode === "signin" ? "Iniciar sesion" : "Crear cuenta"}</h1>

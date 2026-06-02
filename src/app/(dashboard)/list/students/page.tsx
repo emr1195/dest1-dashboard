@@ -28,6 +28,7 @@ type StudentList = Muchacho & {
   parent: Parent;
   displayedRank?: string | null;
   displayedGroupValue?: string | null;
+  displayedGuardianName?: string | null;
 };
 
 const groupIconMap: Record<string, { name: string; icon: string }> = {
@@ -213,12 +214,11 @@ const role = currentUser?.role;
       </td>
       <td className="hidden md:table-cell">{item.phone}</td>
       <td className="hidden lg:table-cell">
-        <Link
-          href={`/list/parents/${item.parent.id}`}
-          className="font-medium hover:text-lamaSky hover:underline"
-        >
-          {item.parent.name} {item.parent.surname}
-        </Link>
+        {item.displayedGuardianName ||
+          (item.parent.username === "guardian-placeholder" ||
+          item.parent.username.startsWith("guardian-")
+            ? "No indicado"
+            : `${item.parent.name} ${item.parent.surname}`)}
       </td>
       <td className="hidden md:table-cell">{item.address}</td>
       <td>
@@ -360,7 +360,7 @@ const role = currentUser?.role;
       role: "student",
       email: { in: data.flatMap((item) => (item.email ? [item.email] : [])) },
     },
-    select: { email: true, rank: true, leaderGroup: true },
+    select: { email: true, rank: true, leaderGroup: true, guardianName: true },
   });
   const rankByEmail = new Map(
     rankAccounts.map((account) => [account.email, account.rank])
@@ -368,11 +368,17 @@ const role = currentUser?.role;
   const groupByEmail = new Map(
     rankAccounts.map((account) => [account.email, account.leaderGroup])
   );
+  const guardianByEmail = new Map(
+    rankAccounts.map((account) => [account.email, account.guardianName])
+  );
   const displayedData: StudentList[] = data.map((item) => ({
     ...item,
     displayedRank:
       item.rank || (item.email ? rankByEmail.get(item.email) : null) || null,
     displayedGroupValue: item.email ? groupByEmail.get(item.email) || null : null,
+    displayedGuardianName: item.email
+      ? guardianByEmail.get(item.email) || null
+      : null,
   }));
 
   return (

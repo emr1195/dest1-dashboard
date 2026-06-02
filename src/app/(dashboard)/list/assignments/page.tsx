@@ -97,6 +97,124 @@ const getDeadlineStatus = (dueDate: Date) => {
   };
 };
 
+const groupValues = [
+  "navegantes",
+  "pioneros",
+  "seguidores",
+  "exploradores",
+] as const;
+
+type GroupValue = (typeof groupValues)[number];
+
+const isGroupValue = (value?: string | null): value is GroupValue =>
+  groupValues.includes(value as GroupValue);
+
+const getStudentAge = (birthday: Date) => {
+  const today = new Date();
+  let age = today.getFullYear() - birthday.getFullYear();
+  const birthdayThisYear = new Date(
+    today.getFullYear(),
+    birthday.getMonth(),
+    birthday.getDate()
+  );
+
+  if (today < birthdayThisYear) age -= 1;
+
+  return age;
+};
+
+const getGroupValueByBirthday = (birthday?: Date | null): GroupValue | null => {
+  if (!birthday) return null;
+
+  const age = getStudentAge(birthday);
+
+  if (age >= 5 && age <= 7) return "navegantes";
+  if (age >= 8 && age <= 10) return "pioneros";
+  if (age >= 11 && age <= 14) return "seguidores";
+  if (age >= 15 && age <= 17) return "exploradores";
+
+  return null;
+};
+
+const getStudentGroupValues = async (
+  profiles: Pick<Muchacho, "id" | "email" | "birthday">[]
+) => {
+  if (!profiles.length) return [];
+
+  const authAccounts = await prisma.authUser.findMany({
+    where: {
+      role: "student",
+      OR: [
+        { id: { in: profiles.map((profile) => profile.id) } },
+        {
+          email: {
+            in: profiles.flatMap((profile) =>
+              profile.email ? [profile.email.toLowerCase()] : []
+            ),
+          },
+        },
+      ],
+    },
+    select: { id: true, email: true, leaderGroup: true, birthday: true },
+  });
+
+  const accountById = new Map(authAccounts.map((account) => [account.id, account]));
+  const accountByEmail = new Map(
+    authAccounts.flatMap((account) =>
+      account.email ? [[account.email.toLowerCase(), account] as const] : []
+    )
+  );
+
+  return Array.from(
+    new Set(
+      profiles
+        .map((profile) => {
+          const account =
+            accountById.get(profile.id) ||
+            (profile.email ? accountByEmail.get(profile.email.toLowerCase()) : null);
+          const savedGroup = account?.leaderGroup;
+
+          if (isGroupValue(savedGroup)) return savedGroup;
+
+          return getGroupValueByBirthday(account?.birthday || profile.birthday);
+        })
+        .filter((group): group is GroupValue => Boolean(group))
+    )
+  );
+};
+
+const getLeaderIdsForGroups = async (groups: GroupValue[]) => {
+  if (!groups.length) return [];
+
+  const leaderAccounts = await prisma.authUser.findMany({
+    where: {
+      role: "teacher",
+      leaderGroup: { in: groups },
+    },
+    select: { id: true, email: true },
+  });
+
+  if (!leaderAccounts.length) return [];
+
+  const leaders = await prisma.lider.findMany({
+    where: {
+      OR: [
+        { id: { in: leaderAccounts.map((account) => account.id) } },
+        {
+          email: {
+            in: leaderAccounts.flatMap((account) =>
+              account.email ? [account.email.toLowerCase()] : []
+            ),
+          },
+        },
+      ],
+    },
+    select: { id: true },
+  });
+
+  return leaders.map((leader) => leader.id);
+};
+
 const assignmentFileIcon = (fileName: string) => {
   const extension = fileName.split(".").pop()?.toLowerCase();
 
@@ -163,6 +281,37 @@ const AssignmentListPage = async ({
     role === "parent" && currentUserId
       ? await getAccessibleStudentProfileIdsForParent(currentUserId)
       : [];
+  const currentStudentProfile =
+    role === "student" && currentUserId
+      ? await prisma.muchacho.findFirst({
+          where: {
+            OR: [
+              { id: currentUserId },
+              ...(currentUser?.email ? [{ email: currentUser.email }] : []),
+            ],
+          },
+          select: { id: true, email: true, birthday: true },
+        })
+      : null;
+  const parentStudentProfiles =
+    role === "parent" && parentStudentIds.length
+      ? await prisma.muchacho.findMany({
+          where: { id: { in: parentStudentIds } },
+          select: { id: true, email: true, birthday: true },
+        })
+      : [];
+  const visibleStudentGroups =
+    role === "student"
+      ? await getStudentGroupValues(
+          currentStudentProfile ? [currentStudentProfile] : []
+        )
+      : role === "parent"
+        ? await getStudentGroupValues(parentStudentProfiles)
+        : [];
+  const visibleLeaderIds =
+    role === "student" || role === "parent"
+      ? await getLeaderIdsForGroups(visibleStudentGroups)
+      : [];
 
   const { page, ...queryParams } = searchParams;
   const p = page ? parseInt(page) : 1;
@@ -204,15 +353,21 @@ const AssignmentListPage = async ({
       query.lesson.teacherId = currentUserId!;
       break;
     case "student":
+      query.lesson.teacherId = {
+        in: visibleLeaderIds.length ? visibleLeaderIds : ["__no_teacher__"],
+      };
       query.lesson.class = {
         students: {
           some: {
-            id: currentUserId!,
+            id: currentStudentProfile?.id || "__no_student__",
           },
         },
       };
       break;
     case "parent":
+      query.lesson.teacherId = {
+        in: visibleLeaderIds.length ? visibleLeaderIds : ["__no_teacher__"],
+      };
       query.lesson.class = {
         students: {
           some: {

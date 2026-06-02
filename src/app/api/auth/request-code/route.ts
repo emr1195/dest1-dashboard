@@ -2,6 +2,7 @@ import { generateAccessCode, isAppRole, isValidLeaderGroup, isValidRankForRole, 
 import { sendAccessCodeRequestEmail } from "@/lib/mailer";
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 
 const parseBirthDate = (value: unknown) => {
   const raw = String(value || "").trim();
@@ -35,6 +36,7 @@ const getAgeFromBirthday = (birthday: Date) => {
 
 export async function POST(req: Request) {
   const { email, name, birthDate, phone, address, guardianName, childrenNames, rank, leaderGroup, gender, role } = await req.json();
+  const appUrl = process.env.NEXTAUTH_URL?.trim() || new URL(req.url).origin;
   const normalizedEmail = String(email || "").toLowerCase().trim();
   const displayName = String(name || "").trim();
   const birthday = parseBirthDate(birthDate);
@@ -81,6 +83,7 @@ export async function POST(req: Request) {
   }
 
   const code = generateAccessCode(role);
+  const decisionToken = randomUUID();
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
   await prisma.accessCode.deleteMany({
@@ -96,9 +99,15 @@ export async function POST(req: Request) {
       email: normalizedEmail,
       role,
       code,
+      status: "pending",
+      decisionToken,
       expiresAt,
     },
   });
+
+  const decisionBase = `${appUrl.replace(/\/$/, "")}/api/auth/access-code/decision`;
+  const approveUrl = `${decisionBase}?token=${decisionToken}&action=approve`;
+  const rejectUrl = `${decisionBase}?token=${decisionToken}&action=reject`;
 
   try {
     const result = await sendAccessCodeRequestEmail({
@@ -118,13 +127,15 @@ export async function POST(req: Request) {
           : undefined,
       roleLabel: roleLabels[role],
       code,
+      approveUrl,
+      rejectUrl,
     });
 
     return NextResponse.json({
       ok: true,
       message: result.sent
-        ? "Solicitud enviada. Espera el codigo por correo."
-        : "Codigo generado, pero falta configurar SMTP para enviarlo por correo.",
+        ? "Solicitud enviada. Espera la aprobacion del administrador."
+        : "Solicitud registrada, pero falta configurar SMTP para enviarla al administrador.",
     });
   } catch (error) {
     console.error("No se pudo enviar el correo de codigo:", error);
@@ -132,7 +143,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         message:
-          "Codigo generado, pero no se pudo enviar el correo. Revisa la configuracion SMTP.",
+          "Solicitud registrada, pero no se pudo enviar el correo. Revisa la configuracion SMTP.",
       },
       { status: 500 }
     );

@@ -34,6 +34,18 @@ const ResultListPage = async ({
   const studentView = role === "student";
   const parentView = role === "parent";
   const teacherView = role === "teacher";
+  const currentStudentProfile =
+    studentView && currentUserId
+      ? await prisma.muchacho.findFirst({
+          where: {
+            OR: [
+              { id: currentUserId },
+              ...(currentUser?.email ? [{ email: currentUser.email }] : []),
+            ],
+          },
+          select: { id: true },
+        })
+      : null;
   const parentStudentIds =
     role === "parent" && currentUserId
       ? await getAccessibleStudentProfileIdsForParent(currentUserId)
@@ -115,7 +127,7 @@ const ResultListPage = async ({
       ];
       break;
     case "student":
-      query.studentId = currentUserId!;
+      query.studentId = currentStudentProfile?.id || "__no_student__";
       query.assignmentId = { not: null };
       query.examId = null;
       break;

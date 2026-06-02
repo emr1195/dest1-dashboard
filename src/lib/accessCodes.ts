@@ -20,6 +20,7 @@ export const verifyAccessCode = async ({
       email: normalizedEmail,
       role,
       code: normalizedCode,
+      status: "approved",
       used: false,
       expiresAt: { gt: new Date() },
     },

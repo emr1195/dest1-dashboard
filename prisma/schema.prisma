@@ -8,14 +8,17 @@ datasource db {
 }
 
 model AccessCode {
-  id        String    @id @default(uuid())
-  email     String
-  role      String
-  code      String    @unique
-  used      Boolean   @default(false)
-  createdAt DateTime  @default(now())
-  expiresAt DateTime
-  usedAt    DateTime?
+  id            String    @id @default(uuid())
+  email         String
+  role          String
+  code          String    @unique
+  status        String    @default("pending")
+  decisionToken String?   @unique
+  used          Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  expiresAt     DateTime
+  decidedAt     DateTime?
+  usedAt        DateTime?
 }
 
 model AuthUser {

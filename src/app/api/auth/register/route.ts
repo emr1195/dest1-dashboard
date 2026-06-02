@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 
 const DEFAULT_ADDRESS = "Destacamento";
 const DEFAULT_BLOOD_TYPE = "O+";
+const STUDENT_GUARDIAN_PLACEHOLDER_ID = "guardian-placeholder";
 
 const splitName = (value: string, fallback: string) => {
   const source = value.trim() || fallback.split("@")[0] || "Usuario";
@@ -106,9 +107,8 @@ const ensureGradeAndClass = async (tx: Prisma.TransactionClient) => {
   return { grade, classItem };
 };
 
-const ensureGuardianProfile = async (
+const ensureStudentParentLink = async (
   tx: Prisma.TransactionClient,
-  authUserId: string,
   guardian: string
 ) => {
   const guardianParts = splitName(guardian, "Acudiente");
@@ -121,15 +121,17 @@ const ensureGuardianProfile = async (
 
   if (existingParent) return existingParent;
 
-  return tx.parent.create({
-    data: {
-      id: `guardian-${authUserId}`,
-      username: `guardian-${authUserId}`,
-      name: guardianParts.name,
-      surname: guardianParts.surname,
-      phone: `guardian-${authUserId}`,
+  return tx.parent.upsert({
+    where: { id: STUDENT_GUARDIAN_PLACEHOLDER_ID },
+    create: {
+      id: STUDENT_GUARDIAN_PLACEHOLDER_ID,
+      username: STUDENT_GUARDIAN_PLACEHOLDER_ID,
+      name: "Acudiente",
+      surname: "Sin perfil",
+      phone: STUDENT_GUARDIAN_PLACEHOLDER_ID,
       address: DEFAULT_ADDRESS,
     },
+    update: {},
   });
 };
 
@@ -206,7 +208,7 @@ const syncRoleProfile = async ({
 
   if (role === "student") {
     const { grade, classItem } = await ensureGradeAndClass(tx);
-    const parent = await ensureGuardianProfile(tx, authUserId, guardian);
+    const parent = await ensureStudentParentLink(tx, guardian);
 
     await tx.muchacho.upsert({
       where: { id: authUserId },
@@ -316,7 +318,7 @@ export async function POST(req: Request) {
 
   const accessCode = await verifyAccessCode({ email: normalizedEmail, role, code: normalizedCode });
   if (!accessCode) {
-    return NextResponse.json({ message: "Codigo invalido, vencido o no asignado a este correo." }, { status: 403 });
+    return NextResponse.json({ message: "Codigo invalido, vencido o pendiente de aprobacion." }, { status: 403 });
   }
 
   const existingUser = await prisma.authUser.findUnique({ where: { email: normalizedEmail } });
