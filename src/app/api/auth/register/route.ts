@@ -273,7 +273,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "Selecciona un rango valido para este tipo de cuenta." }, { status: 400 });
   }
 
-  if (role === "teacher" && selectedRank === "Lider de Grupo" && !isValidLeaderGroup(selectedLeaderGroup)) {
+  if (role === "teacher" && !isValidLeaderGroup(selectedLeaderGroup)) {
     return NextResponse.json({ message: "Selecciona un grupo valido para el lider." }, { status: 400 });
   }
 
@@ -313,7 +313,7 @@ export async function POST(req: Request) {
             guardianName: role === "student" ? guardian : null,
             childrenNames: role === "parent" ? children : null,
             rank: role === "teacher" || role === "student" ? selectedRank : null,
-            leaderGroup: role === "teacher" && selectedRank === "Lider de Grupo" ? selectedLeaderGroup : null,
+            leaderGroup: role === "teacher" ? selectedLeaderGroup : null,
             sex: selectedGender as UserSex,
             passwordHash: samePassword ? existingUser.passwordHash : hashPassword(plainPassword),
             provider: "credentials",
@@ -347,7 +347,7 @@ export async function POST(req: Request) {
           guardianName: role === "student" ? guardian : null,
           childrenNames: role === "parent" ? children : null,
           rank: role === "teacher" || role === "student" ? selectedRank : null,
-          leaderGroup: role === "teacher" && selectedRank === "Lider de Grupo" ? selectedLeaderGroup : null,
+          leaderGroup: role === "teacher" ? selectedLeaderGroup : null,
           sex: selectedGender as UserSex,
           passwordHash: hashPassword(plainPassword),
           provider: "credentials",

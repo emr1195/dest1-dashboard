@@ -47,6 +47,7 @@ export const getRankOption = (role: "teacher" | "student", rank?: string | null)
   rankOptionsByRole[role]?.find((option) => option.label === rank) || null;
 
 export const leaderGroupOptions: LeaderGroupOption[] = [
+  { label: "Sin grupo", value: "sin-grupo", image: "/singleBranch.png" },
   { label: "Navegantes", value: "navegantes", image: "/navegantes-card.png" },
   { label: "Pioneros", value: "pioneros", image: "/pioneros-card.png" },
   { label: "Seguidores", value: "seguidores", image: "/seguidores-card.png" },

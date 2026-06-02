@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ message: "Selecciona un rango valido para este tipo de cuenta." }, { status: 400 });
   }
 
-  if (role === "teacher" && selectedRank === "Lider de Grupo" && !isValidLeaderGroup(selectedLeaderGroup)) {
+  if (role === "teacher" && !isValidLeaderGroup(selectedLeaderGroup)) {
     return NextResponse.json({ message: "Selecciona un grupo valido para el lider." }, { status: 400 });
   }
 
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
       childrenNames: role === "parent" ? children : undefined,
       requesterRank: role === "teacher" || role === "student" ? selectedRank : undefined,
       requesterLeaderGroup:
-        role === "teacher" && selectedRank === "Lider de Grupo"
+        role === "teacher"
           ? leaderGroupOptions.find((group) => group.value === selectedLeaderGroup)?.label
           : undefined,
       roleLabel: roleLabels[role],

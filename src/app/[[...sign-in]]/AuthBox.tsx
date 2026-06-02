@@ -42,7 +42,7 @@ const AuthBox = () => {
   const availableRanks = rankOptionsByRole[role as "teacher" | "student"] || [];
   const selectedRank = availableRanks.find((item) => item.label === rank);
   const selectedLeaderGroup = leaderGroupOptions.find((item) => item.value === leaderGroup);
-  const needsLeaderGroup = role === "teacher" && rank === "Lider de Grupo";
+  const needsLeaderGroup = role === "teacher";
 
   const resetMessages = () => {
     setError("");
@@ -131,7 +131,7 @@ const AuthBox = () => {
         guardianName: role === "student" ? guardianName : "",
         childrenNames: role === "parent" ? childrenNames : "",
         rank: role === "teacher" || role === "student" ? rank : "",
-        leaderGroup: needsLeaderGroup ? leaderGroup : "",
+        leaderGroup: role === "teacher" ? leaderGroup : "",
         gender,
         role,
       }),
@@ -181,7 +181,7 @@ const AuthBox = () => {
         guardianName: role === "student" ? guardianName : "",
         childrenNames: role === "parent" ? childrenNames : "",
         rank: role === "teacher" || role === "student" ? rank : "",
-        leaderGroup: needsLeaderGroup ? leaderGroup : "",
+        leaderGroup: role === "teacher" ? leaderGroup : "",
         gender,
         role,
         code,
@@ -318,7 +318,6 @@ const AuthBox = () => {
                         key={item.label}
                         onClick={() => {
                           setRank(item.label);
-                          if (item.label !== "Lider de Grupo") setLeaderGroup("");
                           setRankMenuOpen(false);
                         }}
                         className={`flex min-h-14 items-center gap-3 rounded-md px-2 py-2 text-left text-sm transition ${

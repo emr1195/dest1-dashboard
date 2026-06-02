@@ -59,6 +59,7 @@ const getGroupByBirthday = (birthday: Date) => {
 };
 
 const getLeaderGroupOption = (group?: string | null) => {
+  if (group === "sin-grupo") return null;
   const option = leaderGroupOptions.find((item) => item.value === group);
   return option ? groupIconMap[option.value] || { name: option.label, icon: option.image } : null;
 };
@@ -378,20 +379,26 @@ const role = currentUser?.role;
     ...item,
     displayedRank:
       item.rank || (item.email ? rankByEmail.get(item.email) : null) || null,
-    displayedGroup:
-      getLeaderGroupOption(item.email ? groupByEmail.get(item.email) : null) ||
-      Array.from(
-        new Map(
-          [
-            ...item.classes.flatMap((classItem) => classItem.students),
-            ...item.lessons.flatMap((lesson) => lesson.class.students),
-          ]
-            .map((student) => getGroupByBirthday(student.birthday))
-            .filter((group): group is { name: string; icon: string } => Boolean(group))
-            .map((group) => [group.name, group])
-        ).values()
-      )[0] ||
-      null,
+    displayedGroup: (() => {
+      const savedGroup = item.email ? groupByEmail.get(item.email) : null;
+
+      if (savedGroup === "sin-grupo") return null;
+      if (savedGroup) return getLeaderGroupOption(savedGroup);
+
+      return (
+        Array.from(
+          new Map(
+            [
+              ...item.classes.flatMap((classItem) => classItem.students),
+              ...item.lessons.flatMap((lesson) => lesson.class.students),
+            ]
+              .map((student) => getGroupByBirthday(student.birthday))
+              .filter((group): group is { name: string; icon: string } => Boolean(group))
+              .map((group) => [group.name, group])
+          ).values()
+        )[0] || null
+      );
+    })(),
   }));
 
   return (
