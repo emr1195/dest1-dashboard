@@ -34,11 +34,23 @@ const getAgeFromBirthday = (birthday: Date) => {
   return age;
 };
 
+const normalizeAppUrl = (value?: string | null) => {
+  const raw = value?.trim();
+
+  if (!raw) return null;
+
+  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+
+  return withProtocol.replace(/\/$/, "");
+};
+
 const getRequestOrigin = (req: Request) => {
   const configuredUrl =
-    process.env.APP_URL?.trim() || process.env.NEXT_PUBLIC_APP_URL?.trim();
+    normalizeAppUrl(process.env.APP_URL) ||
+    normalizeAppUrl(process.env.NEXT_PUBLIC_APP_URL) ||
+    normalizeAppUrl(process.env.VERCEL_PROJECT_PRODUCTION_URL);
 
-  if (configuredUrl) return configuredUrl.replace(/\/$/, "");
+  if (configuredUrl) return configuredUrl;
 
   const forwardedHost = req.headers.get("x-forwarded-host");
   const host = forwardedHost || req.headers.get("host");
@@ -51,9 +63,9 @@ const getRequestOrigin = (req: Request) => {
     return `${proto}://${host}`.replace(/\/$/, "");
   }
 
-  return (process.env.NEXTAUTH_URL?.trim() || new URL(req.url).origin).replace(
-    /\/$/,
-    ""
+  return (
+    normalizeAppUrl(process.env.NEXTAUTH_URL) ||
+    new URL(req.url).origin.replace(/\/$/, "")
   );
 };
 

@@ -325,9 +325,56 @@ export async function POST(req: Request) {
 
   const existingProfileId = await getExistingProfileId(role, normalizedEmail);
   const existingProfileByAuthId = existingUser ? await getProfileIdByAuthId(role, existingUser.id) : null;
+  const existingUserRoleProfileByAuthId =
+    existingUser && isAppRole(existingUser.role)
+      ? await getProfileIdByAuthId(existingUser.role, existingUser.id)
+      : null;
+  const staleExistingUser = Boolean(existingUser && !existingUserRoleProfileByAuthId);
+
   try {
     await prisma.$transaction(async (tx) => {
       if (existingUser) {
+        if (staleExistingUser) {
+          await tx.authUser.delete({ where: { id: existingUser.id } });
+
+          const authUser = await tx.authUser.create({
+            data: {
+              ...(existingProfileId ? { id: existingProfileId } : {}),
+              email: normalizedEmail,
+              name: displayName || normalizedEmail,
+              age: ageNumber,
+              phone: phoneNumber,
+              birthday,
+              address: addressText,
+              guardianName: role === "student" ? guardian : null,
+              childrenNames: role === "parent" ? children : null,
+              rank: role === "teacher" || role === "student" ? selectedRank : null,
+              leaderGroup: role === "teacher" ? selectedLeaderGroup : null,
+              sex: selectedGender as UserSex,
+              passwordHash: hashPassword(plainPassword),
+              provider: "credentials",
+              role,
+            },
+          });
+
+          await syncRoleProfile({
+            tx,
+            authUserId: authUser.id,
+            role,
+            normalizedEmail,
+            displayName,
+            ageNumber,
+            phoneNumber,
+            guardian,
+            selectedRank,
+            selectedGender,
+            birthday,
+            addressText,
+          });
+
+          return;
+        }
+
         const samePassword = existingUser.passwordHash
           ? verifyPassword(plainPassword, existingUser.passwordHash)
           : false;
