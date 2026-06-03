@@ -303,6 +303,11 @@ export const deleteTeacher = async (
 ) => {
   const id = data.get("id") as string;
   try {
+    const leader = await prisma.lider.findUnique({
+      where: { id },
+      select: { email: true, phone: true, username: true },
+    });
+
     const lessons = await prisma.lesson.findMany({
       where: { teacherId: id },
       select: { id: true },
@@ -316,9 +321,15 @@ export const deleteTeacher = async (
     });
 
     await prisma.lider.delete({ where: { id } });
-    await prisma.authUser.deleteMany({ where: { id } });
+    await deleteAuthResidues({
+      ids: [id],
+      emails: [leader?.email, leader?.username],
+      phones: [leader?.phone],
+    });
 
     revalidatePath("/list/teachers");
+    revalidatePath("/admin");
+    revalidatePath("/");
     return { success: true, error: false };
   } catch (err) {
     console.log(err);
@@ -604,6 +615,11 @@ export const deleteParent = async (
   const id = data.get("id") as string;
 
   try {
+    const parent = await prisma.parent.findUnique({
+      where: { id },
+      select: { email: true, phone: true, username: true },
+    });
+
     const students = await prisma.muchacho.findMany({
       where: { parentId: id },
       select: { id: true },
@@ -611,7 +627,11 @@ export const deleteParent = async (
 
     await deleteStudentsById(students.map((student) => student.id));
     await prisma.parent.delete({ where: { id } });
-    await prisma.authUser.deleteMany({ where: { id } });
+    await deleteAuthResidues({
+      ids: [id],
+      emails: [parent?.email, parent?.username],
+      phones: [parent?.phone],
+    });
 
     revalidatePath("/list/parents");
     revalidatePath("/admin");
@@ -786,6 +806,11 @@ const deleteLessonsById = async (lessonIds: number[]) => {
 const deleteStudentsById = async (studentIds: string[]) => {
   if (!studentIds.length) return;
 
+  const students = await prisma.muchacho.findMany({
+    where: { id: { in: studentIds } },
+    select: { id: true, email: true, phone: true, username: true },
+  });
+
   await prisma.attendance.deleteMany({
     where: { studentId: { in: studentIds } },
   });
@@ -798,9 +823,51 @@ const deleteStudentsById = async (studentIds: string[]) => {
   await prisma.muchacho.deleteMany({
     where: { id: { in: studentIds } },
   });
-  await prisma.authUser.deleteMany({
-    where: { id: { in: studentIds } },
+
+  await deleteAuthResidues({
+    ids: studentIds,
+    emails: students.flatMap((student) => [student.email, student.username]),
+    phones: students.map((student) => student.phone),
   });
+};
+
+const deleteAuthResidues = async ({
+  ids = [],
+  emails = [],
+  phones = [],
+}: {
+  ids?: (string | null | undefined)[];
+  emails?: (string | null | undefined)[];
+  phones?: (string | null | undefined)[];
+}) => {
+  const cleanIds = Array.from(new Set(ids.filter(Boolean) as string[]));
+  const cleanEmails = Array.from(
+    new Set(
+      emails
+        .filter(Boolean)
+        .map((email) => String(email).toLowerCase().trim())
+        .filter(Boolean)
+    )
+  );
+  const cleanPhones = Array.from(
+    new Set(phones.filter(Boolean).map((phone) => String(phone).trim()).filter(Boolean))
+  );
+
+  const authConditions = [
+    ...(cleanIds.length ? [{ id: { in: cleanIds } }] : []),
+    ...(cleanEmails.length ? [{ email: { in: cleanEmails } }] : []),
+    ...(cleanPhones.length ? [{ phone: { in: cleanPhones } }] : []),
+  ];
+
+  if (authConditions.length) {
+    await prisma.authUser.deleteMany({ where: { OR: authConditions } });
+  }
+
+  if (cleanEmails.length) {
+    await prisma.accessCode.deleteMany({
+      where: { email: { in: cleanEmails } },
+    });
+  }
 };
 
 

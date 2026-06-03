@@ -49,19 +49,38 @@ const getAgeFromBirthday = (birthday: Date) => {
   return age;
 };
 
-const getExistingProfileId = async (role: AppRole, email: string) => {
+const getExistingProfileId = async (
+  role: AppRole,
+  email: string,
+  phone?: string
+) => {
+  const contactFilters = [
+    { email },
+    { username: email },
+    ...(phone ? [{ phone }] : []),
+  ];
+
   if (role === "student") {
-    const profile = await prisma.muchacho.findUnique({ where: { email }, select: { id: true } });
+    const profile = await prisma.muchacho.findFirst({
+      where: { OR: contactFilters },
+      select: { id: true },
+    });
     return profile?.id;
   }
 
   if (role === "teacher") {
-    const profile = await prisma.lider.findUnique({ where: { email }, select: { id: true } });
+    const profile = await prisma.lider.findFirst({
+      where: { OR: contactFilters },
+      select: { id: true },
+    });
     return profile?.id;
   }
 
   if (role === "parent") {
-    const profile = await prisma.parent.findUnique({ where: { email }, select: { id: true } });
+    const profile = await prisma.parent.findFirst({
+      where: { OR: contactFilters },
+      select: { id: true },
+    });
     return profile?.id;
   }
 
@@ -323,7 +342,7 @@ export async function POST(req: Request) {
 
   const existingUser = await prisma.authUser.findUnique({ where: { email: normalizedEmail } });
 
-  const existingProfileId = await getExistingProfileId(role, normalizedEmail);
+  const existingProfileId = await getExistingProfileId(role, normalizedEmail, phoneNumber);
   const existingProfileByAuthId = existingUser ? await getProfileIdByAuthId(role, existingUser.id) : null;
   const existingUserRoleProfileByAuthId =
     existingUser && isAppRole(existingUser.role)
