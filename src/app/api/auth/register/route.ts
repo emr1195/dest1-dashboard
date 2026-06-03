@@ -485,8 +485,19 @@ export async function POST(req: Request) {
     }
 
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      const target = Array.isArray(error.meta?.target)
+        ? error.meta.target.join(", ")
+        : String(error.meta?.target || "");
+      const conflictLabel = target.includes("phone")
+        ? "telefono"
+        : target.includes("email")
+          ? "correo"
+          : target.includes("username")
+            ? "usuario"
+            : "correo, usuario o telefono";
+
       return NextResponse.json(
-        { message: "Ya existe una cuenta o perfil con ese correo, usuario o telefono." },
+        { message: `Ya existe una cuenta o perfil con ese ${conflictLabel}.` },
         { status: 409 }
       );
     }
