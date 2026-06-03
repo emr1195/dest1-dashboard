@@ -324,7 +324,6 @@ export const deleteTeacher = async (
     await deleteAuthResidues({
       ids: [id],
       emails: [leader?.email, leader?.username],
-      phones: [leader?.phone],
     });
 
     revalidatePath("/list/teachers");
@@ -630,7 +629,6 @@ export const deleteParent = async (
     await deleteAuthResidues({
       ids: [id],
       emails: [parent?.email, parent?.username],
-      phones: [parent?.phone],
     });
 
     revalidatePath("/list/parents");
@@ -827,18 +825,15 @@ const deleteStudentsById = async (studentIds: string[]) => {
   await deleteAuthResidues({
     ids: studentIds,
     emails: students.flatMap((student) => [student.email, student.username]),
-    phones: students.map((student) => student.phone),
   });
 };
 
 const deleteAuthResidues = async ({
   ids = [],
   emails = [],
-  phones = [],
 }: {
   ids?: (string | null | undefined)[];
   emails?: (string | null | undefined)[];
-  phones?: (string | null | undefined)[];
 }) => {
   const cleanIds = Array.from(new Set(ids.filter(Boolean) as string[]));
   const cleanEmails = Array.from(
@@ -849,14 +844,9 @@ const deleteAuthResidues = async ({
         .filter(Boolean)
     )
   );
-  const cleanPhones = Array.from(
-    new Set(phones.filter(Boolean).map((phone) => String(phone).trim()).filter(Boolean))
-  );
-
   const authConditions = [
     ...(cleanIds.length ? [{ id: { in: cleanIds } }] : []),
     ...(cleanEmails.length ? [{ email: { in: cleanEmails } }] : []),
-    ...(cleanPhones.length ? [{ phone: { in: cleanPhones } }] : []),
   ];
 
   if (authConditions.length) {

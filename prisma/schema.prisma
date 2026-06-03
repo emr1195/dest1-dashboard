@@ -52,7 +52,7 @@ model Parent {
   name      String
   surname   String
   email     String?  @unique
-  phone     String   @unique
+  phone     String
   address   String
   createdAt DateTime @default(now())
   students  Muchacho[]
@@ -255,7 +255,7 @@ model Muchacho {
   name       String
   surname    String
   email      String?      @unique
-  phone      String?      @unique
+  phone      String?
   address    String
   img        String?
   rank       String?
@@ -282,7 +282,7 @@ model Lider {
   name      String
   surname   String
   email     String?   @unique
-  phone     String?   @unique
+  phone     String?
   address   String
   img       String?
   rank      String?

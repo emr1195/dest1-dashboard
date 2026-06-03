@@ -49,15 +49,10 @@ const getAgeFromBirthday = (birthday: Date) => {
   return age;
 };
 
-const getExistingProfileId = async (
-  role: AppRole,
-  email: string,
-  phone?: string
-) => {
+const getExistingProfileId = async (role: AppRole, email: string) => {
   const contactFilters = [
     { email },
     { username: email },
-    ...(phone ? [{ phone }] : []),
   ];
 
   if (role === "student") {
@@ -342,7 +337,7 @@ export async function POST(req: Request) {
 
   const existingUser = await prisma.authUser.findUnique({ where: { email: normalizedEmail } });
 
-  const existingProfileId = await getExistingProfileId(role, normalizedEmail, phoneNumber);
+  const existingProfileId = await getExistingProfileId(role, normalizedEmail);
   const existingProfileByAuthId = existingUser ? await getProfileIdByAuthId(role, existingUser.id) : null;
   const existingUserRoleProfileByAuthId =
     existingUser && isAppRole(existingUser.role)
@@ -488,13 +483,11 @@ export async function POST(req: Request) {
       const target = Array.isArray(error.meta?.target)
         ? error.meta.target.join(", ")
         : String(error.meta?.target || "");
-      const conflictLabel = target.includes("phone")
-        ? "telefono"
-        : target.includes("email")
+      const conflictLabel = target.includes("email")
           ? "correo"
           : target.includes("username")
             ? "usuario"
-            : "correo, usuario o telefono";
+            : "correo o usuario";
 
       return NextResponse.json(
         { message: `Ya existe una cuenta o perfil con ese ${conflictLabel}.` },
