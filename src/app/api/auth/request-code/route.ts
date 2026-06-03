@@ -34,9 +34,32 @@ const getAgeFromBirthday = (birthday: Date) => {
   return age;
 };
 
+const getRequestOrigin = (req: Request) => {
+  const configuredUrl =
+    process.env.APP_URL?.trim() || process.env.NEXT_PUBLIC_APP_URL?.trim();
+
+  if (configuredUrl) return configuredUrl.replace(/\/$/, "");
+
+  const forwardedHost = req.headers.get("x-forwarded-host");
+  const host = forwardedHost || req.headers.get("host");
+
+  if (host) {
+    const forwardedProto = req.headers.get("x-forwarded-proto");
+    const proto =
+      forwardedProto || (host.includes("localhost") ? "http" : "https");
+
+    return `${proto}://${host}`.replace(/\/$/, "");
+  }
+
+  return (process.env.NEXTAUTH_URL?.trim() || new URL(req.url).origin).replace(
+    /\/$/,
+    ""
+  );
+};
+
 export async function POST(req: Request) {
   const { email, name, birthDate, phone, address, guardianName, childrenNames, rank, leaderGroup, gender, role } = await req.json();
-  const appUrl = process.env.NEXTAUTH_URL?.trim() || new URL(req.url).origin;
+  const appUrl = getRequestOrigin(req);
   const normalizedEmail = String(email || "").toLowerCase().trim();
   const displayName = String(name || "").trim();
   const birthday = parseBirthDate(birthDate);
