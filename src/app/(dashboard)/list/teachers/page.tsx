@@ -63,6 +63,16 @@ const getLeaderGroupOption = (group?: string | null) => {
   return option ? groupIconMap[option.value] || { name: option.label, icon: option.image } : null;
 };
 
+const teacherRankOrder: Record<string, number> = {
+  "Coordinador de Destacamento": 0,
+  "Coordinador Asistente de Destacamento": 1,
+  "Lider de Grupo": 2,
+  "Lider Asistente de Grupo": 3,
+};
+
+const getTeacherRankWeight = (rank?: string | null) =>
+  rank ? teacherRankOrder[rank] ?? 99 : 99;
+
 
 const TeacherListPage = async ({
 
@@ -344,10 +354,6 @@ const role = currentUser?.role;
 
       },
 
-      take: ITEM_PER_PAGE,
-
-      skip: ITEM_PER_PAGE * (p - 1),
-
     }),
 
     prisma.lider.count({ where: query }),
@@ -367,31 +373,46 @@ const role = currentUser?.role;
   const groupByEmail = new Map(
     rankAccounts.map((account) => [account.email, account.leaderGroup])
   );
-  const displayedData: TeacherList[] = data.map((item) => ({
-    ...item,
-    displayedRank:
-      item.rank || (item.email ? rankByEmail.get(item.email) : null) || null,
-    displayedGroup: (() => {
-      const savedGroup = item.email ? groupByEmail.get(item.email) : null;
+  const displayedData: TeacherList[] = data
+    .map((item) => ({
+      ...item,
+      displayedRank:
+        item.rank || (item.email ? rankByEmail.get(item.email) : null) || null,
+      displayedGroup: (() => {
+        const savedGroup = item.email ? groupByEmail.get(item.email) : null;
 
-      if (savedGroup === "sin-grupo") return null;
-      if (savedGroup) return getLeaderGroupOption(savedGroup);
+        if (savedGroup === "sin-grupo") return null;
+        if (savedGroup) return getLeaderGroupOption(savedGroup);
 
-      return (
-        Array.from(
-          new Map(
-            [
-              ...item.classes.flatMap((classItem) => classItem.students),
-              ...item.lessons.flatMap((lesson) => lesson.class.students),
-            ]
-              .map((student) => getGroupByBirthday(student.birthday))
-              .filter((group): group is { name: string; icon: string } => Boolean(group))
-              .map((group) => [group.name, group])
-          ).values()
-        )[0] || null
-      );
-    })(),
-  }));
+        return (
+          Array.from(
+            new Map(
+              [
+                ...item.classes.flatMap((classItem) => classItem.students),
+                ...item.lessons.flatMap((lesson) => lesson.class.students),
+              ]
+                .map((student) => getGroupByBirthday(student.birthday))
+                .filter((group): group is { name: string; icon: string } => Boolean(group))
+                .map((group) => [group.name, group])
+            ).values()
+          )[0] || null
+        );
+      })(),
+    }))
+    .sort((a, b) => {
+      const rankDiff =
+        getTeacherRankWeight(a.displayedRank) -
+        getTeacherRankWeight(b.displayedRank);
+
+      if (rankDiff !== 0) return rankDiff;
+
+      return `${a.name} ${a.surname}`.localeCompare(`${b.name} ${b.surname}`, "es");
+    });
+
+  const paginatedData = displayedData.slice(
+    ITEM_PER_PAGE * (p - 1),
+    ITEM_PER_PAGE * p
+  );
 
   return (
 
@@ -435,7 +456,7 @@ const role = currentUser?.role;
 
       {/* LIST */}
 
-      <Table columns={columns} renderRow={renderRow} data={displayedData} />
+      <Table columns={columns} renderRow={renderRow} data={paginatedData} />
       {/* PAGINATION */}
 
       <Pagination page={p} count={count} />
