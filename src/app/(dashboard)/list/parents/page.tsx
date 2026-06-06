@@ -262,7 +262,8 @@ const renderRow = (item: ParentList) => (
 
             </button> */}
 
-            {role === "admin" && <FormContainer table="parent" type="create" />}
+            {/* Boton de agregar padre oculto temporalmente. */}
+            {/* {role === "admin" && <FormContainer table="parent" type="create" />} */}
 
           </div>
 

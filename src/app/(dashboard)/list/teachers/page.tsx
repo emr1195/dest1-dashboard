@@ -442,11 +442,8 @@ const role = currentUser?.role;
 
             </button> */}
 
-            {role === "admin" && (
-
-              <FormContainer table="teacher" type="create" />
-
-            )}
+            {/* Boton de agregar lider oculto temporalmente. */}
+            {/* {role === "admin" && <FormContainer table="teacher" type="create" />} */}
 
           </div>
 

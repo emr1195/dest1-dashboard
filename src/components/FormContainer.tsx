@@ -31,9 +31,6 @@ const FormContainer = async ({
   triggerLabel,
   triggerClassName,
 }: FormContainerProps) => {
-  // Botones de agregar ocultos temporalmente en todo el proyecto.
-  if (type === "create") return null;
-
   let relatedData = {};
   const currentUser = await getCurrentUser();
   const role = currentUser?.role;
