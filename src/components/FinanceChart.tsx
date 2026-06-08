@@ -40,7 +40,15 @@ const FinanceChart = ({ data }: { data: FinanceChartEntry[] }) => {
             tickLine={false}
             tickMargin={10}
           />
-          <YAxis axisLine={false} tick={{ fill: "#6B7280" }} tickLine={false}  tickMargin={20}/>
+          <YAxis
+            axisLine={false}
+            domain={[0, 50]}
+            tick={{ fill: "#6B7280" }}
+            tickFormatter={(value) => `$${value}`}
+            ticks={[0, 10, 20, 30, 40, 50]}
+            tickLine={false}
+            tickMargin={20}
+          />
           <Tooltip />
           <Legend
             align="center"
