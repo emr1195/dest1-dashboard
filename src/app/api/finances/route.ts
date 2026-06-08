@@ -13,6 +13,37 @@ const saveReceipt = async (file: File) => {
   return fileToDataUrl(file, { allowedMimePrefixes: ["image/"] });
 };
 
+const validateFinancePayload = (formData: FormData) => {
+  const type = String(formData.get("type") || "").trim();
+  const category = String(formData.get("category") || "").trim();
+  const title = String(formData.get("title") || "").trim();
+  const description = String(formData.get("description") || "").trim();
+  const amount = Number(formData.get("amount"));
+  const dateValue = String(formData.get("date") || "").trim();
+
+  if (!["INGRESO", "GASTO"].includes(type)) {
+    throw new Error("Selecciona si el movimiento es un ingreso o un gasto.");
+  }
+
+  const validCategories =
+    type === "INGRESO" ? ["Ofrendas", "Ventas", "Donaciones"] : ["Pago", "Reembolso", "Deuda"];
+
+  if (!validCategories.includes(category)) {
+    throw new Error("Selecciona una categoria valida para el movimiento.");
+  }
+
+  if (!title || !description || !dateValue || !Number.isFinite(amount) || amount <= 0) {
+    throw new Error("Completa el nombre, descripcion, categoria, monto y fecha del movimiento.");
+  }
+
+  const date = new Date(`${dateValue}T12:00:00`);
+  if (Number.isNaN(date.getTime())) {
+    throw new Error("Selecciona una fecha valida.");
+  }
+
+  return { type, category, title, description, amount, date };
+};
+
 export const POST = async (req: Request) => {
   const currentUser = await getCurrentUser();
 
@@ -25,33 +56,8 @@ export const POST = async (req: Request) => {
 
   try {
     const formData = await req.formData();
-    const type = String(formData.get("type") || "").trim();
-    const category = String(formData.get("category") || "").trim();
-    const title = String(formData.get("title") || "").trim();
-    const description = String(formData.get("description") || "").trim();
-    const amount = Number(formData.get("amount"));
-    const dateValue = String(formData.get("date") || "").trim();
+    const { type, category, title, description, amount, date } = validateFinancePayload(formData);
     const receipt = formData.get("receipt");
-
-    if (!["INGRESO", "GASTO"].includes(type)) {
-      throw new Error("Selecciona si el movimiento es un ingreso o un gasto.");
-    }
-
-    const validCategories =
-      type === "INGRESO" ? ["Ofrendas", "Ventas", "Donaciones"] : ["Pago", "Reembolso", "Deuda"];
-
-    if (!validCategories.includes(category)) {
-      throw new Error("Selecciona una categoria valida para el movimiento.");
-    }
-
-    if (!title || !description || !dateValue || !Number.isFinite(amount) || amount <= 0) {
-      throw new Error("Completa el nombre, descripcion, categoria, monto y fecha del movimiento.");
-    }
-
-    const date = new Date(`${dateValue}T12:00:00`);
-    if (Number.isNaN(date.getTime())) {
-      throw new Error("Selecciona una fecha valida.");
-    }
 
     const receiptImage =
       receipt instanceof File && receipt.size > 0 ? await saveReceipt(receipt) : null;
@@ -76,6 +82,54 @@ export const POST = async (req: Request) => {
   } catch (error) {
     return NextResponse.json(
       { message: error instanceof Error ? error.message : "No se pudo guardar el movimiento." },
+      { status: 400 }
+    );
+  }
+};
+
+export const PATCH = async (req: Request) => {
+  const currentUser = await getCurrentUser();
+
+  if (currentUser?.role !== "admin") {
+    return NextResponse.json(
+      { message: "Solo el administrador puede editar movimientos financieros." },
+      { status: 403 }
+    );
+  }
+
+  try {
+    const formData = await req.formData();
+    const id = String(formData.get("id") || "").trim();
+    const { type, category, title, description, amount, date } = validateFinancePayload(formData);
+    const receipt = formData.get("receipt");
+
+    if (!id) {
+      throw new Error("No se encontro el movimiento financiero.");
+    }
+
+    const receiptImage =
+      receipt instanceof File && receipt.size > 0 ? await saveReceipt(receipt) : undefined;
+
+    const transaction = await prisma.financeTransaction.update({
+      where: { id },
+      data: {
+        type,
+        category,
+        title,
+        description,
+        amount,
+        date,
+        ...(receiptImage ? { receiptImage } : {}),
+      },
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/finances");
+
+    return NextResponse.json(transaction);
+  } catch (error) {
+    return NextResponse.json(
+      { message: error instanceof Error ? error.message : "No se pudo actualizar el movimiento." },
       { status: 400 }
     );
   }
