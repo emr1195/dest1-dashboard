@@ -179,10 +179,10 @@ const role = currentUser?.role;
 
         <div className="flex min-w-0 flex-col">
           <Link href={`/list/students/${item.id}`} className="font-semibold hover:text-lamaSky hover:underline">
-            {item.name}
+            {item.name} {item.surname}
           </Link>
           <p className="max-w-[150px] truncate text-xs text-gray-500 xl:max-w-[220px]">
-            {item.class.name}
+            {item.email || "Sin correo"}
           </p>
         </div>
       </td>
