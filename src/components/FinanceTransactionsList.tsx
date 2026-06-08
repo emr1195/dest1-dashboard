@@ -104,7 +104,7 @@ const FinanceTransactionsList = ({ transactions }: { transactions: FinanceTransa
         {transactions.map((transaction) => (
           <div
             key={transaction.id}
-            className="grid gap-3 py-4 md:grid-cols-[120px_1fr_150px_100px_60px] md:items-center"
+            className="grid gap-3 py-4 md:grid-cols-[120px_1fr_130px_100px_120px] md:items-center"
           >
             <span
               className={`w-fit rounded-md px-3 py-1 text-xs font-semibold ${
@@ -138,10 +138,11 @@ const FinanceTransactionsList = ({ transactions }: { transactions: FinanceTransa
             <button
               type="button"
               onClick={() => openEditor(transaction)}
-              className="flex h-9 w-9 items-center justify-center rounded-full text-lamaSky transition hover:bg-gray-100"
+              className="flex w-fit items-center gap-2 rounded-md border border-lamaSky px-3 py-2 text-sm font-semibold text-lamaSky transition hover:bg-blue-50"
               title="Editar movimiento"
             >
               <Image src="/update.png" alt="Editar" width={20} height={20} />
+              Editar
             </button>
           </div>
         ))}
