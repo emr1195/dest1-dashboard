@@ -15,7 +15,7 @@ const AdminPage = async ({
   const { from, to } = currentFinanceYearRange();
   const financeTransactions = await prisma.financeTransaction.findMany({
     where: { date: { gte: from, lt: to } },
-    select: { type: true, amount: true, date: true },
+    select: { type: true, category: true, title: true, amount: true, date: true },
   });
   const financeData = getFinanceChartData(financeTransactions);
 

@@ -16,7 +16,7 @@ const FinancesPage = async () => {
     prisma.financeTransaction.findMany({ orderBy: [{ date: "desc" }, { createdAt: "desc" }] }),
     prisma.financeTransaction.findMany({
       where: { date: { gte: from, lt: to } },
-      select: { type: true, amount: true, date: true },
+      select: { type: true, category: true, title: true, amount: true, date: true },
     }),
   ]);
   const chartData = getFinanceChartData(chartTransactions);
@@ -54,6 +54,7 @@ const FinancesPage = async () => {
                 </span>
                 <div>
                   <p className="font-semibold text-gray-700">{transaction.title}</p>
+                  <p className="mt-1 text-sm font-medium text-gray-600">{transaction.category}</p>
                   <p className="mt-1 text-sm text-gray-500">{transaction.description}</p>
                   <p className="mt-1 text-xs text-gray-500">
                     {new Intl.DateTimeFormat("es-PA").format(transaction.date)}

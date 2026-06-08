@@ -26,6 +26,7 @@ export const POST = async (req: Request) => {
   try {
     const formData = await req.formData();
     const type = String(formData.get("type") || "").trim();
+    const category = String(formData.get("category") || "").trim();
     const title = String(formData.get("title") || "").trim();
     const description = String(formData.get("description") || "").trim();
     const amount = Number(formData.get("amount"));
@@ -36,8 +37,15 @@ export const POST = async (req: Request) => {
       throw new Error("Selecciona si el movimiento es un ingreso o un gasto.");
     }
 
+    const validCategories =
+      type === "INGRESO" ? ["Ofrendas", "Ventas", "Donaciones"] : ["Pago", "Reembolso", "Deuda"];
+
+    if (!validCategories.includes(category)) {
+      throw new Error("Selecciona una categoria valida para el movimiento.");
+    }
+
     if (!title || !description || !dateValue || !Number.isFinite(amount) || amount <= 0) {
-      throw new Error("Completa el nombre, descripcion, monto y fecha del movimiento.");
+      throw new Error("Completa el nombre, descripcion, categoria, monto y fecha del movimiento.");
     }
 
     const date = new Date(`${dateValue}T12:00:00`);
@@ -51,6 +59,7 @@ export const POST = async (req: Request) => {
     const transaction = await prisma.financeTransaction.create({
       data: {
         type,
+        category,
         title,
         description,
         amount,

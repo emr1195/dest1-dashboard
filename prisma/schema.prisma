@@ -208,6 +208,7 @@ model Announcement {
 model FinanceTransaction {
   id           String   @id @default(uuid())
   type         String
+  category     String   @default("Sin categoria")
   title        String
   description  String
   amount       Float

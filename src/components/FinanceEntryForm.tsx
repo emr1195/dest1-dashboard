@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 const FinanceEntryForm = () => {
   const router = useRouter();
   const [type, setType] = useState("INGRESO");
+  const [category, setCategory] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -25,6 +26,7 @@ const FinanceEntryForm = () => {
 
     const formData = new FormData();
     formData.append("type", type);
+    formData.append("category", category);
     formData.append("title", title);
     formData.append("description", description);
     formData.append("amount", amount);
@@ -41,6 +43,7 @@ const FinanceEntryForm = () => {
       }
 
       setType("INGRESO");
+      setCategory("");
       setTitle("");
       setDescription("");
       setAmount("");
@@ -56,16 +59,38 @@ const FinanceEntryForm = () => {
   };
 
   return (
-    <form onSubmit={submit} className="grid gap-4 lg:grid-cols-2">
+    <form onSubmit={submit} className="grid gap-4 lg:grid-cols-3">
       <label className="flex flex-col gap-2 text-sm text-gray-600">
         Tipo de movimiento
         <select
           value={type}
-          onChange={(event) => setType(event.target.value)}
+          onChange={(event) => {
+            setType(event.target.value);
+            setCategory("");
+          }}
           className="rounded-md border border-gray-300 p-3 outline-none focus:border-lamaSky"
         >
           <option value="INGRESO">Ingreso</option>
           <option value="GASTO">Gasto</option>
+        </select>
+      </label>
+      <label className="flex flex-col gap-2 text-sm text-gray-600">
+        Categoria
+        <select
+          value={category}
+          onChange={(event) => setCategory(event.target.value)}
+          required
+          className="rounded-md border border-gray-300 p-3 outline-none focus:border-lamaSky"
+        >
+          <option value="">Seleccionar categoria</option>
+          {(type === "INGRESO"
+            ? ["Ofrendas", "Ventas", "Donaciones"]
+            : ["Pago", "Reembolso", "Deuda"]
+          ).map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
         </select>
       </label>
       <label className="flex flex-col gap-2 text-sm text-gray-600">
@@ -81,7 +106,7 @@ const FinanceEntryForm = () => {
           className="rounded-md border border-gray-300 p-3 outline-none focus:border-lamaSky"
         />
       </label>
-      <label className="flex flex-col gap-2 text-sm text-gray-600 lg:col-span-2">
+      <label className="flex flex-col gap-2 text-sm text-gray-600 lg:col-span-3">
         Nombre del ingreso o gasto
         <input
           value={title}
@@ -91,7 +116,7 @@ const FinanceEntryForm = () => {
           className="rounded-md border border-gray-300 p-3 outline-none focus:border-lamaSky"
         />
       </label>
-      <label className="flex flex-col gap-2 text-sm text-gray-600 lg:col-span-2">
+      <label className="flex flex-col gap-2 text-sm text-gray-600 lg:col-span-3">
         Descripcion
         <textarea
           value={description}
@@ -101,7 +126,7 @@ const FinanceEntryForm = () => {
           className="min-h-28 resize-y rounded-md border border-gray-300 p-3 outline-none focus:border-lamaSky"
         />
       </label>
-      <label className="flex flex-col gap-2 text-sm text-gray-600">
+      <label className="flex flex-col gap-2 text-sm text-gray-600 lg:col-span-2">
         Fecha
         <input
           type="date"
@@ -121,8 +146,8 @@ const FinanceEntryForm = () => {
         />
         {receipt && <span className="text-xs text-gray-500">{receipt.name}</span>}
       </label>
-      {message && <p className="text-sm text-lamaSky lg:col-span-2">{message}</p>}
-      <div className="lg:col-span-2">
+      {message && <p className="text-sm text-lamaSky lg:col-span-3">{message}</p>}
+      <div className="lg:col-span-3">
         <button
           type="submit"
           disabled={saving}
