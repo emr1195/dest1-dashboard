@@ -390,7 +390,7 @@ const MeetingPlanner = ({
                     {isOpen && (
                       <div className="ml-3 rounded-b-md border border-t-0 bg-white p-4 sm:ml-6">
                         <label className="flex flex-col gap-2 text-sm font-medium text-gray-600">
-                          Informacion del punto
+                          Desarrollo
                           <textarea
                             value={itemNotes.detail}
                             onChange={(event) =>
