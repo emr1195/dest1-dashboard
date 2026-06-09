@@ -18,7 +18,12 @@ type PlannerItem = {
   starred?: boolean;
 };
 
-type PlannerNotes = Record<string, Record<number, { leader: string; detail: string }>>;
+type LeaderOption = {
+  id: string;
+  name: string;
+};
+
+type PlannerNotes = Record<string, Record<number, { leaderId: string; detail: string }>>;
 
 const groups: PlannerGroup[] = [
   {
@@ -65,11 +70,13 @@ const plannerItems: PlannerItem[] = [
 ];
 
 const storageKey = "er-meeting-planner";
+const dateStorageKey = "er-meeting-planner-date";
 
-const MeetingPlanner = () => {
+const MeetingPlanner = ({ leaders }: { leaders: LeaderOption[] }) => {
   const [activeGroupId, setActiveGroupId] = useState(groups[0].id);
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
   const [notes, setNotes] = useState<PlannerNotes>({});
+  const [meetingDate, setMeetingDate] = useState("");
 
   const activeGroup = useMemo(
     () => groups.find((group) => group.id === activeGroupId) || groups[0],
@@ -80,6 +87,7 @@ const MeetingPlanner = () => {
     try {
       const saved = window.localStorage.getItem(storageKey);
       if (saved) setNotes(JSON.parse(saved));
+      setMeetingDate(window.localStorage.getItem(dateStorageKey) || "");
     } catch {
       setNotes({});
     }
@@ -89,9 +97,13 @@ const MeetingPlanner = () => {
     window.localStorage.setItem(storageKey, JSON.stringify(notes));
   }, [notes]);
 
+  useEffect(() => {
+    window.localStorage.setItem(dateStorageKey, meetingDate);
+  }, [meetingDate]);
+
   const updateItem = (
     itemNumber: number,
-    field: "leader" | "detail",
+    field: "leaderId" | "detail",
     value: string
   ) => {
     setNotes((current) => ({
@@ -99,7 +111,7 @@ const MeetingPlanner = () => {
       [activeGroup.id]: {
         ...(current[activeGroup.id] || {}),
         [itemNumber]: {
-          leader: current[activeGroup.id]?.[itemNumber]?.leader || "",
+          leaderId: current[activeGroup.id]?.[itemNumber]?.leaderId || "",
           detail: current[activeGroup.id]?.[itemNumber]?.detail || "",
           [field]: value,
         },
@@ -122,10 +134,15 @@ const MeetingPlanner = () => {
             <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl">
               Planificador de Reunion
             </h1>
-            <div className="mt-2 flex items-center gap-2 text-base text-gray-600">
+            <label className="mt-2 flex max-w-sm items-center gap-2 text-base text-gray-600">
               <span>Semana:</span>
-              <span className="h-px min-w-32 flex-1 bg-gray-500 sm:min-w-56" />
-            </div>
+              <input
+                type="date"
+                value={meetingDate}
+                onChange={(event) => setMeetingDate(event.target.value)}
+                className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-lamaSky"
+              />
+            </label>
           </div>
         </div>
 
@@ -164,22 +181,16 @@ const MeetingPlanner = () => {
         {plannerItems.map((item) => {
           const itemKey = `${activeGroup.id}-${item.number}`;
           const isOpen = Boolean(openItems[itemKey]);
-          const itemNotes = notes[activeGroup.id]?.[item.number] || {
-            leader: "",
-            detail: "",
+          const savedItemNotes = notes[activeGroup.id]?.[item.number];
+          const itemNotes = {
+            leaderId: savedItemNotes?.leaderId || "",
+            detail: savedItemNotes?.detail || "",
           };
 
           return (
             <div key={item.number} className="relative pl-7 sm:pl-10">
-              <button
-                type="button"
-                onClick={() =>
-                  setOpenItems((current) => ({
-                    ...current,
-                    [itemKey]: !current[itemKey],
-                  }))
-                }
-                className="group flex min-h-14 w-full items-center rounded-r-md border text-left shadow-sm transition hover:shadow-md"
+              <div
+                className="grid min-h-14 w-full grid-cols-1 items-center gap-3 rounded-r-md border px-3 py-3 pl-10 text-left shadow-sm transition hover:shadow-md sm:grid-cols-[minmax(0,1fr)_260px_115px_42px] sm:pl-12"
                 style={{
                   borderColor: activeGroup.color,
                   backgroundColor: activeGroup.light,
@@ -192,63 +203,65 @@ const MeetingPlanner = () => {
                   {item.number}
                 </span>
 
-                <span className="flex min-w-0 flex-1 flex-col gap-1 py-3 pl-10 pr-3 sm:flex-row sm:items-center sm:gap-4 sm:pl-12">
-                  <span className="min-w-0 flex-1 break-words text-lg font-bold uppercase tracking-normal text-gray-500 sm:text-xl">
-                    {item.title}
-                    {item.starred ? " ★" : ""}
-                  </span>
-
-                  <span className="flex shrink-0 items-center gap-2 text-sm font-semibold text-gray-500 sm:text-base">
-                    Lider:
-                    <span className="inline-block h-px w-20 bg-gray-500 sm:w-32" />
-                  </span>
-
-                  {item.time && (
-                    <span className="shrink-0 text-sm font-bold text-gray-500 sm:w-28 sm:text-right sm:text-lg">
-                      {item.time}
-                    </span>
-                  )}
-
-                  <span
-                    className={`ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white transition ${
-                      isOpen ? "rotate-180" : ""
-                    }`}
-                    style={{ backgroundColor: activeGroup.color }}
-                  >
-                    v
-                  </span>
+                <span className="min-w-0 break-words text-lg font-bold uppercase tracking-normal text-gray-500 sm:text-xl">
+                  {item.title}
+                  {item.starred ? " *" : ""}
                 </span>
-              </button>
+
+                <label className="flex min-w-0 items-center gap-2 text-sm font-semibold text-gray-500 sm:text-base">
+                  Lider:
+                  <select
+                    value={itemNotes.leaderId}
+                    onChange={(event) =>
+                      updateItem(item.number, "leaderId", event.target.value)
+                    }
+                    className="min-w-0 flex-1 rounded-md border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-600 outline-none focus:border-lamaSky"
+                  >
+                    <option value="">Seleccionar</option>
+                    {leaders.map((leader) => (
+                      <option key={leader.id} value={leader.id}>
+                        {leader.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <span className="min-h-6 text-sm font-bold text-gray-500 sm:text-right sm:text-lg">
+                  {item.time || ""}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setOpenItems((current) => ({
+                      ...current,
+                      [itemKey]: !current[itemKey],
+                    }))
+                  }
+                  aria-label={isOpen ? "Cerrar detalle" : "Abrir detalle"}
+                  className={`ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white transition ${
+                    isOpen ? "rotate-180" : ""
+                  }`}
+                  style={{ backgroundColor: activeGroup.color }}
+                >
+                  v
+                </button>
+              </div>
 
               {isOpen && (
                 <div className="ml-3 rounded-b-md border border-t-0 bg-white p-4 sm:ml-6">
-                  <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
-                    <label className="flex flex-col gap-2 text-sm font-medium text-gray-600">
-                      Lider responsable
-                      <input
-                        type="text"
-                        value={itemNotes.leader}
-                        onChange={(event) =>
-                          updateItem(item.number, "leader", event.target.value)
-                        }
-                        placeholder="Nombre del lider"
-                        className="rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-lamaSky"
-                      />
-                    </label>
-
-                    <label className="flex flex-col gap-2 text-sm font-medium text-gray-600">
-                      Informacion del punto
-                      <textarea
-                        value={itemNotes.detail}
-                        onChange={(event) =>
-                          updateItem(item.number, "detail", event.target.value)
-                        }
-                        placeholder="Coloca aqui los detalles, instrucciones o materiales necesarios."
-                        rows={4}
-                        className="resize-y rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-lamaSky"
-                      />
-                    </label>
-                  </div>
+                  <label className="flex flex-col gap-2 text-sm font-medium text-gray-600">
+                    Informacion del punto
+                    <textarea
+                      value={itemNotes.detail}
+                      onChange={(event) =>
+                        updateItem(item.number, "detail", event.target.value)
+                      }
+                      placeholder="Coloca aqui los detalles, instrucciones o materiales necesarios."
+                      rows={4}
+                      className="resize-y rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-lamaSky"
+                    />
+                  </label>
                 </div>
               )}
             </div>
