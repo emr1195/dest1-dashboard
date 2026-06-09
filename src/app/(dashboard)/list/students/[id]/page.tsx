@@ -78,7 +78,7 @@ const SingleStudentPage = async ({
   return (
     <div className="flex-1 p-4 flex flex-col gap-4 xl:flex-row">
       <div className="w-full xl:w-2/3">
-        <div className="flex flex-col lg:flex-row gap-4">
+        <div className="flex flex-col gap-4 2xl:flex-row">
           <ProfileInfoCard
             id={student.id}
             type="student"
