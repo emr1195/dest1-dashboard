@@ -20,6 +20,7 @@ const menuItems = [
       { icon: "/attendance.png", label: "Asistencia", href: "/list/attendance", visible: ["admin", "teacher", "parent"] },
       { icon: "/calendar.png", label: "Actividades", href: "/list/events", visible: ["admin", "teacher", "student", "parent"] },
       { icon: "/finance.png", label: "Finanzas", href: "/finances", visible: ["admin"] },
+      { icon: "/lesson.png", label: "Planificador", href: "/planificador", visible: ["admin", "teacher"] },
       { icon: "/result.png", label: "Certificados", href: "/certificates", visible: ["admin", "teacher", "student"] },
       { icon: "/exam.png", label: "Evaluacion", href: "/evaluation", visible: ["admin", "teacher", "student"], gated: "evaluation" },
       // { icon: "/message.png", label: "Messages", href: "/list/messages", visible: ["admin", "teacher", "student", "parent"] },
