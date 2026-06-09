@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type PlannerGroup = {
@@ -41,6 +41,37 @@ export type SavedMeetingPlanner = {
 };
 
 type PlannerNotes = Record<string, Record<number, { leaderId: string; detail: string }>>;
+
+const AutoResizeTextarea = ({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+}) => {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    textarea.style.height = "auto";
+    textarea.style.height = `${Math.max(textarea.scrollHeight, 180)}px`;
+  }, [value]);
+
+  return (
+    <textarea
+      ref={textareaRef}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      placeholder={placeholder}
+      rows={1}
+      className="min-h-[180px] w-full resize-none overflow-hidden rounded-md border border-gray-300 p-5 text-base leading-7 outline-none focus:border-lamaSky"
+    />
+  );
+};
 
 const groups: PlannerGroup[] = [
   {
@@ -391,14 +422,10 @@ const MeetingPlanner = ({
                       <div className="ml-3 rounded-b-md border border-t-0 bg-white p-4 sm:ml-6">
                         <label className="flex flex-col gap-2 text-sm font-medium text-gray-600">
                           Desarrollo
-                          <textarea
+                          <AutoResizeTextarea
                             value={itemNotes.detail}
-                            onChange={(event) =>
-                              updateItem(item.number, "detail", event.target.value)
-                            }
+                            onChange={(value) => updateItem(item.number, "detail", value)}
                             placeholder="Coloca aqui los detalles, instrucciones o materiales necesarios."
-                            rows={4}
-                            className="resize-y rounded-md border border-gray-300 px-3 py-2 outline-none focus:border-lamaSky"
                           />
                         </label>
                       </div>
