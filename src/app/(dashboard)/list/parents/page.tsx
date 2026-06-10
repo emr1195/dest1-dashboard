@@ -5,6 +5,7 @@ import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 
 import TableSearch from "@/components/TableSearch";
+import UserNameEditor from "@/components/UserNameEditor";
 
 import prisma from "@/lib/prisma";
 import { getGuardianLinkedStudents } from "@/lib/guardianLinks";
@@ -111,7 +112,7 @@ const renderRow = (item: ParentList) => (
       />
       <div className="flex min-w-0 flex-col">
         <Link href={`/list/parents/${item.id}`} className="font-semibold hover:text-lamaSky hover:underline">
-          {item.name}
+          {item.name} {item.surname}
         </Link>
         <p className="max-w-[150px] truncate text-xs text-gray-500 xl:max-w-[220px]">
           {item?.email}
@@ -149,6 +150,15 @@ const renderRow = (item: ParentList) => (
             </svg>
           </button>
         </Link>
+
+        {role === "admin" && (
+          <UserNameEditor
+            id={item.id}
+            type="parent"
+            name={item.name}
+            surname={item.surname}
+          />
+        )}
 
         {role === "admin" && (
             <FormContainer table="parent" type="delete" id={item.id} />

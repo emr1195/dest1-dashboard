@@ -5,6 +5,7 @@ import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 
 import TableSearch from "@/components/TableSearch";
+import UserNameEditor from "@/components/UserNameEditor";
 
 
 
@@ -247,6 +248,15 @@ const role = currentUser?.role;
             </button>
 
           </Link>
+
+          {role === "admin" && (
+            <UserNameEditor
+              id={item.id}
+              type="student"
+              name={item.name}
+              surname={item.surname}
+            />
+          )}
 
           {role === "admin" && (
 
