@@ -13,6 +13,18 @@ import { redirect } from "next/navigation";
 
 type AttendanceView = "students" | "teachers";
 
+const groupMetaByValue = {
+  navegantes: { name: "Navegantes", icon: "/navegantes-card.png" },
+  pioneros: { name: "Pioneros", icon: "/pioneros-card.png" },
+  seguidores: { name: "Seguidores", icon: "/seguidores-card.png" },
+  exploradores: { name: "Exploradores", icon: "/exploradores-card.png" },
+} as const;
+
+type GroupValue = keyof typeof groupMetaByValue;
+
+const isGroupValue = (value?: string | null): value is GroupValue =>
+  Boolean(value && value in groupMetaByValue);
+
 const getAge = (birthday: Date) => {
   const today = new Date();
   let age = today.getFullYear() - birthday.getFullYear();
@@ -21,13 +33,31 @@ const getAge = (birthday: Date) => {
   return age;
 };
 
-const getGroup = (birthday: Date) => {
+const getGroupValueByBirthday = (birthday: Date): GroupValue | null => {
   const age = getAge(birthday);
-  if (age >= 5 && age <= 7) return { name: "Navegantes", icon: "/navegantes-card.png" };
-  if (age >= 8 && age <= 10) return { name: "Pioneros", icon: "/pioneros-card.png" };
-  if (age >= 11 && age <= 14) return { name: "Seguidores", icon: "/seguidores-card.png" };
-  if (age >= 15 && age <= 17) return { name: "Exploradores", icon: "/exploradores-card.png" };
+
+  if (age >= 5 && age <= 7) return "navegantes";
+  if (age >= 8 && age <= 10) return "pioneros";
+  if (age >= 11 && age <= 14) return "seguidores";
+  if (age >= 15 && age <= 17) return "exploradores";
+
+  return null;
+};
+
+const getGroup = (birthday: Date) => {
+  const groupValue = getGroupValueByBirthday(birthday);
+  if (groupValue) return groupMetaByValue[groupValue];
+
   return { name: "Sin grupo asignado", icon: "" };
+};
+
+const getResolvedStudentGroupValue = (
+  student: { birthday: Date },
+  account?: { leaderGroup: string | null; birthday?: Date | null } | null
+) => {
+  if (isGroupValue(account?.leaderGroup)) return account.leaderGroup;
+
+  return getGroupValueByBirthday(account?.birthday || student.birthday);
 };
 
 const formatDate = (date: Date) =>
@@ -196,21 +226,97 @@ const AttendanceListPage = async ({
   }
 
   if (role === "teacher") {
-    const teacher = await prisma.lider.findUnique({
-      where: { id: currentUser.id },
+    const teacherProfile = await prisma.lider.findFirst({
+      where: {
+        OR: [
+          { id: currentUser.id },
+          ...(currentUser.email ? [{ email: currentUser.email }] : []),
+        ],
+      },
+      select: { id: true, email: true },
+    });
+    const teacherAccount = await prisma.authUser.findFirst({
+      where: {
+        role: "teacher",
+        OR: [
+          { id: currentUser.id },
+          ...(teacherProfile ? [{ id: teacherProfile.id }] : []),
+          ...(currentUser.email ? [{ email: currentUser.email.toLowerCase() }] : []),
+          ...(teacherProfile?.email ? [{ email: teacherProfile.email.toLowerCase() }] : []),
+        ],
+      },
+      select: { leaderGroup: true },
+    });
+    const managedGroup = isGroupValue(teacherAccount?.leaderGroup)
+      ? teacherAccount.leaderGroup
+      : null;
+    const searchWhere: Prisma.MuchachoWhereInput = search
+      ? {
+          OR: [
+            { name: { contains: search, mode: "insensitive" } },
+            { surname: { contains: search, mode: "insensitive" } },
+            { email: { contains: search, mode: "insensitive" } },
+          ],
+        }
+      : {};
+
+    const candidates = managedGroup
+      ? await prisma.muchacho.findMany({
+          where: searchWhere,
+          include: { Attendance: { orderBy: { date: "desc" }, take: 10 } },
+          orderBy: [{ name: "asc" }, { surname: "asc" }],
+        })
+      : [];
+    const candidateAccounts = candidates.length
+      ? await prisma.authUser.findMany({
+          where: {
+            role: "student",
+            OR: [
+              { id: { in: candidates.map((student) => student.id) } },
+              {
+                email: {
+                  in: candidates.flatMap((student) =>
+                    student.email ? [student.email.toLowerCase()] : []
+                  ),
+                },
+              },
+            ],
+          },
+          select: { id: true, email: true, leaderGroup: true, birthday: true },
+        })
+      : [];
+    const accountById = new Map(candidateAccounts.map((account) => [account.id, account]));
+    const accountByEmail = new Map(
+      candidateAccounts.flatMap((account) =>
+        account.email ? [[account.email.toLowerCase(), account] as const] : []
+      )
+    );
+    const studentsById = new Map<string, (typeof candidates)[number]>();
+
+    if (managedGroup) {
+      candidates.forEach((student) => {
+        const account =
+          accountById.get(student.id) ||
+          (student.email ? accountByEmail.get(student.email.toLowerCase()) : null);
+        const studentGroup = getResolvedStudentGroupValue(student, account);
+
+        if (studentGroup === managedGroup) {
+          studentsById.set(student.id, student);
+        }
+      });
+    } else {
+      const teacher = await prisma.lider.findFirst({
+        where: {
+          OR: [
+            { id: currentUser.id },
+            ...(currentUser.email ? [{ email: currentUser.email }] : []),
+          ],
+        },
       include: {
         classes: {
           include: {
             students: {
-              where: search
-                ? {
-                    OR: [
-                      { name: { contains: search, mode: "insensitive" } },
-                      { surname: { contains: search, mode: "insensitive" } },
-                      { email: { contains: search, mode: "insensitive" } },
-                    ],
-                  }
-                : {},
+              where: searchWhere,
               include: { Attendance: { orderBy: { date: "desc" }, take: 10 } },
             },
           },
@@ -220,15 +326,7 @@ const AttendanceListPage = async ({
             class: {
               include: {
                 students: {
-                  where: search
-                    ? {
-                        OR: [
-                          { name: { contains: search, mode: "insensitive" } },
-                          { surname: { contains: search, mode: "insensitive" } },
-                          { email: { contains: search, mode: "insensitive" } },
-                        ],
-                      }
-                    : {},
+                  where: searchWhere,
                   include: { Attendance: { orderBy: { date: "desc" }, take: 10 } },
                 },
               },
@@ -238,18 +336,23 @@ const AttendanceListPage = async ({
       },
     });
 
-    const studentsById = new Map<string, NonNullable<typeof teacher>["classes"][number]["students"][number]>();
-    teacher?.classes.forEach((classItem) => {
-      classItem.students.forEach((student) => studentsById.set(student.id, student));
-    });
-    teacher?.lessons.forEach((lesson) => {
-      lesson.class.students.forEach((student) => studentsById.set(student.id, student));
-    });
+      teacher?.classes.forEach((classItem) => {
+        classItem.students.forEach((student) => studentsById.set(student.id, student));
+      });
+      teacher?.lessons.forEach((lesson) => {
+        lesson.class.students.forEach((student) => studentsById.set(student.id, student));
+      });
+    }
 
     const people: AttendancePerson[] = Array.from(studentsById.values())
       .sort((a, b) => `${a.name} ${a.surname}`.localeCompare(`${b.name} ${b.surname}`))
       .map((student) => {
-        const group = getGroup(student.birthday);
+        const account =
+          accountById.get(student.id) ||
+          (student.email ? accountByEmail.get(student.email.toLowerCase()) : null);
+        const studentGroup = getResolvedStudentGroupValue(student, account);
+        const group = studentGroup ? groupMetaByValue[studentGroup] : getGroup(student.birthday);
+
         return {
           id: student.id,
           name: `${student.name} ${student.surname}`,
