@@ -96,7 +96,12 @@ const AdminAttendanceManager = ({
         groupName: person.groupName,
       }))
     )
-    .sort((a, b) => b.dateValue.localeCompare(a.dateValue));
+    .sort((a, b) => {
+      const byDate = a.dateValue.localeCompare(b.dateValue);
+      if (byDate !== 0) return byDate;
+
+      return a.personName.localeCompare(b.personName);
+    });
 
   return (
     <div className="mt-6">
