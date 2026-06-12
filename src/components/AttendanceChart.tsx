@@ -23,7 +23,7 @@ const AttendanceChart = ({
         height={300}
         data={data}
         barSize={18}
-        barGap={12}
+        barGap={0}
         barCategoryGap="32%"
       >
         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#6B7280" />

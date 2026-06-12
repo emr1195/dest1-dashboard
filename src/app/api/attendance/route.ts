@@ -176,3 +176,33 @@ export const POST = async (req: Request) => {
 
   return NextResponse.json(record);
 };
+
+export const DELETE = async (req: Request) => {
+  const currentUser = await getCurrentUser();
+
+  if (currentUser?.role !== "admin") {
+    return NextResponse.json(
+      { message: "Solo el admin puede eliminar asistencias." },
+      { status: 403 }
+    );
+  }
+
+  const { id, userType } = await req.json();
+  const recordId = Number(id);
+
+  if (
+    !Number.isInteger(recordId) ||
+    recordId <= 0 ||
+    (userType !== "student" && userType !== "teacher")
+  ) {
+    return NextResponse.json({ message: "Datos invalidos." }, { status: 400 });
+  }
+
+  if (userType === "teacher") {
+    await prisma.liderAttendance.delete({ where: { id: recordId } });
+  } else {
+    await prisma.attendance.delete({ where: { id: recordId } });
+  }
+
+  return NextResponse.json({ success: true });
+};

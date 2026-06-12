@@ -131,7 +131,11 @@ const AttendanceListPage = async ({
         </div>
         <TableSearch />
       </div>
-      <AdminAttendanceManager view={activeView} people={people} />
+      <AdminAttendanceManager
+        view={activeView}
+        people={people}
+        canDelete={role === "admin"}
+      />
     </div>
   );
 

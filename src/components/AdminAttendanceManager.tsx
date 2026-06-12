@@ -33,9 +33,11 @@ const groupOrder = ["Navegantes", "Pioneros", "Seguidores", "Exploradores", "Sin
 const AdminAttendanceManager = ({
   view,
   people,
+  canDelete = false,
 }: {
   view: "students" | "teachers";
   people: AttendancePerson[];
+  canDelete?: boolean;
 }) => {
   const [date, setDate] = useState(todayValue());
   const [saving, setSaving] = useState<string | null>(null);
@@ -45,6 +47,39 @@ const AdminAttendanceManager = ({
   const register = async (person: AttendancePerson, present: boolean) => {
     const key = `${person.id}-${date}-${present}`;
     await saveAttendance(person.id, date, present, key);
+  };
+
+  const deleteAttendance = async (recordId: number) => {
+    if (!window.confirm("Seguro que quieres eliminar este registro de asistencia?")) {
+      return;
+    }
+
+    const key = `delete-${recordId}`;
+    setSaving(key);
+    setMessage("");
+
+    try {
+      const response = await fetch("/api/attendance", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: recordId,
+          userType: view === "teachers" ? "teacher" : "student",
+        }),
+      });
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        setMessage(result?.message || "No se pudo eliminar la asistencia.");
+        return;
+      }
+
+      router.refresh();
+    } catch {
+      setMessage("No se pudo conectar con el servidor.");
+    } finally {
+      setSaving(null);
+    }
   };
 
   const saveAttendance = async (
@@ -210,7 +245,7 @@ const AdminAttendanceManager = ({
                   <th className="p-4">Grupo</th>
                   <th className="p-4">Dia</th>
                   <th className="p-4">Estado</th>
-                  <th className="p-4">Editar</th>
+                  <th className="p-4">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -263,6 +298,33 @@ const AdminAttendanceManager = ({
                         >
                           No asistio
                         </button>
+                        {canDelete && (
+                          <button
+                            type="button"
+                            disabled={saving !== null}
+                            onClick={() => deleteAttendance(record.id)}
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+                            aria-label="Eliminar asistencia"
+                            title="Eliminar asistencia"
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="h-5 w-5"
+                              aria-hidden="true"
+                            >
+                              <path d="M3 6h18" />
+                              <path d="M8 6V4h8v2" />
+                              <path d="M19 6l-1 14H6L5 6" />
+                              <path d="M10 11v6" />
+                              <path d="M14 11v6" />
+                            </svg>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
