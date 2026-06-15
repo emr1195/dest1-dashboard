@@ -42,6 +42,9 @@ const toUploadedFiles = (files: AssignmentFile[]): UploadedAssignmentFile[] =>
     filePath: file.filePath,
   }));
 
+const isAwardImageFile = (file: AssignmentFile) =>
+  file.fileType === "award-image";
+
 const toSubmissionFiles = (
   submissions: AssignmentList["submissions"],
   dueDate: Date,
@@ -425,7 +428,10 @@ const AssignmentListPage = async ({
 
       <div className="flex flex-col gap-5">
         {data.map((assignment) => {
-          const taskFiles = toUploadedFiles(assignment.files);
+          const awardImage = assignment.files.find(isAwardImageFile);
+          const taskFiles = toUploadedFiles(
+            assignment.files.filter((file) => !isAwardImageFile(file))
+          );
           const responseFiles = toSubmissionFiles(
             assignment.submissions,
             assignment.dueDate,
@@ -451,6 +457,21 @@ const AssignmentListPage = async ({
                     <p className="mt-3 max-w-3xl text-sm text-gray-600">
                       {assignment.description}
                     </p>
+                  )}
+                  {awardImage && (
+                    <div className="mt-4 w-fit max-w-full rounded-md border border-gray-100 bg-gray-50 p-3">
+                      <p className="mb-2 text-xs font-semibold text-gray-500">
+                        Premio a ganar
+                      </p>
+                      <Image
+                        src={awardImage.filePath}
+                        alt={`Premio a ganar de ${title}`}
+                        width={220}
+                        height={160}
+                        unoptimized
+                        className="max-h-44 w-auto rounded-md object-contain"
+                      />
+                    </div>
                   )}
                   {role !== "student" && (
                     <p className="mt-1 text-xs text-gray-500">

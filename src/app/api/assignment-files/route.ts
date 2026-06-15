@@ -21,6 +21,8 @@ export const POST = async (request: Request) => {
   const formData = await request.formData();
   const assignmentId = Number(formData.get("assignmentId"));
   const file = formData.get("file");
+  const fileKind = String(formData.get("fileKind") || "");
+  const isAwardImage = fileKind === "award-image";
 
   if (!assignmentId || !(file instanceof File)) {
     return NextResponse.json({ message: "Datos invalidos." }, { status: 400 });
@@ -40,9 +42,30 @@ export const POST = async (request: Request) => {
     return NextResponse.json({ message: "Tarea no encontrada." }, { status: 404 });
   }
 
-  const extension = path.extname(file.name) || ".dat";
-  const safeName = sanitizeFileName(file.name, `documento${extension}`);
-  const filePath = await fileToDataUrl(file);
+  const extension = path.extname(file.name) || (isAwardImage ? ".png" : ".dat");
+  const safeName = sanitizeFileName(
+    file.name,
+    `${isAwardImage ? "premio" : "documento"}${extension}`
+  );
+
+  let filePath: string;
+
+  try {
+    filePath = await fileToDataUrl(
+      file,
+      isAwardImage
+        ? { allowedMimePrefixes: ["image/"], maxSize: 8 * 1024 * 1024 }
+        : {}
+    );
+  } catch (error) {
+    return NextResponse.json(
+      {
+        message:
+          error instanceof Error ? error.message : "No se pudo subir el archivo.",
+      },
+      { status: 400 }
+    );
+  }
 
   const assignmentFile = await prisma.assignmentFile.create({
     data: {
@@ -50,7 +73,7 @@ export const POST = async (request: Request) => {
       uploadedById: currentUser.id,
       fileName: safeName,
       filePath,
-      fileType: file.type || null,
+      fileType: isAwardImage ? "award-image" : file.type || null,
     },
   });
 

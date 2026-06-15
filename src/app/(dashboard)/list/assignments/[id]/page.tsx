@@ -54,9 +54,12 @@ const AssignmentDetailPage = async ({
 
   if (!assignment) notFound();
 
+  const documentFiles = assignment.files.filter(
+    (file) => file.fileType !== "award-image"
+  );
   const selectedFile =
-    assignment.files.find((file) => file.id === searchParams.file) ||
-    assignment.files[0];
+    documentFiles.find((file) => file.id === searchParams.file) ||
+    documentFiles[0];
 
   return (
     <div className="flex-1 p-4">

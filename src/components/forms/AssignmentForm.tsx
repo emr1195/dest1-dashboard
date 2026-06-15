@@ -46,6 +46,7 @@ const AssignmentForm = ({
   relatedData?: any;
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const awardImageInputRef = useRef<HTMLInputElement>(null);
   const {
     register,
     handleSubmit,
@@ -58,13 +59,17 @@ const AssignmentForm = ({
   const [error, setError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedAwardImage, setSelectedAwardImage] = useState<File | null>(null);
 
-  const uploadAssignmentFile = async (assignmentId: number) => {
-    if (!selectedFile) return true;
-
+  const uploadAssignmentFile = async (
+    assignmentId: number,
+    file: File,
+    fileKind?: "award-image"
+  ) => {
     const uploadData = new FormData();
     uploadData.append("assignmentId", String(assignmentId));
-    uploadData.append("file", selectedFile);
+    uploadData.append("file", file);
+    if (fileKind) uploadData.append("fileKind", fileKind);
 
     const response = await fetch("/api/assignment-files", {
       method: "POST",
@@ -83,9 +88,21 @@ const AssignmentForm = ({
 
     if (result.success) {
       const assignmentId = result.id || formData.id;
-      const fileSaved = assignmentId
-        ? await uploadAssignmentFile(assignmentId)
-        : !selectedFile;
+      const uploadResults = assignmentId
+        ? await Promise.all([
+            selectedFile
+              ? uploadAssignmentFile(assignmentId, selectedFile)
+              : Promise.resolve(true),
+            selectedAwardImage
+              ? uploadAssignmentFile(
+                  assignmentId,
+                  selectedAwardImage,
+                  "award-image"
+                )
+              : Promise.resolve(true),
+          ])
+        : [!selectedFile && !selectedAwardImage];
+      const fileSaved = uploadResults.every(Boolean);
 
       setSaving(false);
 
@@ -209,6 +226,53 @@ const AssignmentForm = ({
               {errors.points.message.toString()}
             </p>
           )}
+        </div>
+        <div className="flex w-full flex-col gap-2">
+          <label className="text-xs text-gray-500">Imagen del premio</label>
+          <input
+            ref={awardImageInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(event) =>
+              setSelectedAwardImage(event.target.files?.[0] || null)
+            }
+          />
+          <div className="flex flex-col gap-3 rounded-md border border-dashed border-lamaSky p-4 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-gray-700">
+                {selectedAwardImage
+                  ? selectedAwardImage.name
+                  : "Selecciona la imagen del premio a ganar"}
+              </p>
+              <p className="text-xs text-gray-500">
+                Esta imagen se mostrara como el premio asociado a la tarea.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              {selectedAwardImage && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedAwardImage(null);
+                    if (awardImageInputRef.current) {
+                      awardImageInputRef.current.value = "";
+                    }
+                  }}
+                  className="rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-600"
+                >
+                  Quitar
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => awardImageInputRef.current?.click()}
+                className="rounded-md bg-lamaSky px-4 py-2 text-sm font-semibold text-white"
+              >
+                Subir imagen
+              </button>
+            </div>
+          </div>
         </div>
         <div className="flex w-full flex-col gap-2">
           <label className="text-xs text-gray-500">Archivo de la tarea</label>

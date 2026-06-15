@@ -10,19 +10,39 @@ const AttendanceChartContainer = async () => {
     console.error("No se pudo sincronizar la asistencia para la grafica.", error);
   }
 
-  const today = new Date();
-  const dayOfWeek = today.getDay();
+  const [latestStudentAttendance, latestLeaderAttendance] = await Promise.all([
+    prisma.attendance.findFirst({
+      orderBy: { date: "desc" },
+      select: { date: true },
+    }),
+    prisma.liderAttendance.findFirst({
+      orderBy: { date: "desc" },
+      select: { date: true },
+    }),
+  ]);
+
+  const referenceDate = [
+    latestStudentAttendance?.date,
+    latestLeaderAttendance?.date,
+  ]
+    .filter((date): date is Date => Boolean(date))
+    .sort((a, b) => b.getTime() - a.getTime())[0] || new Date();
+  const dayOfWeek = referenceDate.getDay();
   const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
-  const lastMonday = new Date(today);
+  const lastMonday = new Date(referenceDate);
+  lastMonday.setDate(referenceDate.getDate() - daysSinceMonday);
+  lastMonday.setHours(0, 0, 0, 0);
 
-  lastMonday.setDate(today.getDate() - daysSinceMonday);
+  const nextMonday = new Date(lastMonday);
+  nextMonday.setDate(lastMonday.getDate() + 7);
 
   const [studentAttendance, leaderAttendance] = await Promise.all([
     prisma.attendance.findMany({
       where: {
         date: {
           gte: lastMonday,
+          lt: nextMonday,
         },
       },
       select: {
@@ -34,6 +54,7 @@ const AttendanceChartContainer = async () => {
       where: {
         date: {
           gte: lastMonday,
+          lt: nextMonday,
         },
       },
       select: {
