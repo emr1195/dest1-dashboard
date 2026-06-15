@@ -1,8 +1,15 @@
 import Image from "next/image";
 import AttendanceChart from "./AttendanceChart";
+import { syncFirebaseAttendance } from "@/lib/firebaseAttendanceSync";
 import prisma from "@/lib/prisma";
 
 const AttendanceChartContainer = async () => {
+  try {
+    await syncFirebaseAttendance();
+  } catch (error) {
+    console.error("No se pudo sincronizar la asistencia para la grafica.", error);
+  }
+
   const today = new Date();
   const dayOfWeek = today.getDay();
   const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;

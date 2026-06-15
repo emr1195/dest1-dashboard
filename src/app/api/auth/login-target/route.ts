@@ -1,5 +1,5 @@
+import { findAuthUserByIdentifier } from "@/lib/credentialAccount";
 import { verifyPassword } from "@/lib/password";
-import prisma from "@/lib/prisma";
 import { isAppRole, roleOptions } from "@/lib/roles";
 import { NextResponse } from "next/server";
 
@@ -14,20 +14,20 @@ const dashboardPaths = Object.fromEntries(
 
 export async function POST(req: Request) {
   const { email, password } = await req.json();
-  const normalizedEmail = String(email || "").toLowerCase().trim();
+  const identifier = String(email || "").toLowerCase().trim();
   const plainPassword = String(password || "");
 
-  if (!normalizedEmail || !plainPassword) {
-    return NextResponse.json({ message: "Correo y contrasena son requeridos." }, { status: 400 });
+  if (!identifier || !plainPassword) {
+    return NextResponse.json({ message: "Correo o usuario y contrasena son requeridos." }, { status: 400 });
   }
 
-  const authUser = await prisma.authUser.findUnique({ where: { email: normalizedEmail } });
+  const authUser = await findAuthUserByIdentifier(identifier);
 
   if (!authUser?.passwordHash || !verifyPassword(plainPassword, authUser.passwordHash)) {
-    return NextResponse.json({ message: "Correo o contrasena incorrectos." }, { status: 401 });
+    return NextResponse.json({ message: "Correo, usuario o contrasena incorrectos." }, { status: 401 });
   }
 
-  const role = adminEmails.includes(normalizedEmail) ? "admin" : authUser.role;
+  const role = adminEmails.includes(authUser.email.toLowerCase()) ? "admin" : authUser.role;
 
   if (!isAppRole(role)) {
     return NextResponse.json({ message: "La cuenta no tiene un rol valido." }, { status: 403 });

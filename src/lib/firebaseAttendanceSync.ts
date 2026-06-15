@@ -1,5 +1,6 @@
 import { Prisma, UserSex } from "@prisma/client";
 
+import { hashPassword } from "./password";
 import prisma from "./prisma";
 
 const FIREBASE_SOURCE = "dest1-firebase";
@@ -185,19 +186,77 @@ const ensureImportRelations = async (tx: Prisma.TransactionClient) => {
     create: {
       id: DEFAULT_PARENT_ID,
       username: DEFAULT_PARENT_ID,
-      name: "Acudiente",
-      surname: "Pendiente de asignar",
-      phone: "Sin telefono",
-      address: "Destacamento 1",
+      name: "",
+      surname: "",
+      phone: "",
+      address: "",
     },
-    update: {},
+    update: {
+      name: "",
+      surname: "",
+      phone: "",
+      address: "",
+    },
   });
 
   return { grade, classItem, parent };
 };
 
-const getImportedUsername = (firebaseId: string) =>
-  `firebase-${firebaseId.replace(/[^a-zA-Z0-9]/g, "").slice(0, 20)}`;
+const normalizeUsernamePart = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+
+const getUsernameBase = (member: FirebaseMember) => {
+  const firstInitial = normalizeUsernamePart(member.firstName).charAt(0);
+  const surname = normalizeUsernamePart(member.lastName);
+  const fallback = normalizeUsernamePart(member.firebaseId).slice(0, 18);
+
+  return `${firstInitial}${surname}` || fallback || "usuario";
+};
+
+const getUniqueImportedUsername = async (
+  tx: Prisma.TransactionClient,
+  member: FirebaseMember,
+  currentStudentId?: string
+) => {
+  const base = getUsernameBase(member).slice(0, 24);
+  let candidate = base;
+  let suffix = 2;
+
+  while (true) {
+    const [student, leader, parent, admin] = await Promise.all([
+      tx.muchacho.findFirst({
+        where: {
+          username: { equals: candidate, mode: "insensitive" },
+          ...(currentStudentId ? { id: { not: currentStudentId } } : {}),
+        },
+        select: { id: true },
+      }),
+      tx.lider.findFirst({
+        where: { username: { equals: candidate, mode: "insensitive" } },
+        select: { id: true },
+      }),
+      tx.parent.findFirst({
+        where: { username: { equals: candidate, mode: "insensitive" } },
+        select: { id: true },
+      }),
+      tx.admin.findFirst({
+        where: { username: { equals: candidate, mode: "insensitive" } },
+        select: { id: true },
+      }),
+    ]);
+
+    if (!student && !leader && !parent && !admin) return candidate;
+
+    candidate = `${base.slice(0, Math.max(1, 24 - String(suffix).length))}${suffix}`;
+    suffix += 1;
+  }
+};
+
+const getInitialPassword = (username: string) => `${username}#ER2026`;
 
 const getImportedEmail = (firebaseId: string) =>
   `firebase.${firebaseId}@destacamento.local`;
@@ -249,13 +308,14 @@ export const syncFirebaseAttendance =
           }
 
           if (!student) {
+            const username = await getUniqueImportedUsername(tx, member);
             student = await tx.muchacho.create({
               data: {
                 id: member.firebaseId,
-                username: getImportedUsername(member.firebaseId),
+                username,
                 name: member.firstName,
                 surname: member.lastName,
-                address: "Destacamento 1",
+                address: "",
                 bloodType: "Desconocido",
                 sex: UserSex.UNSPECIFIED,
                 birthday,
@@ -270,14 +330,15 @@ export const syncFirebaseAttendance =
             memberChanges += 1;
           } else {
             const importedProfile = student.externalSource === FIREBASE_SOURCE;
+            const hasLegacyUsername = student.username.startsWith("firebase-");
+            const username = hasLegacyUsername
+              ? await getUniqueImportedUsername(tx, member, student.id)
+              : student.username;
             const needsUpdate =
               student.externalSource !== FIREBASE_SOURCE ||
               student.externalId !== member.firebaseId ||
-              (importedProfile &&
-                (student.name !== member.firstName ||
-                  student.surname !== member.lastName ||
-                  student.birthday.getUTCFullYear() !==
-                    birthday.getUTCFullYear()));
+              hasLegacyUsername ||
+              (importedProfile && student.address === "Destacamento 1");
 
             if (needsUpdate) {
               student = await tx.muchacho.update({
@@ -287,9 +348,10 @@ export const syncFirebaseAttendance =
                   externalId: member.firebaseId,
                   ...(importedProfile
                     ? {
-                        name: member.firstName,
-                        surname: member.lastName,
-                        birthday,
+                        username,
+                        ...(student.address === "Destacamento 1"
+                          ? { address: "" }
+                          : {}),
                       }
                     : {}),
                 },
@@ -300,6 +362,13 @@ export const syncFirebaseAttendance =
 
           studentIdByFirebaseId.set(member.firebaseId, student.id);
 
+          const existingAuthUser = await tx.authUser.findUnique({
+            where: { id: student.id },
+          });
+          const passwordHash =
+            existingAuthUser?.passwordHash ||
+            hashPassword(getInitialPassword(student.username));
+
           await tx.authUser.upsert({
             where: { id: student.id },
             create: {
@@ -309,17 +378,17 @@ export const syncFirebaseAttendance =
               age: member.age,
               leaderGroup: member.groupId,
               birthday,
-              address: "Destacamento 1",
+              address: "",
               sex: UserSex.UNSPECIFIED,
+              passwordHash,
               provider: "external",
               role: "student",
             },
             update: {
-              name: `${member.firstName} ${member.lastName}`,
-              age: member.age,
-              leaderGroup: member.groupId,
-              birthday,
-              address: "Destacamento 1",
+              passwordHash,
+              ...(existingAuthUser?.address === "Destacamento 1"
+                ? { address: "" }
+                : {}),
             },
           });
         }

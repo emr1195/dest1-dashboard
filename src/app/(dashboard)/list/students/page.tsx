@@ -219,7 +219,8 @@ const role = currentUser?.role;
       <td className="hidden lg:table-cell">
         {item.displayedGuardianName ||
           (item.parent.username === "guardian-placeholder" ||
-          item.parent.username.startsWith("guardian-")
+          item.parent.username.startsWith("guardian-") ||
+          item.parent.username === "firebase-attendance-guardian"
             ? "No indicado"
             : `${item.parent.name} ${item.parent.surname}`)}
       </td>

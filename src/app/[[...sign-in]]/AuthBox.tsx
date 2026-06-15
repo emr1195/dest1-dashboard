@@ -504,13 +504,13 @@ const AuthBox = () => {
           </>
         )}
         <label className="flex flex-col gap-2 text-sm text-gray-500">
-          Correo
+          {mode === "signin" ? "Correo o usuario" : "Correo"}
           <input
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             className={inputClass}
-            placeholder="correo@ejemplo.com"
-            type="email"
+            placeholder={mode === "signin" ? "Correo o usuario" : "correo@ejemplo.com"}
+            type={mode === "signin" ? "text" : "email"}
             required
           />
         </label>

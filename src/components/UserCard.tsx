@@ -31,6 +31,7 @@ const UserCard = async ({
           NOT: [
             { username: { startsWith: "guardian-" } },
             { username: "guardian-placeholder" },
+            { username: "firebase-attendance-guardian" },
           ],
         }
       : undefined;

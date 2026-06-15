@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { getServerSession, type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
+import { findAuthUserByIdentifier } from "./credentialAccount";
 import prisma from "./prisma";
 import { verifyPassword } from "./password";
 import { AppRole, isAppRole } from "./roles";
@@ -87,30 +88,31 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "Correo y contrasena",
       credentials: {
-        email: { label: "Correo", type: "email" },
+        email: { label: "Correo o usuario", type: "text" },
         password: { label: "Contrasena", type: "password" },
       },
       async authorize(credentials) {
-        const email = credentials?.email?.toLowerCase().trim();
+        const identifier = credentials?.email?.toLowerCase().trim();
         const password = credentials?.password;
 
-        if (!email || !password) return null;
+        if (!identifier || !password) return null;
 
-        if (adminEmails.includes(email)) {
+        const authUser = await findAuthUserByIdentifier(identifier);
+        const accountEmail = authUser?.email.toLowerCase();
+
+        if (accountEmail && adminEmails.includes(accountEmail)) {
           const admin = await prisma.admin.findFirst();
-          const authUser = await prisma.authUser.findUnique({ where: { email } });
 
           if (authUser?.passwordHash && !verifyPassword(password, authUser.passwordHash)) return null;
 
           return {
-            id: admin?.id || authUser?.id || email,
-            email,
-            name: authUser?.name || email,
+            id: admin?.id || authUser?.id || accountEmail,
+            email: accountEmail,
+            name: authUser?.name || accountEmail,
             role: "admin",
           };
         }
 
-        const authUser = await prisma.authUser.findUnique({ where: { email } });
         if (!authUser?.passwordHash || !isAppRole(authUser.role)) return null;
 
         const isValidPassword = verifyPassword(password, authUser.passwordHash);

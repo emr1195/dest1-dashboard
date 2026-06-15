@@ -192,6 +192,7 @@ const renderRow = (item: ParentList) => (
     NOT: [
       { username: { startsWith: "guardian-" } },
       { username: "guardian-placeholder" },
+      { username: "firebase-attendance-guardian" },
     ],
   };
 
