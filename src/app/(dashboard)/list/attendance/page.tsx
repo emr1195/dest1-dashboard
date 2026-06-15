@@ -1,4 +1,5 @@
 import AdminAttendanceManager, { AttendancePerson } from "@/components/AdminAttendanceManager";
+import FirebaseAttendanceSync from "@/components/FirebaseAttendanceSync";
 import Pagination from "@/components/Pagination";
 import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
@@ -104,6 +105,7 @@ const AttendanceListPage = async ({
 
   const attendanceManager = (people: AttendancePerson[], titleNote?: string) => (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
+      {(role === "admin" || role === "teacher") && <FirebaseAttendanceSync />}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-lg font-semibold">Asistencia</h1>
@@ -155,12 +157,44 @@ const AttendanceListPage = async ({
       },
       orderBy: [{ name: "asc" }, { surname: "asc" }],
     });
+    const studentAccounts = students.length
+      ? await prisma.authUser.findMany({
+          where: {
+            role: "student",
+            OR: [
+              { id: { in: students.map((student) => student.id) } },
+              {
+                email: {
+                  in: students.flatMap((student) =>
+                    student.email ? [student.email.toLowerCase()] : []
+                  ),
+                },
+              },
+            ],
+          },
+          select: { id: true, email: true, leaderGroup: true, birthday: true },
+        })
+      : [];
+    const accountById = new Map(studentAccounts.map((account) => [account.id, account]));
+    const accountByEmail = new Map(
+      studentAccounts.flatMap((account) =>
+        account.email ? [[account.email.toLowerCase(), account] as const] : []
+      )
+    );
     const people: AttendancePerson[] = students.map((student) => {
-      const group = getGroup(student.birthday);
+      const account =
+        accountById.get(student.id) ||
+        (student.email ? accountByEmail.get(student.email.toLowerCase()) : null);
+      const studentGroup = getResolvedStudentGroupValue(student, account);
+      const group = studentGroup ? groupMetaByValue[studentGroup] : getGroup(student.birthday);
       return {
         id: student.id,
         name: `${student.name} ${student.surname}`,
-        email: student.email || student.username,
+        email:
+          student.email ||
+          (student.externalSource === "dest1-firebase"
+            ? "Importado desde el control de asistencia"
+            : student.username),
         image: student.img,
         groupName: group.name,
         groupIcon: group.icon,
