@@ -356,24 +356,10 @@ const AssignmentListPage = async ({
       query.lesson.teacherId = {
         in: visibleLeaderIds.length ? visibleLeaderIds : ["__no_teacher__"],
       };
-      query.lesson.class = {
-        students: {
-          some: {
-            id: currentStudentProfile?.id || "__no_student__",
-          },
-        },
-      };
       break;
     case "parent":
       query.lesson.teacherId = {
         in: visibleLeaderIds.length ? visibleLeaderIds : ["__no_teacher__"],
-      };
-      query.lesson.class = {
-        students: {
-          some: {
-            id: { in: parentStudentIds },
-          },
-        },
       };
       break;
     default:

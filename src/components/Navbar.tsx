@@ -11,12 +11,41 @@ const Navbar = async () => {
   let dueSoonTasks = 0;
 
   if (user?.role === "student") {
+    const studentAccount = await prisma.authUser.findUnique({
+      where: { id: user.id },
+      select: { leaderGroup: true },
+    });
+    const leaderAccounts = studentAccount?.leaderGroup
+      ? await prisma.authUser.findMany({
+          where: {
+            role: "teacher",
+            leaderGroup: studentAccount.leaderGroup,
+          },
+          select: { id: true, email: true },
+        })
+      : [];
+    const leaders = leaderAccounts.length
+      ? await prisma.lider.findMany({
+          where: {
+            OR: [
+              { id: { in: leaderAccounts.map((account) => account.id) } },
+              {
+                email: {
+                  in: leaderAccounts.flatMap((account) =>
+                    account.email ? [account.email.toLowerCase()] : []
+                  ),
+                },
+              },
+            ],
+          },
+          select: { id: true },
+        })
+      : [];
+    const leaderIds = leaders.map((leader) => leader.id);
     const pendingTaskFilter = {
       lesson: {
-        class: {
-          students: {
-            some: { id: user.id },
-          },
+        teacherId: {
+          in: leaderIds.length ? leaderIds : ["__no_teacher__"],
         },
       },
       submissions: {
