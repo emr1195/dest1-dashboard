@@ -447,7 +447,19 @@ const AssignmentListPage = async ({
             <section key={assignment.id} className="rounded-md bg-white p-5">
               <div className="mb-5 flex flex-col gap-3 border-b border-gray-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <h2 className="text-xl font-semibold text-lamaSky">{title}</h2>
+                  <h2 className="flex items-center gap-2 text-xl font-semibold text-lamaSky">
+                    {awardImage && (
+                      <Image
+                        src={awardImage.filePath}
+                        alt=""
+                        width={34}
+                        height={34}
+                        unoptimized
+                        className="h-9 w-9 shrink-0 rounded-sm object-contain"
+                      />
+                    )}
+                    <span>{title}</span>
+                  </h2>
                   <p className="mt-1 text-sm text-gray-500">
                     {translateDisplayText(assignment.lesson.subject.name)} -{" "}
                     {assignment.lesson.class.name} - Lider{" "}
@@ -457,21 +469,6 @@ const AssignmentListPage = async ({
                     <p className="mt-3 max-w-3xl text-sm text-gray-600">
                       {assignment.description}
                     </p>
-                  )}
-                  {awardImage && (
-                    <div className="mt-4 w-fit max-w-full rounded-md border border-gray-100 bg-gray-50 p-3">
-                      <p className="mb-2 text-xs font-semibold text-gray-500">
-                        Premio a ganar
-                      </p>
-                      <Image
-                        src={awardImage.filePath}
-                        alt={`Premio a ganar de ${title}`}
-                        width={220}
-                        height={160}
-                        unoptimized
-                        className="max-h-44 w-auto rounded-md object-contain"
-                      />
-                    </div>
                   )}
                   {role !== "student" && (
                     <p className="mt-1 text-xs text-gray-500">
