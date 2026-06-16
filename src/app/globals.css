@@ -59,63 +59,7 @@
 .event-calendar-shell {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-}
-
-.event-calendar-date-pill {
-  align-self: flex-end;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: min(100%, 260px);
-  border: 1px solid #f2b4b4;
-  border-radius: 18px;
-  background: #fffaf7;
-  padding: 10px 14px 10px 10px;
-  box-shadow: 0 10px 26px rgba(224, 58, 58, 0.12);
-}
-
-.event-calendar-date-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: #e53935;
-  color: #fff;
-  box-shadow: 0 8px 18px rgba(229, 57, 53, 0.28);
-}
-
-.event-calendar-date-icon svg {
-  width: 23px;
-  height: 23px;
-}
-
-.event-calendar-date-copy {
-  display: flex;
-  min-width: 0;
-  flex: 1;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.event-calendar-date-copy span {
-  color: #6b7280;
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
-.event-calendar-date-copy strong {
-  color: #102033;
-  font-size: 0.95rem;
-  line-height: 1.1;
-}
-
-.event-calendar-date-caret {
-  color: #637083;
-  font-size: 1.1rem;
-  font-weight: 800;
+  gap: 0;
 }
 
 .event-calendar-card {
@@ -279,6 +223,30 @@
   font-size: 0.82rem;
   font-weight: 800;
   padding: 10px 14px;
+}
+
+input[type="date"],
+input[type="datetime-local"] {
+  min-height: 44px;
+  border-radius: 6px;
+  border: 1px solid #cfd6df;
+  background-color: #fff;
+  color: #111827;
+  font-weight: 600;
+  padding: 9px 12px;
+}
+
+input[type="date"]:focus,
+input[type="datetime-local"]:focus {
+  border-color: #003b7a;
+  outline: 2px solid rgba(0, 59, 122, 0.14);
+  outline-offset: 1px;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.9;
 }
 
 .rbc-btn-group:first-child {
