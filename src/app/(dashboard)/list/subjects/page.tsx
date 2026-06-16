@@ -25,7 +25,15 @@ const groupSections = [
   { name: "Pioneros", key: "pioneros", icon: "/pioneros-card.png" },
   { name: "Seguidores", key: "seguidores", icon: "/seguidores-card.png" },
   { name: "Exploradores", key: "exploradores", icon: "/exploradores-card.png" },
-];
+] as const;
+
+type GroupKey = (typeof groupSections)[number]["key"];
+
+type LeaderGroupAccount = {
+  id: string;
+  email: string | null;
+  leaderGroup: string | null;
+};
 
 const normalizeText = (value: string) =>
   value
@@ -33,34 +41,32 @@ const normalizeText = (value: string) =>
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 
-const getAge = (birthday: Date) => {
-  const today = new Date();
-  let age = today.getFullYear() - birthday.getFullYear();
-  const birthdayThisYear = new Date(today.getFullYear(), birthday.getMonth(), birthday.getDate());
-  if (today < birthdayThisYear) age -= 1;
-  return age;
+const isGroupKey = (value?: string | null): value is GroupKey =>
+  Boolean(value && groupSections.some((group) => group.key === value));
+
+const getAssignmentLeaderGroupKey = (
+  assignment: AssignmentList,
+  accountById: Map<string, LeaderGroupAccount>,
+  accountByEmail: Map<string, LeaderGroupAccount>
+) => {
+  const teacher = assignment.lesson.teacher;
+  const account =
+    accountById.get(teacher.id) ||
+    (teacher.email ? accountByEmail.get(teacher.email.toLowerCase()) : null);
+
+  return isGroupKey(account?.leaderGroup) ? account.leaderGroup : null;
 };
 
-const getGroupKeyFromBirthday = (birthday: Date) => {
-  const age = getAge(birthday);
-  if (age >= 5 && age <= 7) return "navegantes";
-  if (age >= 8 && age <= 10) return "pioneros";
-  if (age >= 11 && age <= 14) return "seguidores";
-  if (age >= 15 && age <= 17) return "exploradores";
-  return "";
-};
-
-const getAssignmentGroupKeys = (assignment: AssignmentList) =>
-  Array.from(
-    new Set(
-      assignment.lesson.class.students
-        .map((student) => getGroupKeyFromBirthday(student.birthday))
-        .filter(Boolean)
-    )
-  ) as string[];
-
-const getGroupAssignments = (assignments: AssignmentList[], groupKey: string) =>
-  assignments.filter((assignment) => getAssignmentGroupKeys(assignment).includes(groupKey));
+const getGroupAssignments = (
+  assignments: AssignmentList[],
+  groupKey: string,
+  accountById: Map<string, LeaderGroupAccount>,
+  accountByEmail: Map<string, LeaderGroupAccount>
+) =>
+  assignments.filter(
+    (assignment) =>
+      getAssignmentLeaderGroupKey(assignment, accountById, accountByEmail) === groupKey
+  );
 
 const isBibleStudy = (assignment: AssignmentList) => {
   const category = normalizeText(assignment.category);
@@ -73,6 +79,14 @@ const isLeadershipAward = (assignment: AssignmentList) => {
 
   return category.includes("liderazgo") || category.includes("lider");
 };
+
+const getCategoryCounts = (assignments: AssignmentList[]) => ({
+  skills: assignments.filter(
+    (assignment) => !isBibleStudy(assignment) && !isLeadershipAward(assignment)
+  ).length,
+  bible: assignments.filter(isBibleStudy).length,
+  leadership: assignments.filter(isLeadershipAward).length,
+});
 
 const formatDate = (date: Date) =>
   new Intl.DateTimeFormat("es-PA", {
@@ -171,9 +185,37 @@ const SubjectListPage = async ({
       dueDate: "asc",
     },
   });
+  const leaderAccounts = data.length
+    ? await prisma.authUser.findMany({
+        where: {
+          role: "teacher",
+          OR: [
+            { id: { in: data.map((assignment) => assignment.lesson.teacher.id) } },
+            {
+              email: {
+                in: data.flatMap((assignment) =>
+                  assignment.lesson.teacher.email
+                    ? [assignment.lesson.teacher.email.toLowerCase()]
+                    : []
+                ),
+              },
+            },
+          ],
+        },
+        select: { id: true, email: true, leaderGroup: true },
+      })
+    : [];
+  const accountById = new Map(
+    leaderAccounts.map((account) => [account.id, account])
+  );
+  const accountByEmail = new Map(
+    leaderAccounts.flatMap((account) =>
+      account.email ? [[account.email.toLowerCase(), account] as const] : []
+    )
+  );
 
   const selectedGroupAssignments = selectedGroup
-    ? getGroupAssignments(data, selectedGroup.key)
+    ? getGroupAssignments(data, selectedGroup.key, accountById, accountByEmail)
     : [];
   const bibleStudies = selectedGroupAssignments.filter(isBibleStudy);
   const leadershipAwards = selectedGroupAssignments.filter(isLeadershipAward);
@@ -223,7 +265,13 @@ const SubjectListPage = async ({
 
       <div className="mt-6 grid gap-4 border-b border-gray-100 pb-5 sm:grid-cols-2 xl:grid-cols-4">
         {groupSections.map((group) => {
-          const groupAssignments = getGroupAssignments(data, group.key);
+          const groupAssignments = getGroupAssignments(
+            data,
+            group.key,
+            accountById,
+            accountByEmail
+          );
+          const counts = getCategoryCounts(groupAssignments);
           const href = search
             ? `/list/subjects?group=${group.key}&search=${encodeURIComponent(search)}`
             : `/list/subjects?group=${group.key}`;
@@ -250,9 +298,13 @@ const SubjectListPage = async ({
               </span>
               <span className="flex min-w-0 flex-col items-center">
                 <span className="text-lg font-semibold">{group.name}</span>
-                <span className="text-sm text-gray-500">
-                  {groupAssignments.length} ascensos
-                </span>
+                {group.key !== "navegantes" && (
+                  <span className="mt-2 flex flex-col gap-1 text-sm text-gray-500">
+                    <span>Destrezas: {counts.skills}</span>
+                    <span>Estudios biblicos: {counts.bible}</span>
+                    <span>Premios de liderazgo: {counts.leadership}</span>
+                  </span>
+                )}
               </span>
             </Link>
           );

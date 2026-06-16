@@ -223,34 +223,16 @@ const AttendanceListPage = async ({
         : {},
       include: {
         attendances: { orderBy: { date: "desc" }, take: 10 },
-        classes: { select: { students: { select: { birthday: true } } } },
-        lessons: {
-          select: { class: { select: { students: { select: { birthday: true } } } } },
-        },
       },
       orderBy: [{ name: "asc" }, { surname: "asc" }],
     });
-    const people: AttendancePerson[] = leaders.flatMap((leader) => {
-      const groups = Array.from(
-        new Map(
-          [
-            ...leader.classes.flatMap((classItem) => classItem.students),
-            ...leader.lessons.flatMap((lesson) => lesson.class.students),
-          ].map((student) => {
-            const group = getGroup(student.birthday);
-            return [group.name, group] as const;
-          })
-        ).values()
-      );
-      const targetGroups = groups.length ? groups : [{ name: "Sin grupo asignado", icon: "" }];
-
-      return targetGroups.map((group) => ({
+    const people: AttendancePerson[] = leaders.map((leader) => ({
         id: leader.id,
         name: `${leader.name} ${leader.surname}`,
         email: leader.email || leader.username,
         image: leader.img,
-        groupName: group.name,
-        groupIcon: group.icon,
+        groupName: "",
+        groupIcon: "",
         records: leader.attendances.map((record) => ({
           id: record.id,
           date: formatDate(record.date),
@@ -258,7 +240,6 @@ const AttendanceListPage = async ({
           present: record.present,
         })),
       }));
-    });
 
     return attendanceManager(people);
   }

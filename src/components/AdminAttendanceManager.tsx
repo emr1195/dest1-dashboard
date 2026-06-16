@@ -117,12 +117,15 @@ const AdminAttendanceManager = ({
     }
   };
 
-  const groups = groupOrder
-    .map((name) => ({
-      name,
-      people: people.filter((person) => person.groupName === name),
-    }))
-    .filter((group) => group.people.length);
+  const groups =
+    view === "teachers"
+      ? [{ name: "Lideres", people }]
+      : groupOrder
+          .map((name) => ({
+            name,
+            people: people.filter((person) => person.groupName === name),
+          }))
+          .filter((group) => group.people.length);
   const history = people
     .flatMap((person) =>
       person.records.map((record) => ({
@@ -180,7 +183,7 @@ const AdminAttendanceManager = ({
           />
         </div>
         <p className="text-sm text-gray-500">
-          {view === "students" ? "Tropa por grupo" : "Lideres por grupo asignado"}
+          {view === "students" ? "Tropa por grupo" : "Listado de lideres"}
         </p>
       </div>
 
@@ -193,34 +196,36 @@ const AdminAttendanceManager = ({
 
       {groups.map((group) => (
         <section key={group.name} className="mb-4 overflow-hidden rounded-md border border-gray-100">
-          <button
-            type="button"
-            onClick={() => toggleGroup(group.name)}
-            className="flex w-full items-center justify-between gap-3 bg-white p-4 text-left"
-          >
-            <span className="flex items-center gap-3">
-            {group.people[0]?.groupIcon && (
-              <Image
-                src={group.people[0].groupIcon}
-                alt={group.name}
-                width={46}
-                height={46}
-                className="h-11 w-11 object-contain"
-              />
-            )}
-              <span>
-                <span className="block text-lg font-semibold">{group.name}</span>
-                <span className="block text-xs text-gray-500">
-                  {group.people.length} {view === "students" ? "muchachos" : "lideres"}
+          {view === "students" && (
+            <button
+              type="button"
+              onClick={() => toggleGroup(group.name)}
+              className="flex w-full items-center justify-between gap-3 bg-white p-4 text-left"
+            >
+              <span className="flex items-center gap-3">
+              {group.people[0]?.groupIcon && (
+                <Image
+                  src={group.people[0].groupIcon}
+                  alt={group.name}
+                  width={46}
+                  height={46}
+                  className="h-11 w-11 object-contain"
+                />
+              )}
+                <span>
+                  <span className="block text-lg font-semibold">{group.name}</span>
+                  <span className="block text-xs text-gray-500">
+                    {group.people.length} muchachos
+                  </span>
                 </span>
               </span>
-            </span>
-            <span className="text-xl font-semibold text-gray-500">
-              {openGroups[group.name] ? "^" : "v"}
-            </span>
-          </button>
-          {openGroups[group.name] && (
-          <div className="divide-y divide-gray-100 border-t border-gray-100">
+              <span className="text-xl font-semibold text-gray-500">
+                {openGroups[group.name] ? "^" : "v"}
+              </span>
+            </button>
+          )}
+          {(view === "teachers" || openGroups[group.name]) && (
+          <div className={`divide-y divide-gray-100 ${view === "students" ? "border-t border-gray-100" : ""}`}>
             {group.people.map((person) => (
               <div
                 key={person.id}
@@ -305,7 +310,7 @@ const AdminAttendanceManager = ({
                       <thead>
                         <tr className="border-b border-gray-100 text-left text-gray-500">
                           <th className="p-4">Nombre</th>
-                          <th className="p-4">Grupo</th>
+                          {view === "students" && <th className="p-4">Grupo</th>}
                           <th className="p-4">Estado</th>
                           <th className="p-4">Acciones</th>
                         </tr>
@@ -317,7 +322,9 @@ const AdminAttendanceManager = ({
                               <p className="font-semibold">{record.personName}</p>
                               <p className="text-xs text-gray-500">{record.personEmail}</p>
                             </td>
-                            <td className="p-4">{record.groupName}</td>
+                            {view === "students" && (
+                              <td className="p-4">{record.groupName}</td>
+                            )}
                             <td className="p-4">
                               <span
                                 className={`rounded-md px-3 py-1 text-xs font-semibold ${
