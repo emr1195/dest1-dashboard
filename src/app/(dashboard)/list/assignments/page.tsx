@@ -60,7 +60,8 @@ const toSubmissionFiles = (
       filePath: submission.filePath,
       href: reviewLinks
         ? `/list/assignments/${assignmentId}/submissions/${submission.id}`
-        : undefined,
+        : `/list/assignments/${assignmentId}/submissions/${submission.id}/view`,
+      deleteUrl: reviewLinks ? undefined : `/api/assignment-submissions?id=${submission.id}`,
       ownerName: `${submission.student.name} ${submission.student.surname}`,
       detail: `Subida: ${formatDeadline(submission.updatedAt)}`,
       statusLabel: deliveredOnTime ? "A tiempo" : "Vencida",
@@ -431,7 +432,10 @@ const AssignmentListPage = async ({
           const awardImage = assignment.files.find(isAwardImageFile);
           const taskFiles = toUploadedFiles(
             assignment.files.filter((file) => !isAwardImageFile(file))
-          );
+          ).map((file) => ({
+            ...file,
+            href: `/list/assignments/${assignment.id}?file=${file.id}`,
+          }));
           const responseFiles = toSubmissionFiles(
             assignment.submissions,
             assignment.dueDate,
@@ -461,8 +465,7 @@ const AssignmentListPage = async ({
                     <span>{title}</span>
                   </h2>
                   <p className="mt-1 text-sm text-gray-500">
-                    {translateDisplayText(assignment.lesson.subject.name)} -{" "}
-                    {assignment.lesson.class.name} - Lider{" "}
+                    {translateDisplayText(assignment.lesson.subject.name)} - Lider{" "}
                     {assignment.lesson.teacher.name} {assignment.lesson.teacher.surname}
                   </p>
                   {assignment.description && (

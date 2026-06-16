@@ -33,7 +33,7 @@ const AttendanceChart = ({
           tick={{ fill: "#6B7280" }}
           tickLine={false}
         />
-        <YAxis axisLine={false} tick={{ fill: "#6B7280" }} tickLine={false} />
+        <YAxis axisLine={false} tick={false} tickLine={false} width={0} />
         <Tooltip
           contentStyle={{ borderRadius: "10px", borderColor: "lightgray" }}
         />

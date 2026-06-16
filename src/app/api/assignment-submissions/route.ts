@@ -71,3 +71,41 @@ export const POST = async (request: Request) => {
 
   return NextResponse.json(submission);
 };
+
+export const DELETE = async (request: Request) => {
+  const currentUser = await getCurrentUser();
+
+  if (!currentUser) {
+    return NextResponse.json({ message: "No autorizado." }, { status: 401 });
+  }
+
+  if (currentUser.role !== "student") {
+    return NextResponse.json(
+      { message: "Solo los muchachos pueden eliminar sus entregas." },
+      { status: 403 }
+    );
+  }
+
+  const { searchParams } = new URL(request.url);
+  const submissionId = searchParams.get("id");
+
+  if (!submissionId) {
+    return NextResponse.json({ message: "Datos invalidos." }, { status: 400 });
+  }
+
+  const submission = await prisma.assignmentSubmission.findFirst({
+    where: {
+      id: submissionId,
+      studentId: currentUser.id,
+    },
+    select: { id: true },
+  });
+
+  if (!submission) {
+    return NextResponse.json({ message: "Entrega no encontrada." }, { status: 404 });
+  }
+
+  await prisma.assignmentSubmission.delete({ where: { id: submission.id } });
+
+  return NextResponse.json({ success: true });
+};

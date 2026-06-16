@@ -42,6 +42,8 @@ const AdminAttendanceManager = ({
   const [date, setDate] = useState(todayValue());
   const [saving, setSaving] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const [openDates, setOpenDates] = useState<Record<string, boolean>>({});
   const router = useRouter();
 
   const register = async (person: AttendancePerson, present: boolean) => {
@@ -137,6 +139,32 @@ const AdminAttendanceManager = ({
 
       return a.personName.localeCompare(b.personName);
     });
+  const historyByDate = history.reduce<
+    { dateValue: string; date: string; records: typeof history }[]
+  >((groups, record) => {
+    const existing = groups.find((group) => group.dateValue === record.dateValue);
+
+    if (existing) {
+      existing.records.push(record);
+    } else {
+      groups.push({
+        dateValue: record.dateValue,
+        date: record.date,
+        records: [record],
+      });
+    }
+
+    return groups;
+  }, []);
+
+  const toggleGroup = (name: string) =>
+    setOpenGroups((current) => ({ ...current, [name]: !current[name] }));
+
+  const toggleDate = (dateValue: string) =>
+    setOpenDates((current) => ({
+      ...current,
+      [dateValue]: !current[dateValue],
+    }));
 
   return (
     <div className="mt-6">
@@ -164,8 +192,13 @@ const AdminAttendanceManager = ({
       )}
 
       {groups.map((group) => (
-        <section key={group.name} className="mb-7">
-          <div className="mb-3 flex items-center gap-3">
+        <section key={group.name} className="mb-4 overflow-hidden rounded-md border border-gray-100">
+          <button
+            type="button"
+            onClick={() => toggleGroup(group.name)}
+            className="flex w-full items-center justify-between gap-3 bg-white p-4 text-left"
+          >
+            <span className="flex items-center gap-3">
             {group.people[0]?.groupIcon && (
               <Image
                 src={group.people[0].groupIcon}
@@ -175,9 +208,19 @@ const AdminAttendanceManager = ({
                 className="h-11 w-11 object-contain"
               />
             )}
-            <h2 className="text-lg font-semibold">{group.name}</h2>
-          </div>
-          <div className="divide-y divide-gray-100 rounded-md border border-gray-100">
+              <span>
+                <span className="block text-lg font-semibold">{group.name}</span>
+                <span className="block text-xs text-gray-500">
+                  {group.people.length} {view === "students" ? "muchachos" : "lideres"}
+                </span>
+              </span>
+            </span>
+            <span className="text-xl font-semibold text-gray-500">
+              {openGroups[group.name] ? "^" : "v"}
+            </span>
+          </button>
+          {openGroups[group.name] && (
+          <div className="divide-y divide-gray-100 border-t border-gray-100">
             {group.people.map((person) => (
               <div
                 key={person.id}
@@ -232,105 +275,127 @@ const AdminAttendanceManager = ({
               </div>
             ))}
           </div>
+          )}
         </section>
       ))}
       <section className="mt-8">
         <h2 className="mb-3 text-lg font-semibold">Registro de asistencia</h2>
-        {history.length ? (
-          <div className="overflow-x-auto rounded-md border border-gray-100">
-            <table className="w-full min-w-[760px] text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 text-left text-gray-500">
-                  <th className="p-4">Nombre</th>
-                  <th className="p-4">Grupo</th>
-                  <th className="p-4">Dia</th>
-                  <th className="p-4">Estado</th>
-                  <th className="p-4">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {history.map((record) => (
-                  <tr key={`${record.personId}-${record.id}`} className="border-b border-gray-100 last:border-0">
-                    <td className="p-4">
-                      <p className="font-semibold">{record.personName}</p>
-                      <p className="text-xs text-gray-500">{record.personEmail}</p>
-                    </td>
-                    <td className="p-4">{record.groupName}</td>
-                    <td className="p-4">{record.date}</td>
-                    <td className="p-4">
-                      <span
-                        className={`rounded-md px-3 py-1 text-xs font-semibold ${
-                          record.present ? "bg-lamaSkyLight text-lamaSky" : "bg-lamaPurpleLight text-lamaPurple"
-                        }`}
-                      >
-                        {record.present ? "Asistio" : "No asistio"}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          disabled={saving !== null}
-                          onClick={() =>
-                            saveAttendance(
-                              record.personId,
-                              record.dateValue,
-                              true,
-                              `${record.personId}-${record.dateValue}-true`
-                            )
-                          }
-                          className="rounded-md border border-lamaSky px-3 py-1 text-xs font-medium text-lamaSky disabled:opacity-50"
-                        >
-                          Asistio
-                        </button>
-                        <button
-                          type="button"
-                          disabled={saving !== null}
-                          onClick={() =>
-                            saveAttendance(
-                              record.personId,
-                              record.dateValue,
-                              false,
-                              `${record.personId}-${record.dateValue}-false`
-                            )
-                          }
-                          className="rounded-md border border-lamaPurple px-3 py-1 text-xs font-medium text-lamaPurple disabled:opacity-50"
-                        >
-                          No asistio
-                        </button>
-                        {canDelete && (
-                          <button
-                            type="button"
-                            disabled={saving !== null}
-                            onClick={() => deleteAttendance(record.id)}
-                            className="flex h-7 w-7 items-center justify-center rounded-md text-red-600 transition hover:bg-red-50 disabled:opacity-50"
-                            aria-label="Eliminar asistencia"
-                            title="Eliminar asistencia"
-                          >
-                            <svg
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="h-5 w-5"
-                              aria-hidden="true"
-                            >
-                              <path d="M3 6h18" />
-                              <path d="M8 6V4h8v2" />
-                              <path d="M19 6l-1 14H6L5 6" />
-                              <path d="M10 11v6" />
-                              <path d="M14 11v6" />
-                            </svg>
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {historyByDate.length ? (
+          <div className="flex flex-col gap-3">
+            {historyByDate.map((dateGroup) => (
+              <div key={dateGroup.dateValue} className="overflow-hidden rounded-md border border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => toggleDate(dateGroup.dateValue)}
+                  className="flex w-full items-center justify-between bg-white p-4 text-left"
+                >
+                  <span>
+                    <span className="block font-semibold">{dateGroup.date}</span>
+                    <span className="block text-xs text-gray-500">
+                      {dateGroup.records.length} registros
+                    </span>
+                  </span>
+                  <span className="text-xl font-semibold text-gray-500">
+                    {openDates[dateGroup.dateValue] ? "^" : "v"}
+                  </span>
+                </button>
+                {openDates[dateGroup.dateValue] && (
+                  <div className="overflow-x-auto border-t border-gray-100">
+                    <table className="w-full min-w-[760px] text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-100 text-left text-gray-500">
+                          <th className="p-4">Nombre</th>
+                          <th className="p-4">Grupo</th>
+                          <th className="p-4">Estado</th>
+                          <th className="p-4">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {dateGroup.records.map((record) => (
+                          <tr key={`${record.personId}-${record.id}`} className="border-b border-gray-100 last:border-0">
+                            <td className="p-4">
+                              <p className="font-semibold">{record.personName}</p>
+                              <p className="text-xs text-gray-500">{record.personEmail}</p>
+                            </td>
+                            <td className="p-4">{record.groupName}</td>
+                            <td className="p-4">
+                              <span
+                                className={`rounded-md px-3 py-1 text-xs font-semibold ${
+                                  record.present ? "bg-lamaSkyLight text-lamaSky" : "bg-lamaPurpleLight text-lamaPurple"
+                                }`}
+                              >
+                                {record.present ? "Asistio" : "No asistio"}
+                              </span>
+                            </td>
+                            <td className="p-4">
+                              <div className="flex flex-wrap gap-2">
+                                <button
+                                  type="button"
+                                  disabled={saving !== null}
+                                  onClick={() =>
+                                    saveAttendance(
+                                      record.personId,
+                                      record.dateValue,
+                                      true,
+                                      `${record.personId}-${record.dateValue}-true`
+                                    )
+                                  }
+                                  className="rounded-md border border-lamaSky px-3 py-1 text-xs font-medium text-lamaSky disabled:opacity-50"
+                                >
+                                  Asistio
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={saving !== null}
+                                  onClick={() =>
+                                    saveAttendance(
+                                      record.personId,
+                                      record.dateValue,
+                                      false,
+                                      `${record.personId}-${record.dateValue}-false`
+                                    )
+                                  }
+                                  className="rounded-md border border-lamaPurple px-3 py-1 text-xs font-medium text-lamaPurple disabled:opacity-50"
+                                >
+                                  No asistio
+                                </button>
+                                {canDelete && (
+                                  <button
+                                    type="button"
+                                    disabled={saving !== null}
+                                    onClick={() => deleteAttendance(record.id)}
+                                    className="flex h-7 w-7 items-center justify-center rounded-md text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+                                    aria-label="Eliminar asistencia"
+                                    title="Eliminar asistencia"
+                                  >
+                                    <svg
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      className="h-5 w-5"
+                                      aria-hidden="true"
+                                    >
+                                      <path d="M3 6h18" />
+                                      <path d="M8 6V4h8v2" />
+                                      <path d="M19 6l-1 14H6L5 6" />
+                                      <path d="M10 11v6" />
+                                      <path d="M14 11v6" />
+                                    </svg>
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         ) : (
           <div className="rounded-md border border-dashed border-gray-200 p-8 text-sm text-gray-500">

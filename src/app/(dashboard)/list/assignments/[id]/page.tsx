@@ -70,8 +70,7 @@ const AssignmentDetailPage = async ({
               {translateDisplayText(assignment.title)}
             </h1>
             <p className="mt-1 text-sm text-gray-500">
-              {translateDisplayText(assignment.lesson.subject.name)} -{" "}
-              {assignment.lesson.class.name} - Lider{" "}
+              {translateDisplayText(assignment.lesson.subject.name)} - Lider{" "}
               {assignment.lesson.teacher.name} {assignment.lesson.teacher.surname}
             </p>
           </div>

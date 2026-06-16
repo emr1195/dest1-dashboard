@@ -8,6 +8,7 @@ export type UploadedAssignmentFile = {
   fileName: string;
   filePath: string;
   href?: string;
+  deleteUrl?: string;
   ownerName?: string;
   detail?: string;
   statusLabel?: string;
@@ -32,52 +33,89 @@ const UploadedFilesList = ({
   title: string;
   files: UploadedAssignmentFile[];
   emptyLabel: string;
-}) => (
-  <div className="flex flex-col gap-3">
-    <h3 className="text-base font-semibold">{title}</h3>
-    {files.length ? (
-      files.map((file) => (
-        <a
-          key={file.id}
-          href={file.href || file.filePath}
-          target={file.href ? undefined : "_blank"}
-          rel={file.href ? undefined : "noreferrer"}
-          title={file.fileName}
-          className="flex flex-wrap items-center gap-3 border border-gray-200 bg-white p-3 hover:border-lamaSky sm:flex-nowrap"
-        >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-lamaSky text-[10px] font-bold text-white">
-            {fileIcon(file.fileName)}
-          </span>
-          <span className="min-w-0 flex-1 basis-[calc(100%-3.5rem)] sm:basis-auto">
-            <span className="block truncate text-sm text-gray-600">{file.fileName}</span>
-            <span className="block truncate text-xs text-gray-500">
-              {file.ownerName || "Completado"}
+}) => {
+  const router = useRouter();
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  const deleteFile = async (file: UploadedAssignmentFile) => {
+    if (!file.deleteUrl) return;
+    if (!window.confirm("Seguro que quieres eliminar esta entrega?")) return;
+
+    setDeleting(file.id);
+
+    try {
+      const response = await fetch(file.deleteUrl, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (response.ok) router.refresh();
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <h3 className="text-base font-semibold">{title}</h3>
+      {files.length ? (
+        files.map((file) => (
+          <a
+            key={file.id}
+            href={file.href || file.filePath}
+            target={file.href ? undefined : "_blank"}
+            rel={file.href ? undefined : "noreferrer"}
+            title={file.fileName}
+            className="flex flex-wrap items-center gap-3 border border-gray-200 bg-white p-3 hover:border-lamaSky sm:flex-nowrap"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-lamaSky text-[10px] font-bold text-white">
+              {fileIcon(file.fileName)}
             </span>
-            {file.detail && (
-              <span className="mt-1 block truncate text-xs text-gray-500">
-                {file.detail}
+            <span className="min-w-0 flex-1 basis-[calc(100%-3.5rem)] sm:basis-auto">
+              <span className="block truncate text-sm text-gray-600">{file.fileName}</span>
+              <span className="block truncate text-xs text-gray-500">
+                {file.ownerName || "Completado"}
+              </span>
+              {file.detail && (
+                <span className="mt-1 block truncate text-xs text-gray-500">
+                  {file.detail}
+                </span>
+              )}
+            </span>
+            {file.statusLabel && (
+              <span
+                className={`shrink-0 rounded-md px-3 py-1 text-xs font-semibold ${
+                  file.statusClassName || "bg-gray-100 text-gray-600"
+                }`}
+              >
+                {file.statusLabel}
               </span>
             )}
-          </span>
-          {file.statusLabel && (
-            <span
-              className={`shrink-0 rounded-md px-3 py-1 text-xs font-semibold ${
-                file.statusClassName || "bg-gray-100 text-gray-600"
-              }`}
-            >
-              {file.statusLabel}
-            </span>
-          )}
-          <span className="ml-auto text-xs text-lamaBrown sm:ml-0">Ver</span>
-        </a>
-      ))
-    ) : (
-      <div className="border border-dashed border-gray-200 p-4 text-sm text-gray-500">
-        {emptyLabel}
-      </div>
-    )}
-  </div>
-);
+            <span className="ml-auto text-xs text-lamaBrown sm:ml-0">Ver</span>
+            {file.deleteUrl && (
+              <button
+                type="button"
+                disabled={deleting === file.id}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  deleteFile(file);
+                }}
+                className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-50"
+              >
+                {deleting === file.id ? "Eliminando..." : "Eliminar"}
+              </button>
+            )}
+          </a>
+        ))
+      ) : (
+        <div className="border border-dashed border-gray-200 p-4 text-sm text-gray-500">
+          {emptyLabel}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const AssignmentUploadBox = ({
   assignmentId,
