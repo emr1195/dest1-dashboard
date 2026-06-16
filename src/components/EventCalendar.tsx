@@ -25,7 +25,6 @@ const EventCalendar = () => {
   return (
     <div className="event-calendar-shell">
       <div className="event-calendar-card">
-        <p className="event-calendar-eyebrow">Selecciona la reunion</p>
         <Calendar
           locale="es-ES"
           onChange={onChange}
@@ -33,13 +32,14 @@ const EventCalendar = () => {
           next2Label={null}
           prev2Label={null}
           prevLabel={<span aria-hidden="true">&lt;</span>}
-          nextLabel={<span aria-hidden="true">&gt;</span>}
           formatShortWeekday={(_, date) =>
             new Intl.DateTimeFormat("es-PA", { weekday: "short" })
               .format(date)
               .replace(".", "")
               .toUpperCase()
           }
+          nextLabel={<span aria-hidden="true">&gt;</span>}
+          
         />
         <div className="event-calendar-footer">
           <span className="event-calendar-selected-label">
