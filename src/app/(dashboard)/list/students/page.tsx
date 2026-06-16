@@ -310,8 +310,15 @@ const role = currentUser?.role;
   };
 
 
+  const selectedGroupParam = searchParams.group;
+  const selectedGroup =
+    selectedGroupParam && [...groupOrder, "sin-grupo"].includes(selectedGroupParam)
+      ? selectedGroupParam
+      : undefined;
   const queryParams = Object.fromEntries(
-    Object.entries(searchParams).filter(([key]) => key !== "page")
+    Object.entries(searchParams).filter(
+      ([key]) => key !== "page" && key !== "group"
+    )
   );
 
 
@@ -447,6 +454,29 @@ const role = currentUser?.role;
       items: groupedData["sin-grupo"],
     },
   ].filter((group) => group.items.length > 0 || group.key !== "sin-grupo");
+  const buildGroupHref = (groupKey: string) => {
+    const params = new URLSearchParams();
+
+    Object.entries(queryParams).forEach(([key, value]) => {
+      if (value) params.set(key, value);
+    });
+    params.set("group", groupKey);
+
+    return `/list/students?${params.toString()}`;
+  };
+  const closeGroupHref = (() => {
+    const params = new URLSearchParams();
+
+    Object.entries(queryParams).forEach(([key, value]) => {
+      if (value) params.set(key, value);
+    });
+
+    const queryString = params.toString();
+    return queryString ? `/list/students?${queryString}` : "/list/students";
+  })();
+  const selectedGroupSection = selectedGroup
+    ? groupSections.find((group) => group.key === selectedGroup)
+    : null;
 
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
@@ -495,9 +525,10 @@ const role = currentUser?.role;
           const count = groupedData[groupKey].length;
 
           return (
-            <div
+            <Link
               key={groupKey}
-              className="flex min-h-44 flex-col items-center justify-center rounded-md border border-gray-200 bg-white p-5 text-center"
+              href={buildGroupHref(groupKey)}
+              className="flex min-h-44 flex-col items-center justify-center rounded-md border border-gray-200 bg-white p-5 text-center transition hover:border-lamaSky hover:bg-slate-50"
             >
               <Image
                 src={group.icon}
@@ -512,44 +543,58 @@ const role = currentUser?.role;
               <p className="mt-1 text-sm text-gray-500">
                 {count} {count === 1 ? "muchacho" : "muchachos"}
               </p>
-            </div>
+            </Link>
           );
         })}
       </div>
 
       {/* LIST */}
 
-      <div className="mt-8 flex flex-col gap-8">
-        {groupSections.map((group) => (
-          <section key={group.key} className="rounded-md border border-gray-100">
-            <div className="flex items-center gap-3 border-b border-gray-100 p-4">
-              {group.icon && (
+      {selectedGroupSection && (
+        <section className="mt-8 rounded-md border border-gray-200 bg-white shadow-sm">
+          <div className="flex flex-col gap-3 border-b border-gray-100 p-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-3">
+              {selectedGroupSection.icon && (
                 <Image
-                  src={group.icon}
-                  alt={group.name}
-                  width={42}
-                  height={42}
-                  className="h-11 w-11 object-contain"
+                  src={selectedGroupSection.icon}
+                  alt={selectedGroupSection.name}
+                  width={52}
+                  height={52}
+                  className="h-14 w-14 object-contain"
                 />
               )}
               <div>
-                <h2 className="text-lg font-semibold">{group.name}</h2>
+                <h2 className="text-xl font-semibold">
+                  {selectedGroupSection.name}
+                </h2>
                 <p className="text-sm text-gray-500">
-                  {group.items.length}{" "}
-                  {group.items.length === 1 ? "muchacho" : "muchachos"}
+                  {selectedGroupSection.items.length}{" "}
+                  {selectedGroupSection.items.length === 1
+                    ? "muchacho"
+                    : "muchachos"}
                 </p>
               </div>
             </div>
-            {group.items.length ? (
-              <Table columns={columns} renderRow={renderRow} data={group.items} />
-            ) : (
-              <p className="p-4 text-sm text-gray-500">
-                No hay muchachos registrados en este grupo.
-              </p>
-            )}
-          </section>
-        ))}
-      </div>
+            <Link
+              href={closeGroupHref}
+              className="w-max rounded-md border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-500 hover:border-lamaSky hover:text-lamaSky"
+            >
+              Cerrar
+            </Link>
+          </div>
+          {selectedGroupSection.items.length ? (
+            <Table
+              columns={columns}
+              renderRow={renderRow}
+              data={selectedGroupSection.items}
+            />
+          ) : (
+            <p className="p-4 text-sm text-gray-500">
+              No hay muchachos registrados en este grupo.
+            </p>
+          )}
+        </section>
+      )}
 
     </div>
 
