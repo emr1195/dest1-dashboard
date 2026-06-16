@@ -1,7 +1,5 @@
 import FormContainer from "@/components/FormContainer";
 
-import Pagination from "@/components/Pagination";
-
 import Table from "@/components/Table";
 
 import TableSearch from "@/components/TableSearch";
@@ -11,7 +9,6 @@ import UserNameEditor from "@/components/UserNameEditor";
 
 import prisma from "@/lib/prisma";
 
-import { ITEM_PER_PAGE } from "@/lib/settings";
 import { getLeaderGroupOption, getRankOption } from "@/lib/roles";
 import { Class, Parent, Prisma, Muchacho } from "@prisma/client";
 
@@ -39,6 +36,15 @@ const groupIconMap: Record<string, { name: string; icon: string }> = {
   exploradores: { name: "Exploradores", icon: "/exploradores.png" },
 };
 
+const groupOrder = [
+  "navegantes",
+  "pioneros",
+  "seguidores",
+  "exploradores",
+] as const;
+
+type GroupKey = (typeof groupOrder)[number];
+
 const getStudentAge = (birthday: Date) => {
   const today = new Date();
   let age = today.getFullYear() - birthday.getFullYear();
@@ -62,6 +68,31 @@ const getStudentGroup = (birthday: Date) => {
   if (age >= 15 && age <= 17) return groupIconMap.exploradores;
 
   return { name: "Sin grupo", icon: "" };
+};
+
+const getStudentGroupKey = (birthday: Date): GroupKey | "sin-grupo" => {
+  const age = getStudentAge(birthday);
+
+  if (age >= 5 && age <= 7) return "navegantes";
+  if (age >= 8 && age <= 10) return "pioneros";
+  if (age >= 11 && age <= 14) return "seguidores";
+  if (age >= 15 && age <= 17) return "exploradores";
+
+  return "sin-grupo";
+};
+
+const getDisplayedGroupKey = (
+  savedGroup: string | null | undefined,
+  birthday: Date
+): GroupKey | "sin-grupo" => {
+  const option = getLeaderGroupOption(savedGroup);
+
+  if (option?.value === "sin-grupo") return "sin-grupo";
+  if (option && groupOrder.includes(option.value as GroupKey)) {
+    return option.value as GroupKey;
+  }
+
+  return getStudentGroupKey(birthday);
 };
 
 const getDisplayedGroup = (savedGroup: string | null | undefined, birthday: Date) => {
@@ -279,11 +310,9 @@ const role = currentUser?.role;
   };
 
 
-  const { page, ...queryParams } = searchParams;
-
-
-
-  const p = page ? parseInt(page) : 1;
+  const queryParams = Object.fromEntries(
+    Object.entries(searchParams).filter(([key]) => key !== "page")
+  );
 
 
 
@@ -346,7 +375,7 @@ const role = currentUser?.role;
 
 
 
-  const [data, count] = await prisma.$transaction([
+  const [data, totalStudentCount] = await prisma.$transaction([
     prisma.muchacho.findMany({
 
       where: query,
@@ -358,13 +387,11 @@ const role = currentUser?.role;
 
       },
 
-      take: ITEM_PER_PAGE,
-
-      skip: ITEM_PER_PAGE * (p - 1),
+      orderBy: [{ name: "asc" }, { surname: "asc" }],
 
     }),
 
-    prisma.muchacho.count({ where: query }),
+    prisma.muchacho.count(),
 
   ]);
 
@@ -393,15 +420,47 @@ const role = currentUser?.role;
       ? guardianByEmail.get(item.email) || null
       : null,
   }));
+  const groupedData = displayedData.reduce(
+    (acc, item) => {
+      const groupKey = getDisplayedGroupKey(item.displayedGroupValue, item.birthday);
+      acc[groupKey].push(item);
+      return acc;
+    },
+    {
+      navegantes: [] as StudentList[],
+      pioneros: [] as StudentList[],
+      seguidores: [] as StudentList[],
+      exploradores: [] as StudentList[],
+      "sin-grupo": [] as StudentList[],
+    }
+  );
+  const groupSections = [
+    ...groupOrder.map((key) => ({
+      key,
+      ...groupIconMap[key],
+      items: groupedData[key],
+    })),
+    {
+      key: "sin-grupo" as const,
+      name: "Sin grupo",
+      icon: "",
+      items: groupedData["sin-grupo"],
+    },
+  ].filter((group) => group.items.length > 0 || group.key !== "sin-grupo");
 
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
 
       {/* TOP */}
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
 
-        <h1 className="hidden md:block text-lg font-semibold">Toda la tropa</h1>
+        <div>
+          <h1 className="text-lg font-semibold">Toda la tropa</h1>
+          <p className="mt-1 text-sm font-medium text-gray-500">
+            Conteo general: {totalStudentCount}
+          </p>
+        </div>
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
 
           <TableSearch />
@@ -430,12 +489,67 @@ const role = currentUser?.role;
 
       </div>
 
+      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {groupOrder.map((groupKey) => {
+          const group = groupIconMap[groupKey];
+          const count = groupedData[groupKey].length;
+
+          return (
+            <div
+              key={groupKey}
+              className="flex min-h-44 flex-col items-center justify-center rounded-md border border-gray-200 bg-white p-5 text-center"
+            >
+              <Image
+                src={group.icon}
+                alt={group.name}
+                width={92}
+                height={92}
+                className="h-24 w-24 object-contain"
+              />
+              <h2 className="mt-4 text-lg font-semibold text-gray-700">
+                {group.name}
+              </h2>
+              <p className="mt-1 text-sm text-gray-500">
+                {count} {count === 1 ? "muchacho" : "muchachos"}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+
       {/* LIST */}
 
-      <Table columns={columns} renderRow={renderRow} data={displayedData} />
-      {/* PAGINATION */}
-
-      <Pagination page={p} count={count} />
+      <div className="mt-8 flex flex-col gap-8">
+        {groupSections.map((group) => (
+          <section key={group.key} className="rounded-md border border-gray-100">
+            <div className="flex items-center gap-3 border-b border-gray-100 p-4">
+              {group.icon && (
+                <Image
+                  src={group.icon}
+                  alt={group.name}
+                  width={42}
+                  height={42}
+                  className="h-11 w-11 object-contain"
+                />
+              )}
+              <div>
+                <h2 className="text-lg font-semibold">{group.name}</h2>
+                <p className="text-sm text-gray-500">
+                  {group.items.length}{" "}
+                  {group.items.length === 1 ? "muchacho" : "muchachos"}
+                </p>
+              </div>
+            </div>
+            {group.items.length ? (
+              <Table columns={columns} renderRow={renderRow} data={group.items} />
+            ) : (
+              <p className="p-4 text-sm text-gray-500">
+                No hay muchachos registrados en este grupo.
+              </p>
+            )}
+          </section>
+        ))}
+      </div>
 
     </div>
 

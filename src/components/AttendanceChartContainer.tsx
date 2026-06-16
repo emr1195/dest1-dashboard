@@ -105,7 +105,7 @@ const AttendanceChartContainer = async ({
         <Image src="/moreDark.png" alt="" width={20} height={20} />
       </div>
       <AttendanceChart data={data}/>
-      <div className="mt-[-4] flex items-center justify-center gap-5 text-sm font-semibold text-gray-500">
+      <div className="mt-[-6] flex items-center justify-center gap-5 text-sm font-semibold text-gray-500">
         <Link
           href={`/admin?attendanceWeek=${weekOffset - 1}`}
           className="rounded-full border border-gray-200 px-3 py-1 hover:border-lamaSky hover:text-lamaSky"
