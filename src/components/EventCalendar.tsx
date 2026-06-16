@@ -26,7 +26,7 @@ const EventCalendar = () => {
     <div className="event-calendar-shell">
       <div className="event-calendar-card">
         <Calendar
-          className="flex"
+          className="event-calendar-side-layout"
           locale="es-ES"
           onChange={onChange}
           value={value}
@@ -40,7 +40,6 @@ const EventCalendar = () => {
               .toUpperCase()
           }
           nextLabel={<span aria-hidden="true">&gt;</span>}
-          
         />
         <div className="event-calendar-footer">
           <span className="event-calendar-selected-label">
