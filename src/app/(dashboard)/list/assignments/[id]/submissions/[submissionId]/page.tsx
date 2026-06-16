@@ -4,6 +4,28 @@ import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+const canPreviewFile = (fileName: string, fileType?: string | null) => {
+  const extension = fileName.split(".").pop()?.toLowerCase();
+
+  return (
+    fileType?.startsWith("image/") ||
+    fileType === "application/pdf" ||
+    fileType?.startsWith("text/") ||
+    ["pdf", "png", "jpg", "jpeg", "webp", "gif", "txt", "csv"].includes(
+      extension || ""
+    )
+  );
+};
+
+const isImageFile = (fileName: string, fileType?: string | null) => {
+  const extension = fileName.split(".").pop()?.toLowerCase();
+
+  return (
+    fileType?.startsWith("image/") ||
+    ["png", "jpg", "jpeg", "webp", "gif"].includes(extension || "")
+  );
+};
+
 const SubmissionReviewPage = async ({
   params,
 }: {
@@ -80,11 +102,34 @@ const SubmissionReviewPage = async ({
               Archivo subido por {submission.student.name} {submission.student.surname}
             </p>
           </div>
-          <iframe
-            src={submission.filePath}
-            title={submission.fileName}
-            className="h-[75vh] w-full rounded-md border border-gray-200"
-          />
+          {canPreviewFile(submission.fileName, submission.fileType) ? (
+            isImageFile(submission.fileName, submission.fileType) ? (
+              <div className="flex min-h-[60vh] items-center justify-center rounded-md border border-gray-200 bg-gray-50 p-4">
+                <img
+                  src={submission.filePath}
+                  alt={submission.fileName}
+                  className="max-h-[70vh] max-w-full object-contain"
+                />
+              </div>
+            ) : (
+              <iframe
+                src={submission.filePath}
+                title={submission.fileName}
+                className="h-[75vh] w-full rounded-md border border-gray-200"
+              />
+            )
+          ) : (
+            <div className="flex min-h-[50vh] flex-col items-center justify-center rounded-md border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
+              <p className="text-lg font-semibold text-gray-700">
+                Vista previa no disponible para este tipo de archivo.
+              </p>
+              <p className="mt-2 max-w-md text-sm text-gray-500">
+                Word, Excel y PowerPoint no se pueden visualizar directamente en el
+                navegador desde esta pagina. Usa el boton de abajo solo si decides
+                abrirlo o descargarlo.
+              </p>
+            </div>
+          )}
           <a
             href={submission.filePath}
             target="_blank"

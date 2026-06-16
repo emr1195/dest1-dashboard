@@ -5,6 +5,28 @@ import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+const canPreviewFile = (fileName: string, fileType?: string | null) => {
+  const extension = fileName.split(".").pop()?.toLowerCase();
+
+  return (
+    fileType?.startsWith("image/") ||
+    fileType === "application/pdf" ||
+    fileType?.startsWith("text/") ||
+    ["pdf", "png", "jpg", "jpeg", "webp", "gif", "txt", "csv"].includes(
+      extension || ""
+    )
+  );
+};
+
+const isImageFile = (fileName: string, fileType?: string | null) => {
+  const extension = fileName.split(".").pop()?.toLowerCase();
+
+  return (
+    fileType?.startsWith("image/") ||
+    ["png", "jpg", "jpeg", "webp", "gif"].includes(extension || "")
+  );
+};
+
 const AssignmentDetailPage = async ({
   params,
   searchParams,
@@ -97,23 +119,51 @@ const AssignmentDetailPage = async ({
           <div className="rounded-md border border-gray-200 p-4">
             <h2 className="text-base font-semibold">Documento de la tarea</h2>
             {selectedFile ? (
-              <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-700">
-                    {selectedFile.fileName}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Revisa el documento original desde el boton.
-                  </p>
+              <div className="mt-4 flex flex-col gap-4">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">
+                      {selectedFile.fileName}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Visualiza el documento antes de decidir si quieres abrirlo o descargarlo.
+                    </p>
+                  </div>
+                  <a
+                    href={selectedFile.filePath}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-max rounded-md bg-lamaSky px-5 py-2 text-sm font-semibold text-white"
+                  >
+                    Abrir o descargar
+                  </a>
                 </div>
-                <a
-                  href={selectedFile.filePath}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-max rounded-md bg-lamaSky px-5 py-2 text-sm font-semibold text-white"
-                >
-                  Ir al documento
-                </a>
+                {canPreviewFile(selectedFile.fileName, selectedFile.fileType) ? (
+                  isImageFile(selectedFile.fileName, selectedFile.fileType) ? (
+                    <div className="flex min-h-[50vh] items-center justify-center rounded-md border border-gray-200 bg-gray-50 p-4">
+                      <img
+                        src={selectedFile.filePath}
+                        alt={selectedFile.fileName}
+                        className="max-h-[65vh] max-w-full object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <iframe
+                      src={selectedFile.filePath}
+                      title={selectedFile.fileName}
+                      className="h-[65vh] w-full rounded-md border border-gray-200"
+                    />
+                  )
+                ) : (
+                  <div className="flex min-h-[40vh] flex-col items-center justify-center rounded-md border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
+                    <p className="text-lg font-semibold text-gray-700">
+                      Vista previa no disponible para este tipo de archivo.
+                    </p>
+                    <p className="mt-2 max-w-md text-sm text-gray-500">
+                      Usa el boton superior solo si decides abrirlo o descargarlo.
+                    </p>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="mt-4 text-sm text-gray-500">

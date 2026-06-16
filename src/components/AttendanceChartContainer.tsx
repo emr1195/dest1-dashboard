@@ -10,23 +10,7 @@ const AttendanceChartContainer = async () => {
     console.error("No se pudo sincronizar la asistencia para la grafica.", error);
   }
 
-  const [latestStudentAttendance, latestLeaderAttendance] = await Promise.all([
-    prisma.attendance.findFirst({
-      orderBy: { date: "desc" },
-      select: { date: true },
-    }),
-    prisma.liderAttendance.findFirst({
-      orderBy: { date: "desc" },
-      select: { date: true },
-    }),
-  ]);
-
-  const referenceDate = [
-    latestStudentAttendance?.date,
-    latestLeaderAttendance?.date,
-  ]
-    .filter((date): date is Date => Boolean(date))
-    .sort((a, b) => b.getTime() - a.getTime())[0] || new Date();
+  const referenceDate = new Date();
   const dayOfWeek = referenceDate.getDay();
   const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
@@ -34,15 +18,19 @@ const AttendanceChartContainer = async () => {
   lastMonday.setDate(referenceDate.getDate() - daysSinceMonday);
   lastMonday.setHours(0, 0, 0, 0);
 
-  const nextMonday = new Date(lastMonday);
-  nextMonday.setDate(lastMonday.getDate() + 7);
+  const weekStartKey = lastMonday.toISOString().slice(0, 10);
+  const weekStart = new Date(`${weekStartKey}T00:00:00.000Z`);
+  const nextMonday = new Date(weekStart);
+  nextMonday.setUTCDate(weekStart.getUTCDate() + 7);
+  const now = new Date();
 
   const [studentAttendance, leaderAttendance] = await Promise.all([
     prisma.attendance.findMany({
       where: {
         date: {
-          gte: lastMonday,
+          gte: weekStart,
           lt: nextMonday,
+          lte: now,
         },
       },
       select: {
@@ -53,8 +41,9 @@ const AttendanceChartContainer = async () => {
     prisma.liderAttendance.findMany({
       where: {
         date: {
-          gte: lastMonday,
+          gte: weekStart,
           lt: nextMonday,
+          lte: now,
         },
       },
       select: {
@@ -68,35 +57,39 @@ const AttendanceChartContainer = async () => {
   // console.log(data)
 
   const daysOfWeek = ["Lun", "Mar", "Mie", "Jue", "Vie"];
+  const weekDays = daysOfWeek.map((name, index) => {
+    const date = new Date(weekStart);
+    date.setUTCDate(weekStart.getUTCDate() + index);
 
-  const attendanceMap: { [key: string]: { present: number; absent: number } } =
-    {
-      Lun: { present: 0, absent: 0 },
-      Mar: { present: 0, absent: 0 },
-      Mie: { present: 0, absent: 0 },
-      Jue: { present: 0, absent: 0 },
-      Vie: { present: 0, absent: 0 },
+    return {
+      name,
+      dateKey: date.toISOString().slice(0, 10),
+      dateLabel: String(date.getUTCDate()).padStart(2, "0"),
     };
+  });
+
+  const attendanceMap = Object.fromEntries(
+    weekDays.map((day) => [day.dateKey, { present: 0, absent: 0 }])
+  ) as { [key: string]: { present: number; absent: number } };
 
   resData.forEach((item) => {
-    const itemDate = new Date(item.date);
-    const dayOfWeek = itemDate.getUTCDay();
-    
-    if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-      const dayName = daysOfWeek[dayOfWeek - 1];
+    const dateKey = item.date.toISOString().slice(0, 10);
+    const attendanceDay = attendanceMap[dateKey];
 
+    if (attendanceDay) {
       if (item.present) {
-        attendanceMap[dayName].present += 1;
+        attendanceDay.present += 1;
       } else {
-        attendanceMap[dayName].absent += 1;
+        attendanceDay.absent += 1;
       }
     }
   });
 
-  const data = daysOfWeek.map((day) => ({
-    name: day,
-    present: attendanceMap[day].present,
-    absent: attendanceMap[day].absent,
+  const data = weekDays.map((day) => ({
+    name: day.name,
+    dateLabel: day.dateLabel,
+    present: attendanceMap[day.dateKey].present,
+    absent: attendanceMap[day.dateKey].absent,
   }));
 
   return (

@@ -2,7 +2,6 @@
 import {
   BarChart,
   Bar,
-  Rectangle,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -14,8 +13,31 @@ import {
 const AttendanceChart = ({
   data,
 }: {
-  data: { name: string; present: number; absent: number }[];
+  data: { name: string; dateLabel: string; present: number; absent: number }[];
 }) => {
+  const renderXAxisTick = ({
+    x,
+    y,
+    payload,
+  }: {
+    x?: number;
+    y?: number;
+    payload?: { value: string; index: number };
+  }) => {
+    const item = payload ? data[payload.index] : null;
+
+    return (
+      <g transform={`translate(${x || 0},${y || 0})`}>
+        <text x={0} y={0} textAnchor="middle" fill="#6B7280" fontSize={14}>
+          {payload?.value}
+        </text>
+        <text x={0} y={18} textAnchor="middle" fill="#6B7280" fontSize={13}>
+          {item?.dateLabel}
+        </text>
+      </g>
+    );
+  };
+
   return (
     <ResponsiveContainer width="100%" height="90%">
       <BarChart
@@ -30,12 +52,20 @@ const AttendanceChart = ({
         <XAxis
           dataKey="name"
           axisLine={false}
-          tick={{ fill: "#6B7280" }}
+          interval={0}
+          tick={renderXAxisTick}
           tickLine={false}
+          height={44}
         />
         <YAxis axisLine={false} tick={false} tickLine={false} width={0} />
         <Tooltip
           contentStyle={{ borderRadius: "10px", borderColor: "lightgray" }}
+          labelFormatter={(label, payload) => {
+            const item = payload?.[0]?.payload as
+              | { dateLabel?: string }
+              | undefined;
+            return item?.dateLabel ? `${label} ${item.dateLabel}` : label;
+          }}
         />
         <Legend
           align="left"
