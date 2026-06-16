@@ -94,23 +94,25 @@
 .event-calendar-card .react-calendar__navigation {
   align-self: center;
   display: grid;
-  grid-template-columns: 42px 1fr 42px;
-  grid-template-rows: auto auto;
-  gap: 14px 8px;
+  grid-template-columns: 48px;
+  grid-template-rows: 44px auto 44px;
+  gap: 12px;
   height: auto;
+  justify-items: start;
   margin: 0;
   min-width: 0;
 }
 
 .event-calendar-card .react-calendar__navigation__label {
-  grid-column: 1 / -1;
+  grid-column: 1;
   grid-row: 2;
   justify-self: start;
   background: transparent !important;
   color: #102033 !important;
-  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  font-size: clamp(1.24rem, 2vw, 1.55rem);
   font-weight: 900;
-  line-height: 0.88;
+  line-height: 1.03;
+  min-width: 120px;
   pointer-events: none;
   text-align: left;
   white-space: normal;
@@ -134,6 +136,7 @@
   font-weight: 800;
   height: 42px;
   justify-content: center;
+  line-height: 1;
   min-width: 42px !important;
   width: 42px;
 }
@@ -144,9 +147,8 @@
 }
 
 .event-calendar-card .react-calendar__navigation__next-button {
-  grid-column: 3;
-  grid-row: 2;
-  align-self: center;
+  grid-column: 1;
+  grid-row: 3;
 }
 
 .event-calendar-card .react-calendar__navigation__arrow:hover,
@@ -268,13 +270,20 @@
     align-items: center;
     grid-template-columns: 42px 1fr 42px;
     grid-template-rows: auto;
+    justify-items: center;
   }
 
   .event-calendar-card .react-calendar__navigation__label {
     grid-column: 2;
     grid-row: 1;
     justify-self: center;
+    min-width: 0;
     text-align: center;
+  }
+
+  .event-calendar-card .react-calendar__navigation__prev-button {
+    grid-column: 1;
+    grid-row: 1;
   }
 
   .event-calendar-card .react-calendar__navigation__next-button {

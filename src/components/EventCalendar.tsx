@@ -32,14 +32,22 @@ const EventCalendar = () => {
           value={value}
           next2Label={null}
           prev2Label={null}
-          prevLabel={<span aria-hidden="true">&lt;</span>}
+          prevLabel={<span aria-hidden="true">^</span>}
+          formatMonthYear={(_, date) =>
+            new Intl.DateTimeFormat("es-PA", {
+              month: "long",
+              year: "numeric",
+            })
+              .format(date)
+              .replace(/^./, (firstLetter) => firstLetter.toUpperCase())
+          }
           formatShortWeekday={(_, date) =>
             new Intl.DateTimeFormat("es-PA", { weekday: "short" })
               .format(date)
               .replace(".", "")
               .toUpperCase()
           }
-          nextLabel={<span aria-hidden="true">&gt;</span>}
+          nextLabel={<span aria-hidden="true">v</span>}
         />
         <div className="event-calendar-footer">
           <span className="event-calendar-selected-label">
