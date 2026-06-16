@@ -452,8 +452,8 @@ const AssignmentListPage = async ({
                       <Image
                         src={awardImage.filePath}
                         alt=""
-                        width={34}
-                        height={34}
+                        width={42}
+                        height={42}
                         unoptimized
                         className="h-9 w-9 shrink-0 rounded-sm object-contain"
                       />
