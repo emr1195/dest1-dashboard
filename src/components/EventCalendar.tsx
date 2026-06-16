@@ -26,6 +26,7 @@ const EventCalendar = () => {
     <div className="event-calendar-shell">
       <div className="event-calendar-card">
         <Calendar
+          className="flex"
           locale="es-ES"
           onChange={onChange}
           value={value}
