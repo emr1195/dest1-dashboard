@@ -91,12 +91,54 @@
   align-items: center;
 }
 
+.event-calendar-month-nav {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.event-calendar-month-label {
+  color: #102033;
+  display: flex;
+  flex-direction: column;
+  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  font-weight: 900;
+  line-height: 0.95;
+  text-transform: capitalize;
+}
+
+.event-calendar-month-arrows {
+  display: flex;
+  gap: 10px;
+}
+
+.event-calendar-month-arrows button {
+  align-items: center;
+  background: #fffdfa;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  color: #102033;
+  display: inline-flex;
+  font-size: 1.35rem;
+  font-weight: 800;
+  height: 42px;
+  justify-content: center;
+  line-height: 1;
+  width: 42px;
+}
+
+.event-calendar-month-arrows button:hover,
+.event-calendar-month-arrows button:focus {
+  background: #f8fafc;
+}
+
 .event-calendar-card .react-calendar__navigation {
   align-self: center;
   display: grid;
-  grid-template-columns: 48px;
-  grid-template-rows: 44px auto 44px;
-  gap: 12px;
+  grid-template-columns: 42px 42px;
+  grid-template-rows: auto 42px;
+  gap: 12px 10px;
   height: auto;
   justify-items: start;
   margin: 0;
@@ -104,15 +146,15 @@
 }
 
 .event-calendar-card .react-calendar__navigation__label {
-  grid-column: 1;
-  grid-row: 2;
+  grid-column: 1 / -1;
+  grid-row: 1;
   justify-self: start;
   background: transparent !important;
   color: #102033 !important;
-  font-size: clamp(1.24rem, 2vw, 1.55rem);
+  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
   font-weight: 900;
-  line-height: 1.03;
-  min-width: 120px;
+  line-height: 0.95;
+  min-width: 96px;
   pointer-events: none;
   text-align: left;
   white-space: normal;
@@ -123,6 +165,7 @@
   display: block;
   font-weight: 900;
   text-transform: capitalize;
+  white-space: pre-line;
 }
 
 .event-calendar-card .react-calendar__navigation__arrow {
@@ -147,8 +190,8 @@
 }
 
 .event-calendar-card .react-calendar__navigation__next-button {
-  grid-column: 1;
-  grid-row: 3;
+  grid-column: 2;
+  grid-row: 2;
 }
 
 .event-calendar-card .react-calendar__navigation__arrow:hover,
@@ -266,15 +309,24 @@
     row-gap: 18px;
   }
 
+  .event-calendar-month-nav {
+    align-items: center;
+  }
+
+  .event-calendar-month-label {
+    text-align: center;
+  }
+
   .event-calendar-card .react-calendar__navigation {
     align-items: center;
-    grid-template-columns: 42px 1fr 42px;
-    grid-template-rows: auto;
+    grid-template-columns: 42px 42px;
+    grid-template-rows: auto 42px;
+    justify-content: center;
     justify-items: center;
   }
 
   .event-calendar-card .react-calendar__navigation__label {
-    grid-column: 2;
+    grid-column: 1 / -1;
     grid-row: 1;
     justify-self: center;
     min-width: 0;
@@ -283,12 +335,12 @@
 
   .event-calendar-card .react-calendar__navigation__prev-button {
     grid-column: 1;
-    grid-row: 1;
+    grid-row: 2;
   }
 
   .event-calendar-card .react-calendar__navigation__next-button {
-    grid-column: 3;
-    grid-row: 1;
+    grid-column: 2;
+    grid-row: 2;
   }
 }
 
