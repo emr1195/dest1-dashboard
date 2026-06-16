@@ -13,10 +13,10 @@ type SyncResult = {
 const FirebaseAttendanceSync = () => {
   const router = useRouter();
   const syncingRef = useRef(false);
-  const [message, setMessage] = useState(
+  const [, setMessage] = useState(
     "Conectando con el control de asistencia..."
   );
-  const [hasError, setHasError] = useState(false);
+  const [, setHasError] = useState(false);
 
   const synchronize = useCallback(
     async (showProgress = false) => {
@@ -65,20 +65,8 @@ const FirebaseAttendanceSync = () => {
     return () => window.clearInterval(interval);
   }, [synchronize]);
 
-  return (
-    <div
-      className={`mb-5 rounded-md border px-4 py-3 text-sm ${
-        hasError
-          ? "border-red-200 bg-red-50 text-red-700"
-          : "border-emerald-200 bg-emerald-50 text-emerald-800"
-      }`}
-    >
-      <div>
-        <p className="font-semibold">Control de asistencia del Destacamento 1</p>
-        <p className="mt-1 text-xs opacity-80">{message}</p>
-      </div>
-    </div>
-  );
+  // Sincronizacion silenciosa: el aviso visual queda oculto por ahora.
+  return null;
 };
 
 export default FirebaseAttendanceSync;
