@@ -96,7 +96,7 @@ const getDeadlineStatus = (dueDate: Date) => {
   }
 
   return {
-    label: "A tiempo",
+    label: "",
     className: "border-green-200 bg-green-100 text-green-700",
   };
 };
@@ -487,7 +487,11 @@ const AssignmentListPage = async ({
                     >
                       <span className="text-xs font-medium">Fecha limite de entrega</span>
                       <span className="font-semibold">{formatDeadline(assignment.dueDate)}</span>
-                      <span className="text-xs font-semibold">{deadlineStatus.label}</span>
+                      {deadlineStatus.label && (
+                        <span className="text-xs font-semibold">
+                          {deadlineStatus.label}
+                        </span>
+                      )}
                     </div>
                   )}
                   {canManageAssignment && (

@@ -1,31 +1,17 @@
 import { getCurrentUser } from "@/lib/auth";
 import { translateDisplayText } from "@/lib/displayText";
+import {
+  canPreviewFile,
+  getOfficePreviewUrl,
+  getPublicBaseUrl,
+  isImageFile,
+  isOfficeFile,
+} from "@/lib/filePreview";
 import { getAccessibleStudentProfileIdsForParent } from "@/lib/guardianLinks";
 import prisma from "@/lib/prisma";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-
-const canPreviewFile = (fileName: string, fileType?: string | null) => {
-  const extension = fileName.split(".").pop()?.toLowerCase();
-
-  return (
-    fileType?.startsWith("image/") ||
-    fileType === "application/pdf" ||
-    fileType?.startsWith("text/") ||
-    ["pdf", "png", "jpg", "jpeg", "webp", "gif", "txt", "csv"].includes(
-      extension || ""
-    )
-  );
-};
-
-const isImageFile = (fileName: string, fileType?: string | null) => {
-  const extension = fileName.split(".").pop()?.toLowerCase();
-
-  return (
-    fileType?.startsWith("image/") ||
-    ["png", "jpg", "jpeg", "webp", "gif"].includes(extension || "")
-  );
-};
 
 const AssignmentDetailPage = async ({
   params,
@@ -82,6 +68,17 @@ const AssignmentDetailPage = async ({
   const selectedFile =
     documentFiles.find((file) => file.id === searchParams.file) ||
     documentFiles[0];
+  const headerList = headers();
+  const publicBaseUrl = getPublicBaseUrl(
+    headerList.get("host"),
+    headerList.get("x-forwarded-proto")
+  );
+  const selectedFilePreviewSrc =
+    selectedFile && isOfficeFile(selectedFile.fileName, selectedFile.fileType)
+      ? getOfficePreviewUrl(
+          `${publicBaseUrl}/api/public-files/assignment-file/${selectedFile.id}`
+        )
+      : selectedFile?.filePath;
 
   return (
     <div className="flex-1 p-4">
@@ -149,7 +146,7 @@ const AssignmentDetailPage = async ({
                     </div>
                   ) : (
                     <iframe
-                      src={selectedFile.filePath}
+                      src={selectedFilePreviewSrc}
                       title={selectedFile.fileName}
                       className="h-[65vh] w-full rounded-md border border-gray-200"
                     />

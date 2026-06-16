@@ -1,30 +1,16 @@
 import SubmissionReviewForm from "@/components/SubmissionReviewForm";
 import { getCurrentUser } from "@/lib/auth";
+import {
+  canPreviewFile,
+  getOfficePreviewUrl,
+  getPublicBaseUrl,
+  isImageFile,
+  isOfficeFile,
+} from "@/lib/filePreview";
 import prisma from "@/lib/prisma";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-
-const canPreviewFile = (fileName: string, fileType?: string | null) => {
-  const extension = fileName.split(".").pop()?.toLowerCase();
-
-  return (
-    fileType?.startsWith("image/") ||
-    fileType === "application/pdf" ||
-    fileType?.startsWith("text/") ||
-    ["pdf", "png", "jpg", "jpeg", "webp", "gif", "txt", "csv"].includes(
-      extension || ""
-    )
-  );
-};
-
-const isImageFile = (fileName: string, fileType?: string | null) => {
-  const extension = fileName.split(".").pop()?.toLowerCase();
-
-  return (
-    fileType?.startsWith("image/") ||
-    ["png", "jpg", "jpeg", "webp", "gif"].includes(extension || "")
-  );
-};
 
 const SubmissionReviewPage = async ({
   params,
@@ -69,6 +55,15 @@ const SubmissionReviewPage = async ({
   const existingResult = submission.assignment.results.find(
     (result) => result.studentId === submission.studentId
   );
+  const headerList = headers();
+  const publicBaseUrl = getPublicBaseUrl(
+    headerList.get("host"),
+    headerList.get("x-forwarded-proto")
+  );
+  const publicFileUrl = `${publicBaseUrl}/api/public-files/assignment-submission/${submission.id}`;
+  const previewSrc = isOfficeFile(submission.fileName, submission.fileType)
+    ? getOfficePreviewUrl(publicFileUrl)
+    : submission.filePath;
 
   return (
     <div className="flex-1 p-4">
@@ -113,7 +108,7 @@ const SubmissionReviewPage = async ({
               </div>
             ) : (
               <iframe
-                src={submission.filePath}
+                src={previewSrc}
                 title={submission.fileName}
                 className="h-[75vh] w-full rounded-md border border-gray-200"
               />
@@ -124,9 +119,7 @@ const SubmissionReviewPage = async ({
                 Vista previa no disponible para este tipo de archivo.
               </p>
               <p className="mt-2 max-w-md text-sm text-gray-500">
-                Word, Excel y PowerPoint no se pueden visualizar directamente en el
-                navegador desde esta pagina. Usa el boton de abajo solo si decides
-                abrirlo o descargarlo.
+                Usa el boton de abajo solo si decides abrirlo o descargarlo.
               </p>
             </div>
           )}

@@ -1,9 +1,14 @@
 import Image from "next/image";
+import Link from "next/link";
 import AttendanceChart from "./AttendanceChart";
 import { syncFirebaseAttendance } from "@/lib/firebaseAttendanceSync";
 import prisma from "@/lib/prisma";
 
-const AttendanceChartContainer = async () => {
+const AttendanceChartContainer = async ({
+  weekOffset = 0,
+}: {
+  weekOffset?: number;
+} = {}) => {
   try {
     await syncFirebaseAttendance();
   } catch (error) {
@@ -11,6 +16,7 @@ const AttendanceChartContainer = async () => {
   }
 
   const referenceDate = new Date();
+  referenceDate.setUTCDate(referenceDate.getUTCDate() + weekOffset * 7);
   const dayOfWeek = referenceDate.getDay();
   const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
 
@@ -99,6 +105,32 @@ const AttendanceChartContainer = async () => {
         <Image src="/moreDark.png" alt="" width={20} height={20} />
       </div>
       <AttendanceChart data={data}/>
+      <div className="mt-2 flex items-center justify-center gap-5 text-sm font-semibold text-gray-500">
+        <Link
+          href={`/admin?attendanceWeek=${weekOffset - 1}`}
+          className="rounded-full border border-gray-200 px-3 py-1 hover:border-lamaSky hover:text-lamaSky"
+          aria-label="Semana anterior"
+        >
+          &lt;
+        </Link>
+        <span>Semana</span>
+        {weekOffset < 0 ? (
+          <Link
+            href={`/admin?attendanceWeek=${weekOffset + 1}`}
+            className="rounded-full border border-gray-200 px-3 py-1 hover:border-lamaSky hover:text-lamaSky"
+            aria-label="Semana siguiente"
+          >
+            &gt;
+          </Link>
+        ) : (
+          <span
+            className="rounded-full border border-gray-200 px-3 py-1 text-gray-300"
+            aria-label="Semana siguiente no disponible"
+          >
+            &gt;
+          </span>
+        )}
+      </div>
     </div>
   );
 };

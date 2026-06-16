@@ -12,6 +12,10 @@ const AdminPage = async ({
 }: {
   searchParams: { [keys: string]: string | undefined };
 }) => {
+  const attendanceWeek = Number(searchParams.attendanceWeek || 0);
+  const safeAttendanceWeek = Number.isFinite(attendanceWeek)
+    ? attendanceWeek
+    : 0;
   const { from, to } = currentFinanceYearRange();
   const financeTransactions = await prisma.financeTransaction.findMany({
     where: { date: { gte: from, lt: to } },
@@ -38,7 +42,7 @@ const AdminPage = async ({
           </div>
           {/* ATTENDANCE CHART */}
           <div className="w-full lg:w-2/3 h-[450px]">
-            <AttendanceChartContainer />
+            <AttendanceChartContainer weekOffset={safeAttendanceWeek} />
           </div>
         </div>
         {/* BOTTOM CHART */}

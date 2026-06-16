@@ -1,30 +1,16 @@
 import { getCurrentUser } from "@/lib/auth";
+import {
+  canPreviewFile,
+  getOfficePreviewUrl,
+  getPublicBaseUrl,
+  isImageFile,
+  isOfficeFile,
+} from "@/lib/filePreview";
 import { getAccessibleStudentProfileIdsForParent } from "@/lib/guardianLinks";
 import prisma from "@/lib/prisma";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-
-const canPreviewFile = (fileName: string, fileType?: string | null) => {
-  const extension = fileName.split(".").pop()?.toLowerCase();
-
-  return (
-    fileType?.startsWith("image/") ||
-    fileType === "application/pdf" ||
-    fileType?.startsWith("text/") ||
-    ["pdf", "png", "jpg", "jpeg", "webp", "gif", "txt", "csv"].includes(
-      extension || ""
-    )
-  );
-};
-
-const isImageFile = (fileName: string, fileType?: string | null) => {
-  const extension = fileName.split(".").pop()?.toLowerCase();
-
-  return (
-    fileType?.startsWith("image/") ||
-    ["png", "jpg", "jpeg", "webp", "gif"].includes(extension || "")
-  );
-};
 
 const SubmissionPreviewPage = async ({
   params,
@@ -72,6 +58,16 @@ const SubmissionPreviewPage = async ({
   });
 
   if (!submission) notFound();
+
+  const headerList = headers();
+  const publicBaseUrl = getPublicBaseUrl(
+    headerList.get("host"),
+    headerList.get("x-forwarded-proto")
+  );
+  const publicFileUrl = `${publicBaseUrl}/api/public-files/assignment-submission/${submission.id}`;
+  const previewSrc = isOfficeFile(submission.fileName, submission.fileType)
+    ? getOfficePreviewUrl(publicFileUrl)
+    : submission.filePath;
 
   return (
     <div className="flex-1 p-4">
@@ -125,7 +121,7 @@ const SubmissionPreviewPage = async ({
             </div>
           ) : (
             <iframe
-              src={submission.filePath}
+              src={previewSrc}
               title={submission.fileName}
               className="h-[75vh] w-full rounded-md border border-gray-200"
             />
