@@ -455,7 +455,7 @@ const AssignmentListPage = async ({
                         width={42}
                         height={42}
                         unoptimized
-                        className="h-9 w-9 shrink-0 rounded-sm object-contain"
+                        className="h-12 w-12 shrink-0 rounded-sm object-contain"
                       />
                     )}
                     <span>{title}</span>
