@@ -3,6 +3,12 @@ import Link from "next/link";
 import AttendanceChart from "./AttendanceChart";
 import { syncFirebaseAttendance } from "@/lib/firebaseAttendanceSync";
 import prisma from "@/lib/prisma";
+import {
+  addDaysToDateKey,
+  dateKeyToUtcDate,
+  getMondayDateKey,
+  getTodayDateKey,
+} from "@/lib/timeZone";
 
 const AttendanceChartContainer = async ({
   weekOffset = 0,
@@ -15,20 +21,10 @@ const AttendanceChartContainer = async ({
     console.error("No se pudo sincronizar la asistencia para la grafica.", error);
   }
 
-  const referenceDate = new Date();
-  referenceDate.setUTCDate(referenceDate.getUTCDate() + weekOffset * 7);
-  const dayOfWeek = referenceDate.getDay();
-  const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-
-  const lastMonday = new Date(referenceDate);
-  lastMonday.setDate(referenceDate.getDate() - daysSinceMonday);
-  lastMonday.setHours(0, 0, 0, 0);
-
-  const weekStartKey = lastMonday.toISOString().slice(0, 10);
-  const weekStart = new Date(`${weekStartKey}T00:00:00.000Z`);
-  const nextMonday = new Date(weekStart);
-  nextMonday.setUTCDate(weekStart.getUTCDate() + 7);
-  const now = new Date();
+  const referenceDateKey = addDaysToDateKey(getTodayDateKey(), weekOffset * 7);
+  const weekStartKey = getMondayDateKey(referenceDateKey);
+  const weekStart = dateKeyToUtcDate(weekStartKey);
+  const nextMonday = dateKeyToUtcDate(addDaysToDateKey(weekStartKey, 7));
 
   const [studentAttendance, leaderAttendance] = await Promise.all([
     prisma.attendance.findMany({
@@ -36,7 +32,6 @@ const AttendanceChartContainer = async ({
         date: {
           gte: weekStart,
           lt: nextMonday,
-          lte: now,
         },
       },
       select: {
@@ -49,7 +44,6 @@ const AttendanceChartContainer = async ({
         date: {
           gte: weekStart,
           lt: nextMonday,
-          lte: now,
         },
       },
       select: {
@@ -64,12 +58,12 @@ const AttendanceChartContainer = async ({
 
   const daysOfWeek = ["Lun", "Mar", "Mie", "Jue", "Vie"];
   const weekDays = daysOfWeek.map((name, index) => {
-    const date = new Date(weekStart);
-    date.setUTCDate(weekStart.getUTCDate() + index);
+    const dateKey = addDaysToDateKey(weekStartKey, index);
+    const date = dateKeyToUtcDate(dateKey);
 
     return {
       name,
-      dateKey: date.toISOString().slice(0, 10),
+      dateKey,
       dateLabel: String(date.getUTCDate()).padStart(2, "0"),
     };
   });

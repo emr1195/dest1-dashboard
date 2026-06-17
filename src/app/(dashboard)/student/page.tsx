@@ -5,23 +5,10 @@ import Performance from "@/components/Performance";
 import ProfileGroupCard from "@/components/ProfileGroupCard";
 import ProfileInfoCard from "@/components/ProfileInfoCard";
 import { getCurrentUser } from "@/lib/auth";
+import { getAge as getStudentAge } from "@/lib/badgeCatalog";
 import { getLeaderGroupOption } from "@/lib/roles";
 import prisma from "@/lib/prisma";
 import { notFound, redirect } from "next/navigation";
-
-const getStudentAge = (birthday: Date) => {
-  const today = new Date();
-  let age = today.getFullYear() - birthday.getFullYear();
-  const birthdayThisYear = new Date(
-    today.getFullYear(),
-    birthday.getMonth(),
-    birthday.getDate()
-  );
-
-  if (today < birthdayThisYear) age -= 1;
-
-  return age;
-};
 
 const getStudentGroup = (age: number) => {
   if (age >= 5 && age <= 7) return { name: "Navegantes", icon: "/navegantes-card.png" };

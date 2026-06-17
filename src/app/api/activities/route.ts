@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { dateKeyToUtcDate } from "@/lib/timeZone";
 import { fileToDataUrl } from "@/lib/uploadStorage";
 
 const savePoster = async (file: File) => {
@@ -23,7 +24,7 @@ const activityInput = async (formData: FormData, requireImage: boolean) => {
     throw new Error("Nombre, descripcion y fecha son requeridos.");
   }
 
-  const eventDate = new Date(`${date}T12:00:00`);
+  const eventDate = dateKeyToUtcDate(date, 12);
   if (Number.isNaN(eventDate.getTime())) {
     throw new Error("Selecciona una fecha valida.");
   }

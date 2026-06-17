@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { getTodayDateKey } from "@/lib/timeZone";
 
 type AttendanceRecord = {
   id: number;
@@ -22,11 +23,7 @@ export type AttendancePerson = {
   records: AttendanceRecord[];
 };
 
-const todayValue = () => {
-  const date = new Date();
-  const offset = date.getTimezoneOffset() * 60000;
-  return new Date(date.getTime() - offset).toISOString().slice(0, 10);
-};
+const todayValue = () => getTodayDateKey();
 
 const groupOrder = ["Navegantes", "Pioneros", "Seguidores", "Exploradores", "Sin grupo asignado"];
 

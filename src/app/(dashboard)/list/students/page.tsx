@@ -19,6 +19,7 @@ import Link from "next/link";
 
 
 import { getCurrentUser } from "@/lib/auth";
+import { getAge as getStudentAge } from "@/lib/badgeCatalog";
 
 
 type StudentList = Muchacho & {
@@ -44,20 +45,6 @@ const groupOrder = [
 ] as const;
 
 type GroupKey = (typeof groupOrder)[number];
-
-const getStudentAge = (birthday: Date) => {
-  const today = new Date();
-  let age = today.getFullYear() - birthday.getFullYear();
-  const birthdayThisYear = new Date(
-    today.getFullYear(),
-    birthday.getMonth(),
-    birthday.getDate()
-  );
-
-  if (today < birthdayThisYear) age -= 1;
-
-  return age;
-};
 
 const getStudentGroup = (birthday: Date) => {
   const age = getStudentAge(birthday);

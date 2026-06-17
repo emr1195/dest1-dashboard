@@ -7,6 +7,7 @@ import TableSearch from "@/components/TableSearch";
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
+import { dateKeyToUtcDate, getTodayDateKey } from "@/lib/timeZone";
 import { Event, Prisma } from "@prisma/client";
 import Image from "next/image";
 
@@ -28,8 +29,7 @@ const EventListPage = async ({
     ];
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = dateKeyToUtcDate(getTodayDateKey());
 
   const allEvents = await prisma.event.findMany({ where: query });
   const sortedEvents = allEvents.sort((first, second) => {

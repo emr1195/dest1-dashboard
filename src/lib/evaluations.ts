@@ -1,4 +1,5 @@
 import prisma from "@/lib/prisma";
+import { dateKeyToUtcDate, getTodayDateKey } from "@/lib/timeZone";
 
 export type EvaluationUserType = "student" | "teacher";
 
@@ -14,10 +15,10 @@ export type EvaluationRecord = {
   createdAt: string;
 };
 
-export const isEvaluationDay = (date = new Date()) => {
+export const isEvaluationDay = (date = dateKeyToUtcDate(getTodayDateKey(), 12)) => {
   const activeMonths = [2, 5, 8, 11];
 
-  return date.getDate() === 1 && activeMonths.includes(date.getMonth());
+  return date.getUTCDate() === 1 && activeMonths.includes(date.getUTCMonth());
 };
 
 const toAspectScores = (value: unknown) =>

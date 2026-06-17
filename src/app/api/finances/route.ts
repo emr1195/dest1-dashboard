@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { dateKeyToUtcDate } from "@/lib/timeZone";
 import { fileToDataUrl } from "@/lib/uploadStorage";
 
 const saveReceipt = async (file: File) => {
@@ -36,7 +37,7 @@ const validateFinancePayload = (formData: FormData) => {
     throw new Error("Completa el nombre, descripcion, categoria, monto y fecha del movimiento.");
   }
 
-  const date = new Date(`${dateValue}T12:00:00`);
+  const date = dateKeyToUtcDate(dateValue, 12);
   if (Number.isNaN(date.getTime())) {
     throw new Error("Selecciona una fecha valida.");
   }

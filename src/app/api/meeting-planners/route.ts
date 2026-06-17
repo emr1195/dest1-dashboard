@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { dateKeyToUtcDate } from "@/lib/timeZone";
 
 const plannerGroups = ["navegantes", "pioneros", "seguidores", "exploradores"];
 const plannerItemNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -28,7 +29,7 @@ const parsePlannerPayload = (payload: unknown) => {
     throw new Error("Selecciona la fecha de la semana.");
   }
 
-  const meetingDate = new Date(`${meetingDateValue}T12:00:00`);
+  const meetingDate = dateKeyToUtcDate(meetingDateValue, 12);
   if (Number.isNaN(meetingDate.getTime())) {
     throw new Error("Selecciona una fecha valida.");
   }

@@ -1,10 +1,10 @@
 import ActivityPreview from "./ActivityPreview";
 import prisma from "@/lib/prisma";
+import { dateKeyToUtcDate, getTodayDateKey } from "@/lib/timeZone";
 import Image from "next/image";
 
 const EventList = async () => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const today = dateKeyToUtcDate(getTodayDateKey());
 
   const events = await prisma.event.findMany({
     orderBy: { startTime: "asc" },

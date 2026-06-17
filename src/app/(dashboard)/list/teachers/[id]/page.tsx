@@ -5,23 +5,10 @@ import Performance from "@/components/Performance";
 import ProfileGroupCard from "@/components/ProfileGroupCard";
 import ProfileInfoCard from "@/components/ProfileInfoCard";
 import { getCurrentUser } from "@/lib/auth";
+import { getAge as getStudentAge } from "@/lib/badgeCatalog";
 import prisma from "@/lib/prisma";
 import { Lider } from "@prisma/client";
 import { notFound } from "next/navigation";
-
-const getStudentAge = (birthday: Date) => {
-  const today = new Date();
-  let age = today.getFullYear() - birthday.getFullYear();
-  const birthdayThisYear = new Date(
-    today.getFullYear(),
-    birthday.getMonth(),
-    birthday.getDate()
-  );
-
-  if (today < birthdayThisYear) age -= 1;
-
-  return age;
-};
 
 const getStudentGroup = (birthday: Date) => {
   const age = getStudentAge(birthday);

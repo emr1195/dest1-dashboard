@@ -1,3 +1,5 @@
+import { dateKeyToUtcDate, getTodayDateKey } from "./timeZone";
+
 type FinancialMovement = {
   type: string;
   category?: string | null;
@@ -41,15 +43,16 @@ const formatFinanceDate = (date: Date) =>
     day: "2-digit",
     month: "short",
     year: "numeric",
+    timeZone: "UTC",
   }).format(date);
 
 export const currentFinanceYearRange = () => {
-  const year = new Date().getFullYear();
+  const year = Number(getTodayDateKey().slice(0, 4));
 
   return {
     year,
-    from: new Date(year, 0, 1),
-    to: new Date(year + 1, 0, 1),
+    from: dateKeyToUtcDate(`${year}-01-01`),
+    to: dateKeyToUtcDate(`${year + 1}-01-01`),
   };
 };
 
@@ -63,7 +66,7 @@ export const getFinanceChartData = (movements: FinancialMovement[]) => {
   }));
 
   movements.forEach((movement) => {
-    const month = movement.date.getMonth();
+    const month = movement.date.getUTCMonth();
     const detail = {
       title: movement.title || "Movimiento financiero",
       category: movement.category || "Sin categoria",

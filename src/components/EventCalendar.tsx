@@ -48,7 +48,13 @@ const EventCalendar = () => {
 
   useEffect(() => {
     if (value instanceof Date) {
-      router.push(`?date=${value}`);
+      const dateKey = [
+        value.getFullYear(),
+        String(value.getMonth() + 1).padStart(2, "0"),
+        String(value.getDate()).padStart(2, "0"),
+      ].join("-");
+
+      router.push(`?date=${dateKey}`);
     }
   }, [value, router]);
 

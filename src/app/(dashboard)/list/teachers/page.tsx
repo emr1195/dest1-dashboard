@@ -18,6 +18,7 @@ import Link from "next/link";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 
 import { getCurrentUser } from "@/lib/auth";
+import { getAge as getStudentAge } from "@/lib/badgeCatalog";
 import { getRankOption, leaderGroupOptions } from "@/lib/roles";
 
 
@@ -31,20 +32,6 @@ const groupIconMap: Record<string, { name: string; icon: string }> = {
   pioneros: { name: "Pioneros", icon: "/pioneros.png" },
   seguidores: { name: "Seguidores", icon: "/seguidores.png" },
   exploradores: { name: "Exploradores", icon: "/exploradores.png" },
-};
-
-const getStudentAge = (birthday: Date) => {
-  const today = new Date();
-  let age = today.getFullYear() - birthday.getFullYear();
-  const birthdayThisYear = new Date(
-    today.getFullYear(),
-    birthday.getMonth(),
-    birthday.getDate()
-  );
-
-  if (today < birthdayThisYear) age -= 1;
-
-  return age;
 };
 
 const getGroupByBirthday = (birthday: Date) => {

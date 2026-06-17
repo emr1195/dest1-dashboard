@@ -2,6 +2,7 @@ import { Prisma, UserSex } from "@prisma/client";
 
 import { hashPassword } from "./password";
 import prisma from "./prisma";
+import { getTodayDateKey } from "./timeZone";
 
 const FIREBASE_SOURCE = "dest1-firebase";
 const FIREBASE_URL =
@@ -91,12 +92,13 @@ const normalizeAge = (value: unknown) => {
 };
 
 const birthdayForAge = (age: number) => {
-  const today = new Date();
+  const [year, month, day] = getTodayDateKey().split("-").map(Number);
+
   return new Date(
     Date.UTC(
-      today.getUTCFullYear() - age,
-      today.getUTCMonth(),
-      today.getUTCDate(),
+      year - age,
+      month - 1,
+      day,
       12
     )
   );

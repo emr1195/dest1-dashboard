@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { dateKeyToUtcDate, getTodayDateKey } from "@/lib/timeZone";
 
 const groupValues = ["navegantes", "pioneros", "seguidores", "exploradores"] as const;
 
@@ -11,9 +12,10 @@ const isGroupValue = (value?: string | null): value is GroupValue =>
   Boolean(value && groupValues.includes(value as GroupValue));
 
 const getAge = (birthday: Date) => {
-  const today = new Date();
-  let age = today.getFullYear() - birthday.getFullYear();
-  const birthdayThisYear = new Date(today.getFullYear(), birthday.getMonth(), birthday.getDate());
+  const [year, month, day] = getTodayDateKey().split("-").map(Number);
+  const today = new Date(Date.UTC(year, month - 1, day, 12));
+  let age = today.getUTCFullYear() - birthday.getUTCFullYear();
+  const birthdayThisYear = new Date(Date.UTC(today.getUTCFullYear(), birthday.getUTCMonth(), birthday.getUTCDate(), 12));
   if (today < birthdayThisYear) age -= 1;
   return age;
 };
@@ -39,9 +41,9 @@ const getResolvedStudentGroupValue = (
 };
 
 const dayRange = (date: string) => {
-  const start = new Date(`${date}T00:00:00`);
-  const end = new Date(`${date}T23:59:59.999`);
-  const recordDate = new Date(`${date}T12:00:00`);
+  const start = dateKeyToUtcDate(date);
+  const end = new Date(`${date}T23:59:59.999Z`);
+  const recordDate = dateKeyToUtcDate(date, 12);
 
   if ([start, end, recordDate].some((value) => Number.isNaN(value.getTime()))) {
     return null;

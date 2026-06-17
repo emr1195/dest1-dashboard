@@ -1,11 +1,12 @@
 import prisma from "@/lib/prisma";
+import { dateKeyToUtcDate, getTodayDateKey } from "@/lib/timeZone";
 
 const StudentAttendanceCard = async ({ id }: { id: string }) => {
   const attendance = await prisma.attendance.findMany({
     where: {
       studentId: id,
       date: {
-        gte: new Date(new Date().getFullYear(), 0, 1),
+        gte: dateKeyToUtcDate(`${getTodayDateKey().slice(0, 4)}-01-01`),
       },
     },
   });

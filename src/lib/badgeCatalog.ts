@@ -1,3 +1,5 @@
+import { getTodayDateKey } from "./timeZone";
+
 export type BadgeCourse = {
   id: string;
   src: string;
@@ -35,12 +37,11 @@ export const studentBadgesByGroup: Record<string, BadgeCourse[]> = {
 };
 
 export const getAge = (birthday: Date) => {
-  const today = new Date();
-  let age = today.getFullYear() - birthday.getFullYear();
+  const [year, month, day] = getTodayDateKey().split("-").map(Number);
+  const today = new Date(Date.UTC(year, month - 1, day, 12));
+  let age = today.getUTCFullYear() - birthday.getUTCFullYear();
   const birthdayThisYear = new Date(
-    today.getFullYear(),
-    birthday.getMonth(),
-    birthday.getDate()
+    Date.UTC(today.getUTCFullYear(), birthday.getUTCMonth(), birthday.getUTCDate(), 12)
   );
 
   if (today < birthdayThisYear) age -= 1;

@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { getAccessibleStudentProfileIdsForParent } from "@/lib/guardianLinks";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
+import { getTodayDateKey } from "@/lib/timeZone";
 import { Prisma } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -27,9 +28,12 @@ const isGroupValue = (value?: string | null): value is GroupValue =>
   Boolean(value && value in groupMetaByValue);
 
 const getAge = (birthday: Date) => {
-  const today = new Date();
-  let age = today.getFullYear() - birthday.getFullYear();
-  const birthdayThisYear = new Date(today.getFullYear(), birthday.getMonth(), birthday.getDate());
+  const [year, month, day] = getTodayDateKey().split("-").map(Number);
+  const today = new Date(Date.UTC(year, month - 1, day, 12));
+  let age = today.getUTCFullYear() - birthday.getUTCFullYear();
+  const birthdayThisYear = new Date(
+    Date.UTC(today.getUTCFullYear(), birthday.getUTCMonth(), birthday.getUTCDate(), 12)
+  );
   if (today < birthdayThisYear) age -= 1;
   return age;
 };
