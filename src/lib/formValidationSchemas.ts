@@ -139,6 +139,12 @@ export const assignmentSchema = z.object({
       message: "Selecciona un puntaje valido!",
     }),
   lessonId: z.coerce.number().optional(),
+  assignmentGroup: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z
+      .enum(["navegantes", "pioneros", "seguidores", "exploradores"])
+      .optional()
+  ),
 });
 
 export type AssignmentSchema = z.infer<typeof assignmentSchema>;

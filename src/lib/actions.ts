@@ -15,26 +15,17 @@ import { randomUUID } from "crypto";
 
 type CurrentState = { success: boolean; error: boolean; id?: number };
 
-const getAssignmentLessonId = async (lessonId?: number) => {
-  if (lessonId) return lessonId;
-
-  const currentUser = await getCurrentUser();
-  const isLeader = currentUser?.role === "teacher";
-
+const getOrCreateAssignmentLesson = async (leader: {
+  id: string;
+  name?: string | null;
+}) => {
   const existingLesson = await prisma.lesson.findFirst({
-    where: isLeader ? { teacherId: currentUser.id } : undefined,
+    where: { teacherId: leader.id },
     select: { id: true },
+    orderBy: { id: "asc" },
   });
 
   if (existingLesson) return existingLesson.id;
-
-  const leader = isLeader
-    ? await prisma.lider.findUnique({ where: { id: currentUser.id } })
-    : await prisma.lider.findFirst();
-
-  if (!leader) {
-    throw new Error("No hay lider disponible para asociar la tarea.");
-  }
 
   const grade =
     (await prisma.grade.findFirst({ orderBy: { level: "asc" } })) ||
@@ -52,7 +43,7 @@ const getAssignmentLessonId = async (lessonId?: number) => {
     }));
 
   const subject =
-    (await prisma.subject.findFirst()) ||
+    (await prisma.subject.findFirst({ where: { name: "Tareas generales" } })) ||
     (await prisma.subject.create({
       data: {
         name: "Tareas generales",
@@ -78,6 +69,65 @@ const getAssignmentLessonId = async (lessonId?: number) => {
   });
 
   return lesson.id;
+};
+
+const getLeaderForAssignmentGroup = async (assignmentGroup?: string) => {
+  if (!assignmentGroup) return null;
+
+  const leaderAccount = await prisma.authUser.findFirst({
+    where: {
+      role: "teacher",
+      leaderGroup: assignmentGroup,
+    },
+    select: { id: true, email: true },
+    orderBy: { createdAt: "asc" },
+  });
+
+  if (!leaderAccount) return null;
+
+  return prisma.lider.findFirst({
+    where: {
+      OR: [
+        { id: leaderAccount.id },
+        ...(leaderAccount.email ? [{ email: leaderAccount.email }] : []),
+      ],
+    },
+    select: { id: true, name: true },
+  });
+};
+
+const getAssignmentLessonId = async (lessonId?: number, assignmentGroup?: string) => {
+  if (lessonId) return lessonId;
+
+  const currentUser = await getCurrentUser();
+  const isLeader = currentUser?.role === "teacher";
+
+  if (currentUser?.role === "admin" && assignmentGroup) {
+    const groupLeader = await getLeaderForAssignmentGroup(assignmentGroup);
+
+    if (!groupLeader) {
+      throw new Error("No hay lider asignado al grupo seleccionado.");
+    }
+
+    return getOrCreateAssignmentLesson(groupLeader);
+  }
+
+  const existingLesson = await prisma.lesson.findFirst({
+    where: isLeader ? { teacherId: currentUser.id } : undefined,
+    select: { id: true },
+  });
+
+  if (existingLesson) return existingLesson.id;
+
+  const leader = isLeader
+    ? await prisma.lider.findUnique({ where: { id: currentUser.id } })
+    : await prisma.lider.findFirst();
+
+  if (!leader) {
+    throw new Error("No hay lider disponible para asociar la tarea.");
+  }
+
+  return getOrCreateAssignmentLesson(leader);
 };
 
 export const createSubject = async (
@@ -534,7 +584,10 @@ export const createAssignment = async (
   data: AssignmentSchema
 ) => {
   try {
-    const lessonId = await getAssignmentLessonId(data.lessonId);
+    const lessonId = await getAssignmentLessonId(
+      data.lessonId,
+      data.assignmentGroup
+    );
 
     const assignment = await prisma.assignment.create({
       data: {

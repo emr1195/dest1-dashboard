@@ -87,6 +87,7 @@ const FormContainer = async ({
         break;
     }
   }
+  relatedData = { ...relatedData, currentRole: role };
 
   return (
     <div>

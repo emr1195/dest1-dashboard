@@ -10,6 +10,7 @@ import {
   assignmentSchema,
   AssignmentSchema,
 } from "@/lib/formValidationSchemas";
+import { leaderGroupOptions } from "@/lib/roles";
 import InputField from "../InputField";
 
 const assignmentCategories = [
@@ -123,6 +124,10 @@ const AssignmentForm = ({
   });
 
   const lessons = relatedData?.lessons || [];
+  const isAdminCreate = type === "create" && relatedData?.currentRole === "admin";
+  const assignableGroups = leaderGroupOptions.filter(
+    (group) => group.value !== "sin-grupo"
+  );
   const defaultLessonId = data?.lessonId || lessons[0]?.id;
 
   return (
@@ -179,12 +184,37 @@ const AssignmentForm = ({
             hidden
           />
         )}
-        {defaultLessonId && (
+        {defaultLessonId && !isAdminCreate && (
           <input
             type="hidden"
             value={defaultLessonId}
             {...register("lessonId")}
           />
+        )}
+        {isAdminCreate && (
+          <div className="flex flex-col gap-2 w-full md:w-1/4">
+            <label className="text-xs text-gray-500">Grupo</label>
+            <select
+              className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+              {...register("assignmentGroup")}
+              defaultValue=""
+              required
+            >
+              <option value="" disabled>
+                Seleccionar
+              </option>
+              {assignableGroups.map((group) => (
+                <option value={group.value} key={group.value}>
+                  {group.label}
+                </option>
+              ))}
+            </select>
+            {errors.assignmentGroup?.message && (
+              <p className="text-xs text-lamaPurple">
+                {errors.assignmentGroup.message.toString()}
+              </p>
+            )}
+          </div>
         )}
         <div className="flex flex-col gap-2 w-full md:w-1/4">
           <label className="text-xs text-gray-500">Categoria</label>
