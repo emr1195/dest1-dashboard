@@ -76,7 +76,7 @@ const SubmissionReviewPage = async ({
             Muchacho: {submission.student.name} {submission.student.surname}
           </p>
           <p className="mt-1 text-sm text-gray-500">
-            {submission.assignment.lesson.subject.name} - Lider{" "}
+            {submission.assignment.category} - Lider{" "}
             {submission.assignment.lesson.teacher.name}{" "}
             {submission.assignment.lesson.teacher.surname}
           </p>

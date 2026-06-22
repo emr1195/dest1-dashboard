@@ -89,7 +89,7 @@ const AssignmentDetailPage = async ({
               {translateDisplayText(assignment.title)}
             </h1>
             <p className="mt-1 text-sm text-gray-500">
-              {translateDisplayText(assignment.lesson.subject.name)} - Lider{" "}
+              {translateDisplayText(assignment.category)} - Lider{" "}
               {assignment.lesson.teacher.name} {assignment.lesson.teacher.surname}
             </p>
           </div>
@@ -109,7 +109,7 @@ const AssignmentDetailPage = async ({
             <textarea
               readOnly
               value={assignment.description || "Sin descripcion."}
-              className="min-h-40 resize-none rounded-md border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700 outline-none"
+              className="min-h-40 resize-none whitespace-pre-line rounded-md border border-gray-200 bg-gray-50 p-4 text-sm leading-6 text-gray-700 outline-none"
             />
           </div>
 

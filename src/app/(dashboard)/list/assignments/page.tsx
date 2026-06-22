@@ -465,11 +465,11 @@ const AssignmentListPage = async ({
                     <span>{title}</span>
                   </h2>
                   <p className="mt-1 text-sm text-gray-500">
-                    {translateDisplayText(assignment.lesson.subject.name)} - Lider{" "}
+                    {translateDisplayText(assignment.category)} - Lider{" "}
                     {assignment.lesson.teacher.name} {assignment.lesson.teacher.surname}
                   </p>
                   {assignment.description && (
-                    <p className="mt-3 max-w-3xl text-sm text-gray-600">
+                    <p className="mt-3 max-w-3xl whitespace-pre-line text-sm leading-6 text-gray-600">
                       {assignment.description}
                     </p>
                   )}
