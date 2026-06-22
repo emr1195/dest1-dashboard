@@ -139,6 +139,10 @@ export const assignmentSchema = z.object({
       message: "Selecciona un puntaje valido!",
     }),
   lessonId: z.coerce.number().optional(),
+  createdById: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string().optional()
+  ),
   assignmentGroup: z.preprocess(
     (value) => (value === "" ? undefined : value),
     z

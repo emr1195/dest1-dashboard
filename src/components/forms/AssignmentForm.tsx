@@ -125,6 +125,8 @@ const AssignmentForm = ({
 
   const lessons = relatedData?.lessons || [];
   const isAdminCreate = type === "create" && relatedData?.currentRole === "admin";
+  const canEditDisplayedLeader = relatedData?.currentRole === "admin";
+  const assignmentCreators = relatedData?.assignmentCreators || [];
   const assignableGroups = leaderGroupOptions.filter(
     (group) => group.value !== "sin-grupo"
   );
@@ -212,6 +214,37 @@ const AssignmentForm = ({
             {errors.assignmentGroup?.message && (
               <p className="text-xs text-lamaPurple">
                 {errors.assignmentGroup.message.toString()}
+              </p>
+            )}
+          </div>
+        )}
+        {canEditDisplayedLeader && (
+          <div className="flex flex-col gap-2 w-full md:w-1/4">
+            <label className="text-xs text-gray-500">Lider mostrado</label>
+            <select
+              className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+              {...register("createdById")}
+              defaultValue={
+                data?.createdById ||
+                relatedData?.currentUserId ||
+                ""
+              }
+            >
+              <option value="" disabled>
+                Seleccionar
+              </option>
+              {assignmentCreators.map(
+                (creator: { id: string; name: string | null; email: string; role: string }) => (
+                  <option value={creator.id} key={creator.id}>
+                    {creator.name || creator.email}{" "}
+                    {creator.role === "admin" ? "(Admin)" : "(Lider)"}
+                  </option>
+                )
+              )}
+            </select>
+            {errors.createdById?.message && (
+              <p className="text-xs text-lamaPurple">
+                {errors.createdById.message.toString()}
               </p>
             )}
           </div>

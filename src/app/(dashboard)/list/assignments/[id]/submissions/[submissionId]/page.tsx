@@ -77,8 +77,8 @@ const SubmissionReviewPage = async ({
           </p>
           <p className="mt-1 text-sm text-gray-500">
             {submission.assignment.category} - Lider{" "}
-            {submission.assignment.lesson.teacher.name}{" "}
-            {submission.assignment.lesson.teacher.surname}
+            {submission.assignment.createdByName ||
+              `${submission.assignment.lesson.teacher.name} ${submission.assignment.lesson.teacher.surname}`}
           </p>
         </div>
         <Link

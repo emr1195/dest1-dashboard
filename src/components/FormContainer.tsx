@@ -80,14 +80,22 @@ const FormContainer = async ({
           },
           select: { id: true, name: true },
         });
-        relatedData = { lessons };
+        const assignmentCreators =
+          role === "admin"
+            ? await prisma.authUser.findMany({
+                where: { role: { in: ["admin", "teacher"] } },
+                select: { id: true, name: true, email: true, role: true },
+                orderBy: [{ role: "asc" }, { name: "asc" }],
+              })
+            : [];
+        relatedData = { lessons, assignmentCreators };
         break;
       }
       default:
         break;
     }
   }
-  relatedData = { ...relatedData, currentRole: role };
+  relatedData = { ...relatedData, currentRole: role, currentUserId };
 
   return (
     <div>

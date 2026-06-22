@@ -90,7 +90,8 @@ const AssignmentDetailPage = async ({
             </h1>
             <p className="mt-1 text-sm text-gray-500">
               {translateDisplayText(assignment.category)} - Lider{" "}
-              {assignment.lesson.teacher.name} {assignment.lesson.teacher.surname}
+              {assignment.createdByName ||
+                `${assignment.lesson.teacher.name} ${assignment.lesson.teacher.surname}`}
             </p>
           </div>
           <Link

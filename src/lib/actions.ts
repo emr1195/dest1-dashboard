@@ -130,6 +130,25 @@ const getAssignmentLessonId = async (lessonId?: number, assignmentGroup?: string
   return getOrCreateAssignmentLesson(leader);
 };
 
+const getAssignmentCreator = async (selectedCreatorId?: string) => {
+  const currentUser = await getCurrentUser();
+  const creatorId =
+    currentUser?.role === "admin" && selectedCreatorId
+      ? selectedCreatorId
+      : currentUser?.id;
+
+  if (!creatorId) return { id: null, name: null };
+
+  const creator = await prisma.authUser.findUnique({
+    where: { id: creatorId },
+    select: { id: true, name: true, email: true },
+  });
+
+  if (!creator) return { id: currentUser?.id || null, name: currentUser?.name || currentUser?.email || null };
+
+  return { id: creator.id, name: creator.name || creator.email };
+};
+
 export const createSubject = async (
   currentState: CurrentState,
   data: SubjectSchema
@@ -584,7 +603,7 @@ export const createAssignment = async (
   data: AssignmentSchema
 ) => {
   try {
-    const currentUser = await getCurrentUser();
+    const creator = await getAssignmentCreator(data.createdById);
     const lessonId = await getAssignmentLessonId(
       data.lessonId,
       data.assignmentGroup
@@ -598,8 +617,8 @@ export const createAssignment = async (
         dueDate: data.dueDate,
         category: data.category,
         points: data.points,
-        createdById: currentUser?.id || null,
-        createdByName: currentUser?.name || currentUser?.email || null,
+        createdById: creator.id,
+        createdByName: creator.name,
         lessonId,
       },
     });
@@ -621,6 +640,11 @@ export const updateAssignment = async (
   }
 
   try {
+    const currentUser = await getCurrentUser();
+    const creator =
+      currentUser?.role === "admin" && data.createdById
+        ? await getAssignmentCreator(data.createdById)
+        : null;
     const lessonId = await getAssignmentLessonId(data.lessonId);
 
     const assignment = await prisma.assignment.update({
@@ -634,6 +658,12 @@ export const updateAssignment = async (
         dueDate: data.dueDate,
         category: data.category,
         points: data.points,
+        ...(creator
+          ? {
+              createdById: creator.id,
+              createdByName: creator.name,
+            }
+          : {}),
         lessonId,
       },
     });
