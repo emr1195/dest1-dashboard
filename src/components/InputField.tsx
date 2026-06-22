@@ -26,10 +26,7 @@ const InputField = ({
       <label className="text-xs text-gray-500">{label}</label>
       <input
         type={type}
-        {...register(
-          name,
-          type === "datetime-local" ? { valueAsDate: true } : undefined
-        )}
+        {...register(name)}
         className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
         {...inputProps}
         defaultValue={defaultValue}

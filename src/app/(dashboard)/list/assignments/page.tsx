@@ -74,6 +74,7 @@ const toSubmissionFiles = (
 
 const formatDeadline = (date: Date) =>
   new Intl.DateTimeFormat("es-PA", {
+    timeZone: "America/Panama",
     dateStyle: "short",
     timeStyle: "short",
   }).format(date);
@@ -399,7 +400,7 @@ const AssignmentListPage = async ({
       },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
-      orderBy: { dueDate: "desc" },
+      orderBy: { id: "desc" },
     }),
     prisma.assignment.count({ where: query }),
   ]);

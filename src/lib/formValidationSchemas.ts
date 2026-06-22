@@ -1,5 +1,25 @@
 import { z } from "zod";
 
+const panamaDateTimeLocalToUtc = (value: string) => {
+  const match = value.match(
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/
+  );
+
+  if (!match) return new Date(value);
+
+  const [, year, month, day, hour, minute] = match;
+
+  return new Date(
+    Date.UTC(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hour) + 5,
+      Number(minute)
+    )
+  );
+};
+
 const dateTimeField = (message: string) =>
   z.any().transform((value, ctx) => {
     if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
@@ -7,8 +27,10 @@ const dateTimeField = (message: string) =>
     let date = new Date("");
 
     if (typeof value === "string") {
-      if (value.includes("-")) {
-        date = new Date(value);
+      if (value.includes("T")) {
+        date = panamaDateTimeLocalToUtc(value);
+      } else if (value.includes("-")) {
+        date = new Date(`${value}T05:00:00.000Z`);
       } else {
         const match = value.match(
           /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})$/
