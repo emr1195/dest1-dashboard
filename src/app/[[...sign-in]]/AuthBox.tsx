@@ -275,7 +275,7 @@ const AuthBox = () => {
       <div>
         <h1 className="text-2xl md:text-3xl font-bold text-center">{mode === "signin" ? "Iniciar sesion" : "Crear cuenta"}</h1>
         <p className="text-base text-gray-500 mt-2">
-          {mode === "signin" ? "Ingresa con tu correo o Google." : "Elige tu tipo de cuenta y valida tu codigo."}
+          {mode === "signin" ? "Ingresa con tu correo." : "Elige tu tipo de cuenta y valida tu codigo."}
         </p>
       </div>
 
@@ -563,7 +563,7 @@ const AuthBox = () => {
         </button>
       </form>
 
-      {mode === "signin" && (
+      {/* {mode === "signin" && (
         <>
           <div className="flex items-center gap-3 text-xs text-gray-500">
             <div className="h-px bg-gray-200 flex-1" />
@@ -579,7 +579,7 @@ const AuthBox = () => {
             Ingresar con Google
           </button>
         </>
-      )}
+      )} */}
 
       {mode === "signin" ? (
         <p className="text-base text-gray-500 text-center">
