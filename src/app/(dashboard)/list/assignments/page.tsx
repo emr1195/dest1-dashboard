@@ -400,7 +400,7 @@ const AssignmentListPage = async ({
       },
       take: ITEM_PER_PAGE,
       skip: ITEM_PER_PAGE * (p - 1),
-      orderBy: { id: "desc" },
+      orderBy: { id: "asc" },
     }),
     prisma.assignment.count({ where: query }),
   ]);
