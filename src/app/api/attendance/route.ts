@@ -82,9 +82,11 @@ export const POST = async (req: Request) => {
       );
     }
 
-    const existing = await prisma.liderAttendance.findFirst({
+    const existingRecords = await prisma.liderAttendance.findMany({
       where: { liderId: userId, date: { gte: range.start, lte: range.end } },
+      orderBy: { id: "desc" },
     });
+    const existing = existingRecords[0];
     const record = existing
       ? await prisma.liderAttendance.update({
           where: { id: existing.id },
@@ -93,6 +95,13 @@ export const POST = async (req: Request) => {
       : await prisma.liderAttendance.create({
           data: { liderId: userId, present, date: range.recordDate },
         });
+    const duplicateIds = existingRecords.slice(1).map((item) => item.id);
+
+    if (duplicateIds.length) {
+      await prisma.liderAttendance.deleteMany({
+        where: { id: { in: duplicateIds } },
+      });
+    }
 
     return NextResponse.json(record);
   }
@@ -164,9 +173,11 @@ export const POST = async (req: Request) => {
     }
   }
 
-  const existing = await prisma.attendance.findFirst({
+  const existingRecords = await prisma.attendance.findMany({
     where: { studentId: userId, date: { gte: range.start, lte: range.end } },
+    orderBy: { id: "desc" },
   });
+  const existing = existingRecords[0];
   const record = existing
     ? await prisma.attendance.update({
         where: { id: existing.id },
@@ -175,6 +186,13 @@ export const POST = async (req: Request) => {
     : await prisma.attendance.create({
         data: { studentId: userId, present, date: range.recordDate },
       });
+  const duplicateIds = existingRecords.slice(1).map((item) => item.id);
+
+  if (duplicateIds.length) {
+    await prisma.attendance.deleteMany({
+      where: { id: { in: duplicateIds } },
+    });
+  }
 
   return NextResponse.json(record);
 };

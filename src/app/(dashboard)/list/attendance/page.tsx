@@ -449,7 +449,8 @@ const AttendanceListPage = async ({
             >
               {item.lider.name} {item.lider.surname}
             </Link>
-            <span className="text-xs text-gray-500">{item.lider.email || item.lider.username}</span>
+            {/* Correo oculto temporalmente en asistencia. */}
+            {/* <span className="text-xs text-gray-500">{item.lider.email || item.lider.username}</span> */}
           </div>
         </td>
         <td className="hidden md:table-cell">Lider</td>
@@ -541,7 +542,8 @@ const AttendanceListPage = async ({
           >
             {item.student.name} {item.student.surname}
           </Link>
-          <span className="text-xs text-gray-500">{item.student.email || item.student.username}</span>
+          {/* Correo oculto temporalmente en asistencia. */}
+          {/* <span className="text-xs text-gray-500">{item.student.email || item.student.username}</span> */}
         </div>
       </td>
       {role !== "parent" && <td className="hidden md:table-cell">Muchacho</td>}

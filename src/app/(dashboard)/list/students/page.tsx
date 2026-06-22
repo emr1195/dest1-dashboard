@@ -200,9 +200,10 @@ const role = currentUser?.role;
           <Link href={`/list/students/${item.id}`} className="font-semibold hover:text-lamaSky hover:underline">
             {item.name} {item.surname}
           </Link>
-          <p className="max-w-[150px] truncate text-xs text-gray-500 xl:max-w-[220px]">
+          {/* Correo oculto temporalmente en el listado de tropa. */}
+          {/* <p className="max-w-[150px] truncate text-xs text-gray-500 xl:max-w-[220px]">
             {item.email || "Sin correo"}
-          </p>
+          </p> */}
         </div>
       </td>
       <td className="hidden md:table-cell">

@@ -27,6 +27,22 @@ const todayValue = () => getTodayDateKey();
 
 const groupOrder = ["Navegantes", "Pioneros", "Seguidores", "Exploradores", "Sin grupo asignado"];
 
+const dedupeRecordsByPersonDate = (records: AttendanceRecord[]) => {
+  const recordByDate = new Map<string, AttendanceRecord>();
+
+  records.forEach((record) => {
+    const current = recordByDate.get(record.dateValue);
+
+    if (!current || record.id > current.id) {
+      recordByDate.set(record.dateValue, record);
+    }
+  });
+
+  return Array.from(recordByDate.values()).sort((a, b) =>
+    b.dateValue.localeCompare(a.dateValue)
+  );
+};
+
 const AdminAttendanceManager = ({
   view,
   people,
@@ -42,6 +58,10 @@ const AdminAttendanceManager = ({
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [openDates, setOpenDates] = useState<Record<string, boolean>>({});
   const router = useRouter();
+  const normalizedPeople = people.map((person) => ({
+    ...person,
+    records: dedupeRecordsByPersonDate(person.records),
+  }));
 
   const register = async (person: AttendancePerson, present: boolean) => {
     const key = `${person.id}-${date}-${present}`;
@@ -116,14 +136,14 @@ const AdminAttendanceManager = ({
 
   const groups =
     view === "teachers"
-      ? [{ name: "Lideres", people }]
+      ? [{ name: "Lideres", people: normalizedPeople }]
       : groupOrder
           .map((name) => ({
             name,
-            people: people.filter((person) => person.groupName === name),
+            people: normalizedPeople.filter((person) => person.groupName === name),
           }))
           .filter((group) => group.people.length);
-  const history = people
+  const history = normalizedPeople
     .flatMap((person) =>
       person.records.map((record) => ({
         ...record,
@@ -247,7 +267,8 @@ const AdminAttendanceManager = ({
                     >
                       {person.name}
                     </Link>
-                    <p className="text-xs text-gray-500">{person.email}</p>
+                    {/* Correo oculto temporalmente en asistencia. */}
+                    {/* <p className="text-xs text-gray-500">{person.email}</p> */}
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
@@ -317,7 +338,8 @@ const AdminAttendanceManager = ({
                           <tr key={`${record.personId}-${record.id}`} className="border-b border-gray-100 last:border-0">
                             <td className="p-4">
                               <p className="font-semibold">{record.personName}</p>
-                              <p className="text-xs text-gray-500">{record.personEmail}</p>
+                              {/* Correo oculto temporalmente en el registro de asistencia. */}
+                              {/* <p className="text-xs text-gray-500">{record.personEmail}</p> */}
                             </td>
                             {view === "students" && (
                               <td className="p-4">{record.groupName}</td>
