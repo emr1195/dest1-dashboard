@@ -1,4 +1,5 @@
 import TableSearch from "@/components/TableSearch";
+import FormContainer from "@/components/FormContainer";
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
@@ -126,10 +127,12 @@ const AssignmentTable = ({
   assignments,
   emptyMessage,
   creatorById,
+  role,
 }: {
   assignments: AssignmentList[];
   emptyMessage: string;
   creatorById: Map<string, CreatorAccount>;
+  role?: string;
 }) => {
   if (!assignments.length) {
     return (
@@ -164,6 +167,11 @@ const AssignmentTable = ({
           </div>
           <div className="shrink-0 text-xs font-medium text-gray-500">
             Fecha limite: {formatDate(assignment.dueDate)}
+            {role === "admin" && (
+              <div className="mt-2 flex justify-end">
+                <FormContainer table="assignment" type="update" data={assignment} />
+              </div>
+            )}
           </div>
         </div>
       ))}
@@ -400,6 +408,7 @@ const SubjectListPage = async ({
                   assignments={skillAwards}
                   emptyMessage="No hay premios de destreza registrados para este grupo."
                   creatorById={creatorById}
+                  role={role}
                 />
               </div>
             </section>
@@ -410,6 +419,7 @@ const SubjectListPage = async ({
                   assignments={bibleStudies}
                   emptyMessage="No hay estudios biblicos registrados para este grupo."
                   creatorById={creatorById}
+                  role={role}
                 />
               </div>
             </section>
@@ -421,6 +431,7 @@ const SubjectListPage = async ({
                     assignments={leadershipAwards}
                     emptyMessage="No hay premios de liderazgo registrados para este grupo."
                     creatorById={creatorById}
+                    role={role}
                   />
                 </div>
               </section>

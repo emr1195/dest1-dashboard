@@ -445,7 +445,8 @@ const AssignmentListPage = async ({
           const title = translateDisplayText(assignment.title);
           const deadlineStatus = getDeadlineStatus(assignment.dueDate);
           const canManageAssignment =
-            role === "teacher" && assignment.lesson.teacher.id === currentUserId;
+            role === "admin" ||
+            (role === "teacher" && assignment.lesson.teacher.id === currentUserId);
 
           return (
             <section key={assignment.id} className="rounded-md bg-white p-5">
