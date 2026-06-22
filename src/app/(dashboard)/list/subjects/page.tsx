@@ -17,6 +17,7 @@ type AssignmentList = Prisma.AssignmentGetPayload<{
         };
       };
     };
+    files: { select: { uploadedById: true; fileType: true; createdAt: true } };
   };
 }>;
 
@@ -33,6 +34,12 @@ type LeaderGroupAccount = {
   id: string;
   email: string | null;
   leaderGroup: string | null;
+};
+
+type CreatorAccount = {
+  id: string;
+  name: string | null;
+  email: string;
 };
 
 const normalizeText = (value: string) =>
@@ -95,12 +102,34 @@ const formatDate = (date: Date) =>
     year: "numeric",
   }).format(date);
 
+const getCreatorName = (
+  assignment: AssignmentList,
+  creatorById: Map<string, CreatorAccount>
+) => {
+  if (assignment.createdByName) return assignment.createdByName;
+
+  const fileUploaderId = assignment.files.find(
+    (file) => file.fileType !== "award-image" && file.uploadedById
+  )?.uploadedById;
+  const creator =
+    (assignment.createdById ? creatorById.get(assignment.createdById) : null) ||
+    (fileUploaderId ? creatorById.get(fileUploaderId) : null);
+
+  if (creator) {
+    return creator.name || creator.email;
+  }
+
+  return `${assignment.lesson.teacher.name} ${assignment.lesson.teacher.surname}`.trim();
+};
+
 const AssignmentTable = ({
   assignments,
   emptyMessage,
+  creatorById,
 }: {
   assignments: AssignmentList[];
   emptyMessage: string;
+  creatorById: Map<string, CreatorAccount>;
 }) => {
   if (!assignments.length) {
     return (
@@ -125,8 +154,7 @@ const AssignmentTable = ({
               {assignment.title}
             </Link>
             <p className="mt-1 truncate text-xs text-gray-500">
-              Lider {assignment.lesson.teacher.name} {assignment.lesson.teacher.surname} -{" "}
-              {assignment.points} puntos
+              Lider {getCreatorName(assignment, creatorById)} - {assignment.points} puntos
             </p>
             {assignment.description && (
               <p className="mt-1 line-clamp-2 text-xs text-gray-500">
@@ -180,11 +208,34 @@ const SubjectListPage = async ({
           },
         },
       },
+      files: {
+        select: { uploadedById: true, fileType: true, createdAt: true },
+        orderBy: { createdAt: "asc" },
+      },
     },
     orderBy: {
       dueDate: "asc",
     },
   });
+  const creatorIds = Array.from(
+    new Set(
+      data.flatMap((assignment) => [
+        ...(assignment.createdById ? [assignment.createdById] : []),
+        ...assignment.files.flatMap((file) =>
+          file.uploadedById ? [file.uploadedById] : []
+        ),
+      ])
+    )
+  );
+  const creatorAccounts = creatorIds.length
+    ? await prisma.authUser.findMany({
+        where: { id: { in: creatorIds } },
+        select: { id: true, name: true, email: true },
+      })
+    : [];
+  const creatorById = new Map(
+    creatorAccounts.map((account) => [account.id, account])
+  );
   const leaderAccounts = data.length
     ? await prisma.authUser.findMany({
         where: {
@@ -348,6 +399,7 @@ const SubjectListPage = async ({
                 <AssignmentTable
                   assignments={skillAwards}
                   emptyMessage="No hay premios de destreza registrados para este grupo."
+                  creatorById={creatorById}
                 />
               </div>
             </section>
@@ -357,6 +409,7 @@ const SubjectListPage = async ({
                 <AssignmentTable
                   assignments={bibleStudies}
                   emptyMessage="No hay estudios biblicos registrados para este grupo."
+                  creatorById={creatorById}
                 />
               </div>
             </section>
@@ -367,6 +420,7 @@ const SubjectListPage = async ({
                   <AssignmentTable
                     assignments={leadershipAwards}
                     emptyMessage="No hay premios de liderazgo registrados para este grupo."
+                    creatorById={creatorById}
                   />
                 </div>
               </section>

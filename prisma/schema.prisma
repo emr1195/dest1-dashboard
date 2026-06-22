@@ -121,11 +121,15 @@ model Assignment {
   dueDate     DateTime
   category    String                 @default("Premio de adiestramiento")
   points      Int                    @default(25)
+  createdById String?
+  createdByName String?
   lessonId    Int
   lesson      Lesson                 @relation(fields: [lessonId], references: [id])
   files       AssignmentFile[]
   results     Result[]
   submissions AssignmentSubmission[]
+
+  @@index([createdById])
 }
 
 model AssignmentFile {

@@ -584,6 +584,7 @@ export const createAssignment = async (
   data: AssignmentSchema
 ) => {
   try {
+    const currentUser = await getCurrentUser();
     const lessonId = await getAssignmentLessonId(
       data.lessonId,
       data.assignmentGroup
@@ -597,6 +598,8 @@ export const createAssignment = async (
         dueDate: data.dueDate,
         category: data.category,
         points: data.points,
+        createdById: currentUser?.id || null,
+        createdByName: currentUser?.name || currentUser?.email || null,
         lessonId,
       },
     });
