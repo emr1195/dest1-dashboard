@@ -37,6 +37,7 @@ const ProfileInfoCard = ({
     type === "student" && studentGroup ? studentGroupColors[studentGroup] : undefined;
   const hideStudentContact =
     type === "student" && (studentGroup === "Navegantes" || studentGroup === "Pioneros");
+  const showEmail = type === "teacher";
   const showPhone = !hideStudentContact;
 
   return (
@@ -62,14 +63,27 @@ const ProfileInfoCard = ({
         </div>
 
         <div className="flex min-w-0 flex-wrap items-center justify-center gap-x-4 gap-y-3 text-xs font-medium sm:justify-start">
-          {/* Correo oculto temporalmente en las tarjetas de perfil. */}
-          {/* <div className="flex min-w-0 items-center gap-2">
-            <Image src="/mail.png" alt="" width={14} height={14} />
-            <span className="min-w-0 break-all">{email || "-"}</span>
-          </div> */}
+          {showEmail && (
+            <div className="flex min-w-0 items-center gap-2">
+              <Image
+                src="/mail.png"
+                alt=""
+                width={14}
+                height={14}
+                className="brightness-0 invert"
+              />
+              <span className="min-w-0 break-all">{email || "-"}</span>
+            </div>
+          )}
           {showPhone && (
             <div className="flex min-w-0 items-center gap-2">
-              <Image src="/phone.png" alt="" width={14} height={14} />
+              <Image
+                src="/phone.png"
+                alt=""
+                width={14}
+                height={14}
+                className={type === "teacher" ? "brightness-0 invert" : undefined}
+              />
               <span className="min-w-0 break-all">{phone || "-"}</span>
             </div>
           )}

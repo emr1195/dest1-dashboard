@@ -32,7 +32,7 @@ const messages = {
 const BigCalendar = ({
   data,
 }: {
-  data: { title: string; start: Date; end: Date }[];
+  data: { title: string; start: Date; end: Date; deadlineStatus?: "ontime" | "soon" | "late" }[];
 }) => {
   const [view, setView] = useState<View>(Views.WORK_WEEK);
 
@@ -55,6 +55,35 @@ const BigCalendar = ({
         max={new Date(2025, 1, 0, 17, 0, 0)}
         culture="es"
         messages={messages}
+        eventPropGetter={(event) => {
+          if (!event.deadlineStatus) return {};
+
+          const colors = {
+            ontime: {
+              backgroundColor: "#dcfce7",
+              borderColor: "#22c55e",
+              color: "#166534",
+            },
+            soon: {
+              backgroundColor: "#fef3c7",
+              borderColor: "#f59e0b",
+              color: "#92400e",
+            },
+            late: {
+              backgroundColor: "#fee2e2",
+              borderColor: "#ef4444",
+              color: "#991b1b",
+            },
+          }[event.deadlineStatus];
+
+          return {
+            style: {
+              ...colors,
+              borderWidth: 2,
+              fontWeight: 600,
+            },
+          };
+        }}
       />
     </div>
   );

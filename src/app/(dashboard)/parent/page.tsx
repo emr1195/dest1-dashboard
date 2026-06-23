@@ -38,7 +38,7 @@ const ParentPage = async ({
                   {student.name} {student.surname}
                 </h2>
               </div>
-              <BigCalendarContainer type="classId" id={student.class.id} />
+              <BigCalendarContainer type="studentId" id={student.id} />
             </section>
           ))
         ) : (
