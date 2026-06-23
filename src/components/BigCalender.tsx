@@ -31,8 +31,10 @@ const messages = {
 
 const BigCalendar = ({
   data,
+  hideEventTime = false,
 }: {
   data: { title: string; start: Date; end: Date; deadlineStatus?: "ontime" | "soon" | "late" }[];
+  hideEventTime?: boolean;
 }) => {
   const [view, setView] = useState<View>(Views.WORK_WEEK);
 
@@ -55,6 +57,13 @@ const BigCalendar = ({
         max={new Date(2025, 1, 0, 17, 0, 0)}
         culture="es"
         messages={messages}
+        formats={
+          hideEventTime
+            ? {
+                eventTimeRangeFormat: () => "",
+              }
+            : undefined
+        }
         eventPropGetter={(event) => {
           if (!event.deadlineStatus) return {};
 
@@ -81,6 +90,8 @@ const BigCalendar = ({
               ...colors,
               borderWidth: 2,
               fontWeight: 600,
+              padding: "6px 8px",
+              whiteSpace: "normal",
             },
           };
         }}

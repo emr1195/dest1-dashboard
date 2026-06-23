@@ -2,6 +2,8 @@ import prisma from "@/lib/prisma";
 import BigCalendar from "./BigCalender";
 import { adjustScheduleToCurrentWeek } from "@/lib/utils";
 import { translateDisplayText } from "@/lib/displayText";
+import { getStudentGroupName } from "@/lib/badgeCatalog";
+import { isValidLeaderGroup } from "@/lib/roles";
 
 const getDeadlineStatus = (dueDate: Date) => {
   const now = new Date();
@@ -12,15 +14,35 @@ const getDeadlineStatus = (dueDate: Date) => {
   return "ontime" as const;
 };
 
-const getVisibleDeadlineSlot = (dueDate: Date) => {
+const groupLabelsByValue: Record<string, string> = {
+  navegantes: "Navegantes",
+  pioneros: "Pioneros",
+  seguidores: "Seguidores",
+  exploradores: "Exploradores",
+};
+
+const groupValuesByLabel: Record<string, string> = Object.fromEntries(
+  Object.entries(groupLabelsByValue).map(([value, label]) => [label, value])
+);
+
+const getVisibleDeadlineSlot = (dueDate: Date, slotIndex: number) => {
   const start = new Date(dueDate);
-  start.setHours(13, 0, 0, 0);
+  const startMinutes = 9 * 60 + (slotIndex % 7) * 65;
+  start.setHours(Math.floor(startMinutes / 60), startMinutes % 60, 0, 0);
 
   const end = new Date(start);
-  end.setHours(14, 0, 0, 0);
+  end.setMinutes(start.getMinutes() + 55);
 
   return { start, end };
 };
+
+const getDateKey = (date: Date) =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Panama",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
 
 const BigCalendarContainer = async ({
   type,
@@ -30,14 +52,70 @@ const BigCalendarContainer = async ({
   id: string | number;
 }) => {
   if (type === "studentId") {
+    const student = await prisma.muchacho.findUnique({
+      where: { id: id as string },
+      select: { id: true, email: true, birthday: true },
+    });
+
+    if (!student) {
+      return (
+        <div className="h-full w-full overflow-x-auto overflow-y-hidden">
+          <BigCalendar data={[]} />
+        </div>
+      );
+    }
+
+    const studentAccount = await prisma.authUser.findFirst({
+      where: {
+        role: "student",
+        OR: [
+          { id: student.id },
+          ...(student.email ? [{ email: student.email.toLowerCase() }] : []),
+        ],
+      },
+      select: { leaderGroup: true, birthday: true },
+    });
+    const savedGroup = studentAccount?.leaderGroup;
+    const studentGroupValue =
+      savedGroup && isValidLeaderGroup(savedGroup) && savedGroup !== "sin-grupo"
+        ? savedGroup
+        : groupValuesByLabel[
+            getStudentGroupName(studentAccount?.birthday || student.birthday)
+          ] || null;
+
+    const leaderAccounts = studentGroupValue
+      ? await prisma.authUser.findMany({
+          where: {
+            role: "teacher",
+            leaderGroup: studentGroupValue,
+          },
+          select: { id: true, email: true },
+        })
+      : [];
+    const leaderIds = leaderAccounts.length
+      ? (
+          await prisma.lider.findMany({
+            where: {
+              OR: [
+                { id: { in: leaderAccounts.map((account) => account.id) } },
+                {
+                  email: {
+                    in: leaderAccounts.flatMap((account) =>
+                      account.email ? [account.email.toLowerCase()] : []
+                    ),
+                  },
+                },
+              ],
+            },
+            select: { id: true },
+          })
+        ).map((leader) => leader.id)
+      : [];
+
     const assignments = await prisma.assignment.findMany({
       where: {
         lesson: {
-          class: {
-            students: {
-              some: { id: id as string },
-            },
-          },
+          teacherId: { in: leaderIds.length ? leaderIds : ["__no_teacher__"] },
         },
       },
       select: {
@@ -47,15 +125,22 @@ const BigCalendarContainer = async ({
       orderBy: { id: "asc" },
     });
 
-    const schedule = assignments.map((assignment) => ({
-      title: assignment.title,
-      ...getVisibleDeadlineSlot(assignment.dueDate),
-      deadlineStatus: getDeadlineStatus(assignment.dueDate),
-    }));
+    const slotsByDate = new Map<string, number>();
+    const schedule = assignments.map((assignment) => {
+      const dateKey = getDateKey(assignment.dueDate);
+      const slotIndex = slotsByDate.get(dateKey) || 0;
+      slotsByDate.set(dateKey, slotIndex + 1);
+
+      return {
+        title: assignment.title,
+        ...getVisibleDeadlineSlot(assignment.dueDate, slotIndex),
+        deadlineStatus: getDeadlineStatus(assignment.dueDate),
+      };
+    });
 
     return (
       <div className="h-full w-full overflow-x-auto overflow-y-hidden">
-        <BigCalendar data={schedule} />
+        <BigCalendar data={schedule} hideEventTime />
       </div>
     );
   }
