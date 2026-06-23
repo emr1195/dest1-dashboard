@@ -4,6 +4,7 @@ import { adjustScheduleToCurrentWeek } from "@/lib/utils";
 import { translateDisplayText } from "@/lib/displayText";
 import { getStudentGroupName } from "@/lib/badgeCatalog";
 import { isValidLeaderGroup } from "@/lib/roles";
+import StudentAssignmentCalendar from "./StudentAssignmentCalendar";
 
 const getDeadlineStatus = (dueDate: Date) => {
   const now = new Date();
@@ -24,25 +25,6 @@ const groupLabelsByValue: Record<string, string> = {
 const groupValuesByLabel: Record<string, string> = Object.fromEntries(
   Object.entries(groupLabelsByValue).map(([value, label]) => [label, value])
 );
-
-const getVisibleDeadlineSlot = (dueDate: Date, slotIndex: number) => {
-  const start = new Date(dueDate);
-  const startMinutes = 9 * 60 + (slotIndex % 7) * 65;
-  start.setHours(Math.floor(startMinutes / 60), startMinutes % 60, 0, 0);
-
-  const end = new Date(start);
-  end.setMinutes(start.getMinutes() + 55);
-
-  return { start, end };
-};
-
-const getDateKey = (date: Date) =>
-  new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Panama",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(date);
 
 const BigCalendarContainer = async ({
   type,
@@ -119,28 +101,23 @@ const BigCalendarContainer = async ({
         },
       },
       select: {
+        id: true,
         title: true,
         dueDate: true,
       },
       orderBy: { id: "asc" },
     });
 
-    const slotsByDate = new Map<string, number>();
-    const schedule = assignments.map((assignment) => {
-      const dateKey = getDateKey(assignment.dueDate);
-      const slotIndex = slotsByDate.get(dateKey) || 0;
-      slotsByDate.set(dateKey, slotIndex + 1);
-
-      return {
-        title: assignment.title,
-        ...getVisibleDeadlineSlot(assignment.dueDate, slotIndex),
-        deadlineStatus: getDeadlineStatus(assignment.dueDate),
-      };
-    });
+    const schedule = assignments.map((assignment) => ({
+      id: assignment.id,
+      title: assignment.title,
+      dueDate: assignment.dueDate.toISOString(),
+      deadlineStatus: getDeadlineStatus(assignment.dueDate),
+    }));
 
     return (
-      <div className="h-full w-full overflow-x-auto overflow-y-hidden">
-        <BigCalendar data={schedule} hideEventTime />
+      <div className="h-full w-full min-w-0 overflow-hidden">
+        <StudentAssignmentCalendar assignments={schedule} />
       </div>
     );
   }
