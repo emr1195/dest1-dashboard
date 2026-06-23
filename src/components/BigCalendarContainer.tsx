@@ -103,6 +103,7 @@ const BigCalendarContainer = async ({
       select: {
         id: true,
         title: true,
+        category: true,
         dueDate: true,
       },
       orderBy: { id: "asc" },
@@ -111,6 +112,7 @@ const BigCalendarContainer = async ({
     const schedule = assignments.map((assignment) => ({
       id: assignment.id,
       title: assignment.title,
+      category: assignment.category,
       dueDate: assignment.dueDate.toISOString(),
       deadlineStatus: getDeadlineStatus(assignment.dueDate),
     }));
