@@ -17,6 +17,7 @@ const assignmentCategories = [
   "Premio de adiestramiento",
   "Estudio biblico",
   "Premio liderazgo",
+  "Otros",
 ] as const;
 
 const assignmentPoints = [25, 50, 75, 100];

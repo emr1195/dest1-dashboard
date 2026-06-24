@@ -152,7 +152,7 @@ export const assignmentSchema = z.object({
   startDate: dateTimeField("La fecha de inicio es obligatoria!"),
   dueDate: dateTimeField("La fecha limite es obligatoria!"),
   category: z.enum(
-    ["Premio de adiestramiento", "Estudio biblico", "Premio liderazgo"],
+    ["Premio de adiestramiento", "Estudio biblico", "Premio liderazgo", "Otros"],
     { message: "La categoria es obligatoria!" }
   ),
   points: z.coerce

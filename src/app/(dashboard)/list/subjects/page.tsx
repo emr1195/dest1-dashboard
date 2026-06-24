@@ -88,12 +88,20 @@ const isLeadershipAward = (assignment: AssignmentList) => {
   return category.includes("liderazgo") || category.includes("lider");
 };
 
+const isOtherCategory = (assignment: AssignmentList) =>
+  normalizeText(assignment.category) === "otros";
+
+const isSkillAward = (assignment: AssignmentList) => {
+  const category = normalizeText(assignment.category);
+
+  return category.includes("adiestramiento") || category.includes("destreza");
+};
+
 const getCategoryCounts = (assignments: AssignmentList[]) => ({
-  skills: assignments.filter(
-    (assignment) => !isBibleStudy(assignment) && !isLeadershipAward(assignment)
-  ).length,
+  skills: assignments.filter(isSkillAward).length,
   bible: assignments.filter(isBibleStudy).length,
   leadership: assignments.filter(isLeadershipAward).length,
+  others: assignments.filter(isOtherCategory).length,
 });
 
 const formatDate = (date: Date) =>
@@ -278,9 +286,8 @@ const SubjectListPage = async ({
     : [];
   const bibleStudies = selectedGroupAssignments.filter(isBibleStudy);
   const leadershipAwards = selectedGroupAssignments.filter(isLeadershipAward);
-  const skillAwards = selectedGroupAssignments.filter(
-    (assignment) => !isBibleStudy(assignment) && !isLeadershipAward(assignment)
-  );
+  const skillAwards = selectedGroupAssignments.filter(isSkillAward);
+  const otherAssignments = selectedGroupAssignments.filter(isOtherCategory);
   const hasLeadershipAwards =
     selectedGroup?.key === "pioneros" ||
     selectedGroup?.key === "seguidores" ||
@@ -362,6 +369,7 @@ const SubjectListPage = async ({
                     <span>Destrezas: {counts.skills}</span>
                     <span>Estudios biblicos: {counts.bible}</span>
                     <span>Premios de liderazgo: {counts.leadership}</span>
+                    <span>Otros: {counts.others}</span>
                   </span>
                 )}
               </span>
@@ -436,6 +444,17 @@ const SubjectListPage = async ({
                 </div>
               </section>
             )}
+            <section className="rounded-md border border-gray-100 p-4">
+              <h3 className="text-base font-semibold">Otros</h3>
+              <div className="mt-3">
+                <AssignmentTable
+                  assignments={otherAssignments}
+                  emptyMessage="No hay tareas registradas en otros para este grupo."
+                  creatorById={creatorById}
+                  role={role}
+                />
+              </div>
+            </section>
           </div>
         </div>
       )}
