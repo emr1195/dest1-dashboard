@@ -238,6 +238,7 @@ model MeetingPlanner {
   @@index([group])
   @@index([createdById])
   @@index([meetingDate])
+  @@unique([group, meetingDate])
 }
 
 model BadgeCertificate {

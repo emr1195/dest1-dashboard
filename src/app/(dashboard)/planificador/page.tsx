@@ -20,13 +20,34 @@ const PlannerPage = async () => {
     orderBy: [{ name: "asc" }, { surname: "asc" }],
   });
 
+  const currentLeaderAccount =
+    currentUser.role === "teacher"
+      ? await prisma.authUser.findFirst({
+          where: {
+            role: "teacher",
+            OR: [
+              { id: currentUser.id },
+              ...(currentUser.email
+                ? [{ email: currentUser.email.toLowerCase() }]
+                : []),
+            ],
+          },
+          select: { leaderGroup: true },
+        })
+      : null;
+  const currentGroup = ["navegantes", "pioneros", "seguidores", "exploradores"].includes(
+    currentLeaderAccount?.leaderGroup || ""
+  )
+    ? currentLeaderAccount?.leaderGroup || null
+    : null;
+
   const planners = await prisma.meetingPlanner.findMany({
     where:
       currentUser.role === "admin"
         ? {}
-        : {
-            createdById: currentUser.id,
-          },
+        : currentGroup
+          ? { group: currentGroup }
+          : { createdById: currentUser.id },
     orderBy: [{ meetingDate: "desc" }, { createdAt: "desc" }],
   });
 
@@ -35,6 +56,7 @@ const PlannerPage = async () => {
       <MeetingPlanner
         currentRole={currentUser.role}
         currentUserId={currentUser.id}
+        currentGroup={currentGroup}
         leaders={leaders.map((leader) => ({
           id: leader.id,
           name: `${leader.name} ${leader.surname}`,

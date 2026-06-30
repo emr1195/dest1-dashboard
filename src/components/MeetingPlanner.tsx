@@ -150,11 +150,13 @@ const MeetingPlanner = ({
   leaders,
   currentRole,
   currentUserId,
+  currentGroup,
   initialPlanners,
 }: {
   leaders: LeaderOption[];
   currentRole: "admin" | "teacher";
   currentUserId: string;
+  currentGroup?: string | null;
   initialPlanners: SavedMeetingPlanner[];
 }) => {
   const router = useRouter();
@@ -163,7 +165,13 @@ const MeetingPlanner = ({
   const [activeView, setActiveView] = useState<"general" | "group">(
     currentRole === "admin" ? "general" : "group"
   );
-  const [activeGroupId, setActiveGroupId] = useState(groups[0].id);
+  const navigationGroups =
+    currentRole === "teacher" && currentGroup
+      ? groups.filter((group) => group.id === currentGroup)
+      : groups;
+  const [activeGroupId, setActiveGroupId] = useState(
+    navigationGroups[0]?.id || groups[0].id
+  );
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
   const [openSaved, setOpenSaved] = useState<Record<string, boolean>>({});
   const [openGeneralGroup, setOpenGeneralGroup] = useState<Record<string, boolean>>({});
@@ -400,7 +408,7 @@ const MeetingPlanner = ({
                 Reunion general
               </button>
             )}
-            {groups.map((group) => {
+            {navigationGroups.map((group) => {
               const active = activeView === "group" && group.id === activeGroup.id;
 
               return (
@@ -930,7 +938,7 @@ const MeetingPlanner = ({
         ) : (
           <div className="flex flex-col gap-3">
             {filteredPlanners.map((planner) => {
-              const canEditPlanner = canManage && planner.createdById === currentUserId;
+              const canEditPlanner = canManage;
               const open = Boolean(openSaved[planner.id]);
 
               return (

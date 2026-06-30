@@ -6,6 +6,7 @@
   },
   "include": [
     "scripts/sync-firebase-attendance.ts",
+    "scripts/merge-duplicate-meeting-planners.ts",
     "src/lib/firebaseAttendanceSync.ts",
     "src/lib/prisma.ts"
   ]

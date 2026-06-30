@@ -11,6 +11,42 @@ const plannerGroups = ["navegantes", "pioneros", "seguidores", "exploradores"];
 const groupPlannerItemNumbers = [4, 5, 6, 7];
 const generalPlannerItemNumbers = [1, 2, 3, 8, 9, 10];
 
+type PlannerItemPayload = {
+  number: number;
+  leaderId: string;
+  detail: string;
+};
+
+const normalizeStoredItems = (value: unknown): PlannerItemPayload[] => {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item) => ({
+      number: Number(item?.number),
+      leaderId: typeof item?.leaderId === "string" ? item.leaderId : "",
+      detail: typeof item?.detail === "string" ? item.detail : "",
+    }))
+    .filter((item) => Number.isFinite(item.number));
+};
+
+const mergePlannerItems = (
+  existingValue: unknown,
+  incomingItems: PlannerItemPayload[]
+) => {
+  const existingItems = new Map(
+    normalizeStoredItems(existingValue).map((item) => [item.number, item])
+  );
+
+  return incomingItems.map((incoming) => {
+    const existing = existingItems.get(incoming.number);
+    return {
+      number: incoming.number,
+      leaderId: incoming.leaderId || existing?.leaderId || "",
+      detail: incoming.detail || existing?.detail || "",
+    };
+  });
+};
+
 const parsePlannerPayload = (payload: unknown, role: "admin" | "teacher") => {
   const data = payload as {
     id?: unknown;
@@ -73,10 +109,60 @@ const ensurePlannerManager = async () => {
   };
 };
 
+const getTeacherPlannerGroup = async (user: {
+  id: string;
+  email?: string | null;
+}) => {
+  const account = await prisma.authUser.findFirst({
+    where: {
+      role: "teacher",
+      OR: [
+        { id: user.id },
+        ...(user.email ? [{ email: user.email.toLowerCase() }] : []),
+      ],
+    },
+    select: { leaderGroup: true },
+  });
+
+  return account?.leaderGroup && plannerGroups.includes(account.leaderGroup)
+    ? account.leaderGroup
+    : null;
+};
+
 export const POST = async (req: Request) => {
   try {
     const currentUser = await ensurePlannerManager();
     const payload = parsePlannerPayload(await req.json(), currentUser.role);
+
+    if (currentUser.role === "teacher") {
+      const teacherGroup = await getTeacherPlannerGroup(currentUser);
+      if (teacherGroup && payload.group !== teacherGroup) {
+        return NextResponse.json(
+          { message: "Solo puedes guardar el planificador de tu grupo." },
+          { status: 403 }
+        );
+      }
+    }
+
+    const existingPlanner = await prisma.meetingPlanner.findFirst({
+      where: {
+        group: payload.group,
+        meetingDate: payload.meetingDate,
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    if (existingPlanner) {
+      const planner = await prisma.meetingPlanner.update({
+        where: { id: existingPlanner.id },
+        data: {
+          items: mergePlannerItems(existingPlanner.items, payload.items),
+        },
+      });
+
+      revalidatePath("/planificador");
+      return NextResponse.json(planner);
+    }
 
     const planner = await prisma.meetingPlanner.create({
       data: {
@@ -110,12 +196,25 @@ export const PATCH = async (req: Request) => {
 
     const existingPlanner = await prisma.meetingPlanner.findUnique({
       where: { id: payload.id },
-      select: { createdById: true },
+      select: { createdById: true, group: true },
     });
 
-    if (!existingPlanner || existingPlanner.createdById !== currentUser.id) {
+    const teacherGroup =
+      currentUser.role === "teacher"
+        ? await getTeacherPlannerGroup(currentUser)
+        : null;
+    const canEdit =
+      existingPlanner &&
+      existingPlanner.group === payload.group &&
+      (currentUser.role === "admin"
+        ? existingPlanner.group === "general"
+        : teacherGroup
+          ? existingPlanner.group === teacherGroup
+          : existingPlanner.createdById === currentUser.id);
+
+    if (!canEdit) {
       return NextResponse.json(
-        { message: "Solo puedes editar tus propios planificadores." },
+        { message: "No puedes editar este planificador." },
         { status: 403 }
       );
     }
@@ -151,12 +250,24 @@ export const DELETE = async (req: Request) => {
 
     const existingPlanner = await prisma.meetingPlanner.findUnique({
       where: { id },
-      select: { createdById: true },
+      select: { createdById: true, group: true },
     });
 
-    if (!existingPlanner || existingPlanner.createdById !== currentUser.id) {
+    const teacherGroup =
+      currentUser.role === "teacher"
+        ? await getTeacherPlannerGroup(currentUser)
+        : null;
+    const canDelete =
+      existingPlanner &&
+      (currentUser.role === "admin"
+        ? existingPlanner.group === "general"
+        : teacherGroup
+          ? existingPlanner.group === teacherGroup
+          : existingPlanner.createdById === currentUser.id);
+
+    if (!canDelete) {
       return NextResponse.json(
-        { message: "Solo puedes eliminar tus propios planificadores." },
+        { message: "No puedes eliminar este planificador." },
         { status: 403 }
       );
     }
