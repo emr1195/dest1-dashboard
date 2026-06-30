@@ -131,6 +131,12 @@ const generalItems: PlannerItem[] = [
   { number: 10, displayNumber: 10, title: "Despues de la reunion" },
 ];
 
+const orderedGeneralPlannerItems = [
+  ...generalItems.slice(0, 3),
+  ...plannerItems,
+  ...generalItems.slice(3),
+];
+
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat("es-PA", {
     day: "2-digit",
@@ -431,10 +437,13 @@ const MeetingPlanner = ({
           (canManageGeneral && activeView === "general")) && (
           <>
             <div className="flex flex-col gap-4">
-              {(activeView === "general" ? generalItems : plannerItems).map((item) => {
+              {(activeView === "general" ? orderedGeneralPlannerItems : plannerItems).map((item) => {
                 const plannerKey = activeView === "general" ? "general" : activeGroup.id;
                 const itemKey = `${plannerKey}-${item.number}`;
                 const isOpen = Boolean(openItems[itemKey]);
+                const isSpecificGeneralItem =
+                  activeView === "general" &&
+                  plannerItems.some((plannerItem) => plannerItem.number === item.number);
                 const itemNotes = {
                   leaderId: notes[plannerKey]?.[item.number]?.leaderId || "",
                   detail: notes[plannerKey]?.[item.number]?.detail || "",
@@ -445,7 +454,11 @@ const MeetingPlanner = ({
                 return (
                   <div key={item.number} className="relative pl-7 sm:pl-10">
                     <div
-                      className="grid min-h-14 w-full grid-cols-1 items-center gap-3 rounded-r-md border px-3 py-3 pl-10 text-left shadow-sm transition hover:shadow-md sm:grid-cols-[minmax(0,1fr)_260px_115px_42px] sm:pl-12"
+                      className={`grid min-h-14 w-full grid-cols-1 items-center gap-3 rounded-r-md border px-3 py-3 pl-10 text-left shadow-sm transition hover:shadow-md sm:pl-12 ${
+                        isSpecificGeneralItem
+                          ? "sm:grid-cols-[minmax(0,1fr)_minmax(280px,430px)_115px]"
+                          : "sm:grid-cols-[minmax(0,1fr)_260px_115px_42px]"
+                      }`}
                       style={{
                         borderColor: rowColor,
                         backgroundColor: rowLight,
@@ -455,7 +468,7 @@ const MeetingPlanner = ({
                         className="absolute left-0 flex h-14 w-14 items-center justify-center rounded-full border-[8px] bg-white text-2xl font-semibold text-gray-500 sm:h-16 sm:w-16 sm:text-3xl"
                         style={{ borderColor: rowColor }}
                       >
-                        {item.displayNumber}
+                        {activeView === "general" ? item.number : item.displayNumber}
                       </span>
 
                       <span className="min-w-0 break-words text-lg font-bold uppercase tracking-normal text-gray-500 sm:text-xl">
@@ -463,28 +476,73 @@ const MeetingPlanner = ({
                         {item.starred ? " *" : ""}
                       </span>
 
-                      <label className="flex min-w-0 items-center gap-2 text-sm font-semibold text-gray-500 sm:text-base">
-                        Lider:
-                        <select
-                          value={itemNotes.leaderId}
-                          onChange={(event) =>
-                            updateItem(item.number, "leaderId", event.target.value)
-                          }
-                          className="min-w-0 flex-1 rounded-md border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-600 outline-none focus:border-lamaSky"
-                        >
-                          <option value="">Seleccionar</option>
-                          {leaders.map((leader) => (
-                            <option key={leader.id} value={leader.id}>
-                              {leader.name}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                      {isSpecificGeneralItem ? (
+                        <div className="flex flex-wrap items-center gap-2">
+                          {groups.map((group) => {
+                            const groupPlanner = initialPlanners.find(
+                              (planner) =>
+                                planner.group === group.id &&
+                                toInputDate(planner.meetingDate) === meetingDate
+                            );
+                            const savedItem = groupPlanner?.items.find(
+                              (entry) => entry.number === item.number
+                            );
+                            const hasPlan = Boolean(savedItem?.detail || savedItem?.leaderId);
+                            const openKey = `form-${meetingDate}-${item.number}-${group.id}`;
+                            const open = Boolean(openGeneralGroup[openKey]);
+
+                            return (
+                              <button
+                                key={group.id}
+                                type="button"
+                                onClick={() =>
+                                  setOpenGeneralGroup((current) => ({
+                                    ...current,
+                                    [openKey]: !current[openKey],
+                                  }))
+                                }
+                                title={`Ver plan de ${group.name}`}
+                                className={`flex h-12 w-14 items-center justify-center rounded-md border bg-white p-1 transition ${
+                                  open ? "shadow-md" : ""
+                                } ${hasPlan ? "" : "opacity-50"}`}
+                                style={{ borderColor: group.color }}
+                              >
+                                <Image
+                                  src={group.icon}
+                                  alt={group.name}
+                                  width={44}
+                                  height={40}
+                                  className="h-9 w-11 object-contain"
+                                />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <label className="flex min-w-0 items-center gap-2 text-sm font-semibold text-gray-500 sm:text-base">
+                          Lider:
+                          <select
+                            value={itemNotes.leaderId}
+                            onChange={(event) =>
+                              updateItem(item.number, "leaderId", event.target.value)
+                            }
+                            className="min-w-0 flex-1 rounded-md border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-600 outline-none focus:border-lamaSky"
+                          >
+                            <option value="">Seleccionar</option>
+                            {leaders.map((leader) => (
+                              <option key={leader.id} value={leader.id}>
+                                {leader.name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
 
                       <span className="min-h-6 text-sm font-bold text-gray-500 sm:text-right sm:text-lg">
                         {item.time || ""}
                       </span>
 
+                      {!isSpecificGeneralItem && (
                       <button
                         type="button"
                         onClick={() =>
@@ -501,9 +559,10 @@ const MeetingPlanner = ({
                       >
                         v
                       </button>
+                      )}
                     </div>
 
-                    {isOpen && (
+                    {!isSpecificGeneralItem && isOpen && (
                       <div className="ml-3 rounded-b-md border border-t-0 bg-white p-4 sm:ml-6">
                         <label className="flex flex-col gap-2 text-sm font-medium text-gray-600">
                           Desarrollo
@@ -513,6 +572,55 @@ const MeetingPlanner = ({
                             placeholder="Coloca aqui los detalles, instrucciones o materiales necesarios."
                           />
                         </label>
+                      </div>
+                    )}
+
+                    {isSpecificGeneralItem && (
+                      <div className="ml-3 flex flex-col gap-2 sm:ml-6">
+                        {groups.map((group) => {
+                          const openKey = `form-${meetingDate}-${item.number}-${group.id}`;
+                          if (!openGeneralGroup[openKey]) return null;
+
+                          const groupPlanner = initialPlanners.find(
+                            (planner) =>
+                              planner.group === group.id &&
+                              toInputDate(planner.meetingDate) === meetingDate
+                          );
+                          const savedItem = groupPlanner?.items.find(
+                            (entry) => entry.number === item.number
+                          );
+                          const leaderName = savedItem?.leaderId
+                            ? leaderNameById.get(savedItem.leaderId) || "Lider eliminado"
+                            : "Sin lider";
+
+                          return (
+                            <div
+                              key={group.id}
+                              className="rounded-b-md border border-t-0 p-4 text-sm"
+                              style={{
+                                borderColor: group.color,
+                                backgroundColor: group.light,
+                              }}
+                            >
+                              <div className="mb-2 flex items-center gap-2 font-semibold text-gray-700">
+                                <Image
+                                  src={group.icon}
+                                  alt=""
+                                  width={34}
+                                  height={34}
+                                  className="h-8 w-9 object-contain"
+                                />
+                                {group.name} - Lider: {leaderName}
+                              </div>
+                              <p className="whitespace-pre-wrap text-gray-600">
+                                {!meetingDate
+                                  ? "Selecciona primero la fecha de la reunion."
+                                  : savedItem?.detail ||
+                                    "No hay informacion guardada para este punto."}
+                              </p>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -675,7 +783,7 @@ const MeetingPlanner = ({
                       <div key={item.number} className="rounded-md border border-gray-200 p-4">
                         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                           <h4 className="text-base font-semibold text-gray-800">
-                            {item.displayNumber}. {item.title}
+                            {item.number}. {item.title}
                           </h4>
                           <span className="text-sm font-medium text-gray-500">{item.time}</span>
                         </div>
@@ -755,7 +863,7 @@ const MeetingPlanner = ({
                     ))}
                   </div>
 
-                  <div className="grid gap-3 border-t border-gray-200 p-4 lg:grid-cols-2">
+                  <div className="flex flex-col gap-3 border-t border-gray-200 p-4">
                     {generalItems.slice(3).map((item) => (
                       (() => {
                         const generalPlanner = weekPlanners.find(
