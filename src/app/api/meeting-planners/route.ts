@@ -6,7 +6,9 @@ import prisma from "@/lib/prisma";
 import { dateKeyToUtcDate } from "@/lib/timeZone";
 
 const plannerGroups = ["navegantes", "pioneros", "seguidores", "exploradores"];
-const plannerItemNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+// Los planificadores de grupo solo contienen los cuatro momentos especificos.
+// Se conservan sus numeros historicos para que los planes guardados sigan siendo compatibles.
+const plannerItemNumbers = [4, 5, 6, 7];
 
 const parsePlannerPayload = (payload: unknown) => {
   const data = payload as {

@@ -14,6 +14,7 @@ type PlannerGroup = {
 
 type PlannerItem = {
   number: number;
+  displayNumber: number;
   title: string;
   time?: string;
   starred?: boolean;
@@ -105,14 +106,22 @@ const groups: PlannerGroup[] = [
 ];
 
 const plannerItems: PlannerItem[] = [
+  { number: 4, displayNumber: 1, title: "Estudio biblico", time: "15-20 min." },
+  {
+    number: 5,
+    displayNumber: 2,
+    title: "Seccion especial del programa",
+    time: "15-25 min.",
+  },
+  { number: 6, displayNumber: 3, title: "Periodo de ascenso", time: "5-10 min." },
+  { number: 7, displayNumber: 4, title: "Recreacion", time: "10-15 min." },
+];
+
+const generalItems = [
   { number: 1, title: "Mientras llegan los exploradores" },
   { number: 2, title: "Ceremonia de apertura", time: "1-5 min." },
   { number: 3, title: "Asuntos generales / Rincon de patrulla", time: "3-10 min." },
-  { number: 4, title: "Estudio biblico", time: "15-20 min.", starred: true },
-  { number: 5, title: "Seccion especial del programa", time: "15-25 min.", starred: true },
-  { number: 6, title: "Periodo de ascenso", time: "5-10 min." },
-  { number: 7, title: "Recreacion", time: "10-15 min.", starred: true },
-  { number: 8, title: "Devocional", time: "5 min.", starred: true },
+  { number: 8, title: "Devocional", time: "5 min." },
   { number: 9, title: "Ceremonia de clausura", time: "1-5 min." },
   { number: 10, title: "Despues de la reunion" },
 ];
@@ -139,9 +148,13 @@ const MeetingPlanner = ({
 }) => {
   const router = useRouter();
   const canManage = currentRole === "teacher";
+  const [activeView, setActiveView] = useState<"general" | "group">(
+    currentRole === "admin" ? "general" : "group"
+  );
   const [activeGroupId, setActiveGroupId] = useState(groups[0].id);
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
   const [openSaved, setOpenSaved] = useState<Record<string, boolean>>({});
+  const [openGeneralGroup, setOpenGeneralGroup] = useState<Record<string, boolean>>({});
   const [notes, setNotes] = useState<PlannerNotes>({});
   const [meetingDate, setMeetingDate] = useState("");
   const [editingPlannerId, setEditingPlannerId] = useState<string | null>(null);
@@ -161,6 +174,19 @@ const MeetingPlanner = ({
   const filteredPlanners = initialPlanners.filter(
     (planner) => planner.group === activeGroupId
   );
+
+  const generalWeeks = useMemo(() => {
+    const weeks = new Map<string, SavedMeetingPlanner[]>();
+
+    initialPlanners.forEach((planner) => {
+      const dateKey = toInputDate(planner.meetingDate);
+      weeks.set(dateKey, [...(weeks.get(dateKey) || []), planner]);
+    });
+
+    return Array.from(weeks.entries()).sort(([dateA], [dateB]) =>
+      dateB.localeCompare(dateA)
+    );
+  }, [initialPlanners]);
 
   const resetForm = () => {
     setMeetingDate("");
@@ -286,18 +312,35 @@ const MeetingPlanner = ({
       <div className="flex flex-col gap-5 rounded-md bg-white p-4 sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
-            <Image
-              src={activeGroup.icon}
-              alt={activeGroup.name}
-              width={150}
-              height={110}
-              className="h-24 w-36 object-contain sm:h-28 sm:w-44"
-            />
+            {activeView === "group" ? (
+              <Image
+                src={activeGroup.icon}
+                alt={activeGroup.name}
+                width={150}
+                height={110}
+                className="h-24 w-36 object-contain sm:h-28 sm:w-44"
+              />
+            ) : (
+              <div className="grid w-fit grid-cols-2 gap-2">
+                {groups.map((group) => (
+                  <Image
+                    key={group.id}
+                    src={group.icon}
+                    alt={group.name}
+                    width={58}
+                    height={58}
+                    className="h-12 w-16 object-contain"
+                  />
+                ))}
+              </div>
+            )}
             <div className="min-w-0">
               <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl">
-                Planificador de Reunion
+                {activeView === "general"
+                  ? "Planificador semanal general"
+                  : "Planificador de grupo"}
               </h1>
-              {canManage ? (
+              {canManage && activeView === "group" ? (
                 <label className="mt-2 flex max-w-sm items-center gap-2 text-base text-gray-600">
                   <span>Semana:</span>
                   <input
@@ -309,21 +352,39 @@ const MeetingPlanner = ({
                 </label>
               ) : (
                 <p className="mt-2 text-base text-gray-600">
-                  Listado de planificadores guardados por grupo.
+                  {activeView === "general"
+                    ? "Vista conjunta de los momentos compartidos y los puntos especificos de cada grupo."
+                    : "Listado de planificadores guardados por grupo."}
                 </p>
               )}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+            {currentRole === "admin" && (
+              <button
+                type="button"
+                onClick={() => setActiveView("general")}
+                className={`col-span-2 rounded-md border px-4 py-2 text-sm font-semibold transition sm:col-span-1 ${
+                  activeView === "general"
+                    ? "border-lamaSky bg-lamaSky text-white"
+                    : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+                }`}
+              >
+                Reunion general
+              </button>
+            )}
             {groups.map((group) => {
-              const active = group.id === activeGroup.id;
+              const active = activeView === "group" && group.id === activeGroup.id;
 
               return (
                 <button
                   key={group.id}
                   type="button"
-                  onClick={() => setActiveGroupId(group.id)}
+                  onClick={() => {
+                    setActiveView("group");
+                    setActiveGroupId(group.id);
+                  }}
                   className={`flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-semibold transition ${
                     active ? "text-white" : "bg-white text-gray-600 hover:bg-gray-50"
                   }`}
@@ -346,7 +407,7 @@ const MeetingPlanner = ({
           </div>
         </div>
 
-        {canManage && (
+        {canManage && activeView === "group" && (
           <>
             <div className="flex flex-col gap-4">
               {plannerItems.map((item) => {
@@ -370,7 +431,7 @@ const MeetingPlanner = ({
                         className="absolute left-0 flex h-14 w-14 items-center justify-center rounded-full border-[8px] bg-white text-2xl font-semibold text-gray-500 sm:h-16 sm:w-16 sm:text-3xl"
                         style={{ borderColor: activeGroup.color }}
                       >
-                        {item.number}
+                        {item.displayNumber}
                       </span>
 
                       <span className="min-w-0 break-words text-lg font-bold uppercase tracking-normal text-gray-500 sm:text-xl">
@@ -467,6 +528,159 @@ const MeetingPlanner = ({
         )}
       </div>
 
+      {activeView === "general" ? (
+        <div className="rounded-md bg-white p-4 sm:p-6">
+          <div className="mb-5">
+            <h2 className="text-xl font-semibold text-gray-900">
+              Reuniones generales guardadas
+            </h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Abre el logo de un grupo para consultar su planificacion en cada punto especifico.
+            </p>
+          </div>
+
+          {generalWeeks.length === 0 ? (
+            <div className="rounded-md border border-dashed border-gray-300 p-4 text-sm text-gray-500">
+              No hay planificadores guardados.
+            </div>
+          ) : (
+            <div className="flex flex-col gap-5">
+              {generalWeeks.map(([dateKey, weekPlanners]) => (
+                <section key={dateKey} className="overflow-hidden rounded-md border border-gray-200">
+                  <div className="border-b border-gray-200 bg-gray-50 px-4 py-3">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Semana del {formatDate(`${dateKey}T12:00:00.000Z`)}
+                    </h3>
+                  </div>
+
+                  <div className="grid gap-3 p-4 lg:grid-cols-2">
+                    {generalItems.slice(0, 3).map((item) => (
+                      <div
+                        key={item.number}
+                        className="grid grid-cols-[44px_minmax(0,1fr)_90px] items-center gap-3 rounded-md border border-gray-200 p-3"
+                      >
+                        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 font-semibold text-gray-600">
+                          {item.number}
+                        </span>
+                        <span className="font-semibold text-gray-700">{item.title}</span>
+                        <span className="text-right text-sm font-medium text-gray-500">
+                          {item.time || ""}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="border-y border-gray-200 bg-gray-50 px-4 py-3">
+                    <h4 className="font-semibold text-gray-800">Puntos especificos por grupo</h4>
+                  </div>
+
+                  <div className="flex flex-col gap-4 p-4">
+                    {plannerItems.map((item) => (
+                      <div key={item.number} className="rounded-md border border-gray-200 p-4">
+                        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                          <h4 className="text-base font-semibold text-gray-800">
+                            {item.displayNumber}. {item.title}
+                          </h4>
+                          <span className="text-sm font-medium text-gray-500">{item.time}</span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                          {groups.map((group) => {
+                            const matchingPlanners = weekPlanners.filter(
+                              (planner) => planner.group === group.id
+                            );
+                            const hasDetail = matchingPlanners.some((planner) =>
+                              planner.items.some(
+                                (savedItem) =>
+                                  savedItem.number === item.number && Boolean(savedItem.detail)
+                              )
+                            );
+                            const openKey = `${dateKey}-${item.number}-${group.id}`;
+                            const open = Boolean(openGeneralGroup[openKey]);
+
+                            return (
+                              <div key={group.id} className="min-w-0">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setOpenGeneralGroup((current) => ({
+                                      ...current,
+                                      [openKey]: !current[openKey],
+                                    }))
+                                  }
+                                  className={`flex min-h-28 w-full flex-col items-center justify-center gap-2 rounded-md border p-3 text-sm font-semibold transition ${
+                                    hasDetail ? "bg-white" : "bg-gray-50 text-gray-400"
+                                  }`}
+                                  style={{ borderColor: hasDetail ? group.color : undefined }}
+                                >
+                                  <Image
+                                    src={group.icon}
+                                    alt={group.name}
+                                    width={62}
+                                    height={62}
+                                    className={`h-14 w-16 object-contain ${hasDetail ? "" : "opacity-50"}`}
+                                  />
+                                  <span>{group.name}</span>
+                                </button>
+
+                                {open && (
+                                  <div
+                                    className="mt-2 rounded-md border p-3 text-sm"
+                                    style={{ borderColor: group.color, backgroundColor: group.light }}
+                                  >
+                                    {matchingPlanners.length === 0 ? (
+                                      <p className="text-gray-500">Sin planificacion para esta semana.</p>
+                                    ) : (
+                                      matchingPlanners.map((planner) => {
+                                        const savedItem = planner.items.find(
+                                          (entry) => entry.number === item.number
+                                        );
+                                        const leaderName = savedItem?.leaderId
+                                          ? leaderNameById.get(savedItem.leaderId) || "Lider eliminado"
+                                          : "Sin lider";
+
+                                        return (
+                                          <div key={planner.id} className="whitespace-pre-wrap text-gray-700">
+                                            <p className="font-semibold">Lider: {leaderName}</p>
+                                            <p className="mt-1">
+                                              {savedItem?.detail || "Sin informacion registrada."}
+                                            </p>
+                                          </div>
+                                        );
+                                      })
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="grid gap-3 border-t border-gray-200 p-4 lg:grid-cols-2">
+                    {generalItems.slice(3).map((item) => (
+                      <div
+                        key={item.number}
+                        className="grid grid-cols-[44px_minmax(0,1fr)_90px] items-center gap-3 rounded-md border border-gray-200 p-3"
+                      >
+                        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 font-semibold text-gray-600">
+                          {item.number}
+                        </span>
+                        <span className="font-semibold text-gray-700">{item.title}</span>
+                        <span className="text-right text-sm font-medium text-gray-500">
+                          {item.time || ""}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
       <div className="rounded-md bg-white p-4 sm:p-6">
         <div className="mb-4 flex items-center gap-3">
           <Image
@@ -559,7 +773,7 @@ const MeetingPlanner = ({
                               className="grid gap-2 rounded-md bg-gray-50 p-3 md:grid-cols-[56px_minmax(0,1fr)_220px_110px]"
                             >
                               <span className="font-semibold text-gray-500">
-                                {item.number}
+                                {item.displayNumber}
                               </span>
                               <div>
                                 <p className="font-semibold text-gray-700">
@@ -590,6 +804,7 @@ const MeetingPlanner = ({
           </div>
         )}
       </div>
+      )}
     </div>
   );
 };
