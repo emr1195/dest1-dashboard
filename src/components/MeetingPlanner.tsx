@@ -117,13 +117,18 @@ const plannerItems: PlannerItem[] = [
   { number: 7, displayNumber: 4, title: "Recreacion", time: "10-15 min." },
 ];
 
-const generalItems = [
-  { number: 1, title: "Mientras llegan los exploradores" },
-  { number: 2, title: "Ceremonia de apertura", time: "1-5 min." },
-  { number: 3, title: "Asuntos generales / Rincon de patrulla", time: "3-10 min." },
-  { number: 8, title: "Devocional", time: "5 min." },
-  { number: 9, title: "Ceremonia de clausura", time: "1-5 min." },
-  { number: 10, title: "Despues de la reunion" },
+const generalItems: PlannerItem[] = [
+  { number: 1, displayNumber: 1, title: "Mientras llegan los exploradores" },
+  { number: 2, displayNumber: 2, title: "Ceremonia de apertura", time: "1-5 min." },
+  {
+    number: 3,
+    displayNumber: 3,
+    title: "Asuntos generales / Rincon de patrulla",
+    time: "3-10 min.",
+  },
+  { number: 8, displayNumber: 8, title: "Devocional", time: "5 min." },
+  { number: 9, displayNumber: 9, title: "Ceremonia de clausura", time: "1-5 min." },
+  { number: 10, displayNumber: 10, title: "Despues de la reunion" },
 ];
 
 const formatDate = (value: string) =>
@@ -148,6 +153,7 @@ const MeetingPlanner = ({
 }) => {
   const router = useRouter();
   const canManage = currentRole === "teacher";
+  const canManageGeneral = currentRole === "admin";
   const [activeView, setActiveView] = useState<"general" | "group">(
     currentRole === "admin" ? "general" : "group"
   );
@@ -155,6 +161,7 @@ const MeetingPlanner = ({
   const [openItems, setOpenItems] = useState<Record<string, boolean>>({});
   const [openSaved, setOpenSaved] = useState<Record<string, boolean>>({});
   const [openGeneralGroup, setOpenGeneralGroup] = useState<Record<string, boolean>>({});
+  const [openGeneralWeeks, setOpenGeneralWeeks] = useState<Record<string, boolean>>({});
   const [notes, setNotes] = useState<PlannerNotes>({});
   const [meetingDate, setMeetingDate] = useState("");
   const [editingPlannerId, setEditingPlannerId] = useState<string | null>(null);
@@ -200,29 +207,36 @@ const MeetingPlanner = ({
     field: "leaderId" | "detail",
     value: string
   ) => {
+    const plannerKey = activeView === "general" ? "general" : activeGroup.id;
+
     setNotes((current) => ({
       ...current,
-      [activeGroup.id]: {
-        ...(current[activeGroup.id] || {}),
+      [plannerKey]: {
+        ...(current[plannerKey] || {}),
         [itemNumber]: {
-          leaderId: current[activeGroup.id]?.[itemNumber]?.leaderId || "",
-          detail: current[activeGroup.id]?.[itemNumber]?.detail || "",
+          leaderId: current[plannerKey]?.[itemNumber]?.leaderId || "",
+          detail: current[plannerKey]?.[itemNumber]?.detail || "",
           [field]: value,
         },
       },
     }));
   };
 
-  const buildPayload = () => ({
-    id: editingPlannerId || undefined,
-    group: activeGroup.id,
-    meetingDate,
-    items: plannerItems.map((item) => ({
-      number: item.number,
-      leaderId: notes[activeGroup.id]?.[item.number]?.leaderId || "",
-      detail: notes[activeGroup.id]?.[item.number]?.detail || "",
-    })),
-  });
+  const buildPayload = () => {
+    const plannerKey = activeView === "general" ? "general" : activeGroup.id;
+    const items = activeView === "general" ? generalItems : plannerItems;
+
+    return {
+      id: editingPlannerId || undefined,
+      group: plannerKey,
+      meetingDate,
+      items: items.map((item) => ({
+        number: item.number,
+        leaderId: notes[plannerKey]?.[item.number]?.leaderId || "",
+        detail: notes[plannerKey]?.[item.number]?.detail || "",
+      })),
+    };
+  };
 
   const savePlanner = async () => {
     if (!meetingDate) {
@@ -261,7 +275,12 @@ const MeetingPlanner = ({
   };
 
   const editPlanner = (planner: SavedMeetingPlanner) => {
-    setActiveGroupId(planner.group);
+    if (planner.group === "general") {
+      setActiveView("general");
+    } else {
+      setActiveView("group");
+      setActiveGroupId(planner.group);
+    }
     setMeetingDate(toInputDate(planner.meetingDate));
     setEditingPlannerId(planner.id);
     setStatus("Editando planificador guardado.");
@@ -340,7 +359,8 @@ const MeetingPlanner = ({
                   ? "Planificador semanal general"
                   : "Planificador de grupo"}
               </h1>
-              {canManage && activeView === "group" ? (
+              {(canManage && activeView === "group") ||
+              (canManageGeneral && activeView === "general") ? (
                 <label className="mt-2 flex max-w-sm items-center gap-2 text-base text-gray-600">
                   <span>Semana:</span>
                   <input
@@ -407,29 +427,33 @@ const MeetingPlanner = ({
           </div>
         </div>
 
-        {canManage && activeView === "group" && (
+        {((canManage && activeView === "group") ||
+          (canManageGeneral && activeView === "general")) && (
           <>
             <div className="flex flex-col gap-4">
-              {plannerItems.map((item) => {
-                const itemKey = `${activeGroup.id}-${item.number}`;
+              {(activeView === "general" ? generalItems : plannerItems).map((item) => {
+                const plannerKey = activeView === "general" ? "general" : activeGroup.id;
+                const itemKey = `${plannerKey}-${item.number}`;
                 const isOpen = Boolean(openItems[itemKey]);
                 const itemNotes = {
-                  leaderId: notes[activeGroup.id]?.[item.number]?.leaderId || "",
-                  detail: notes[activeGroup.id]?.[item.number]?.detail || "",
+                  leaderId: notes[plannerKey]?.[item.number]?.leaderId || "",
+                  detail: notes[plannerKey]?.[item.number]?.detail || "",
                 };
+                const rowColor = activeView === "general" ? "#004A92" : activeGroup.color;
+                const rowLight = activeView === "general" ? "#E6EEF7" : activeGroup.light;
 
                 return (
                   <div key={item.number} className="relative pl-7 sm:pl-10">
                     <div
                       className="grid min-h-14 w-full grid-cols-1 items-center gap-3 rounded-r-md border px-3 py-3 pl-10 text-left shadow-sm transition hover:shadow-md sm:grid-cols-[minmax(0,1fr)_260px_115px_42px] sm:pl-12"
                       style={{
-                        borderColor: activeGroup.color,
-                        backgroundColor: activeGroup.light,
+                        borderColor: rowColor,
+                        backgroundColor: rowLight,
                       }}
                     >
                       <span
                         className="absolute left-0 flex h-14 w-14 items-center justify-center rounded-full border-[8px] bg-white text-2xl font-semibold text-gray-500 sm:h-16 sm:w-16 sm:text-3xl"
-                        style={{ borderColor: activeGroup.color }}
+                        style={{ borderColor: rowColor }}
                       >
                         {item.displayNumber}
                       </span>
@@ -473,7 +497,7 @@ const MeetingPlanner = ({
                         className={`ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-lg font-bold text-white transition ${
                           isOpen ? "rotate-180" : ""
                         }`}
-                        style={{ backgroundColor: activeGroup.color }}
+                        style={{ backgroundColor: rowColor }}
                       >
                         v
                       </button>
@@ -547,26 +571,98 @@ const MeetingPlanner = ({
             <div className="flex flex-col gap-5">
               {generalWeeks.map(([dateKey, weekPlanners]) => (
                 <section key={dateKey} className="overflow-hidden rounded-md border border-gray-200">
-                  <div className="border-b border-gray-200 bg-gray-50 px-4 py-3">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Semana del {formatDate(`${dateKey}T12:00:00.000Z`)}
-                    </h3>
+                  <div className="flex flex-wrap items-center justify-between gap-3 bg-gray-50 px-4 py-3">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setOpenGeneralWeeks((current) => ({
+                          ...current,
+                          [dateKey]: !current[dateKey],
+                        }))
+                      }
+                      className="flex min-w-0 flex-1 items-center justify-between gap-3 text-left"
+                    >
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Semana del {formatDate(`${dateKey}T12:00:00.000Z`)}
+                      </h3>
+                      <span
+                        className={`text-lg font-bold text-gray-500 transition ${
+                          openGeneralWeeks[dateKey] ? "rotate-180" : ""
+                        }`}
+                      >
+                        v
+                      </span>
+                    </button>
+
+                    {(() => {
+                      const generalPlanner = weekPlanners.find(
+                        (planner) => planner.group === "general"
+                      );
+                      const canEditGeneral =
+                        generalPlanner?.createdById === currentUserId;
+
+                      return canEditGeneral && generalPlanner ? (
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => editPlanner(generalPlanner)}
+                            className="rounded-md border border-lamaSky px-3 py-2 text-sm font-semibold text-lamaSky"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deletePlanner(generalPlanner.id)}
+                            disabled={saving}
+                            className="rounded-md border border-red-500 px-3 py-2 text-sm font-semibold text-red-600 disabled:opacity-60"
+                          >
+                            Eliminar
+                          </button>
+                        </div>
+                      ) : null;
+                    })()}
                   </div>
 
-                  <div className="grid gap-3 p-4 lg:grid-cols-2">
+                  {openGeneralWeeks[dateKey] && (
+                  <>
+                  <div className="flex flex-col gap-3 border-t border-gray-200 p-4">
                     {generalItems.slice(0, 3).map((item) => (
+                      (() => {
+                        const generalPlanner = weekPlanners.find(
+                          (planner) => planner.group === "general"
+                        );
+                        const savedItem = generalPlanner?.items.find(
+                          (entry) => entry.number === item.number
+                        );
+                        const leaderName = savedItem?.leaderId
+                          ? leaderNameById.get(savedItem.leaderId) || "Lider eliminado"
+                          : "Sin lider";
+
+                        return (
                       <div
                         key={item.number}
-                        className="grid grid-cols-[44px_minmax(0,1fr)_90px] items-center gap-3 rounded-md border border-gray-200 p-3"
+                        className="grid grid-cols-[44px_minmax(0,1fr)] items-start gap-3 rounded-md border border-gray-200 p-3 md:grid-cols-[44px_minmax(0,1fr)_220px_90px] md:items-center"
                       >
                         <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 font-semibold text-gray-600">
                           {item.number}
                         </span>
-                        <span className="font-semibold text-gray-700">{item.title}</span>
+                        <div>
+                          <span className="font-semibold text-gray-700">{item.title}</span>
+                          {savedItem?.detail && (
+                            <p className="mt-1 whitespace-pre-wrap text-sm text-gray-500">
+                              {savedItem.detail}
+                            </p>
+                          )}
+                        </div>
+                        <span className="col-start-2 text-sm font-medium text-gray-600 md:col-start-auto">
+                          Lider: {leaderName}
+                        </span>
                         <span className="text-right text-sm font-medium text-gray-500">
                           {item.time || ""}
                         </span>
                       </div>
+                        );
+                      })()
                     ))}
                   </div>
 
@@ -661,20 +757,46 @@ const MeetingPlanner = ({
 
                   <div className="grid gap-3 border-t border-gray-200 p-4 lg:grid-cols-2">
                     {generalItems.slice(3).map((item) => (
+                      (() => {
+                        const generalPlanner = weekPlanners.find(
+                          (planner) => planner.group === "general"
+                        );
+                        const savedItem = generalPlanner?.items.find(
+                          (entry) => entry.number === item.number
+                        );
+                        const leaderName = savedItem?.leaderId
+                          ? leaderNameById.get(savedItem.leaderId) || "Lider eliminado"
+                          : "Sin lider";
+
+                        return (
                       <div
                         key={item.number}
-                        className="grid grid-cols-[44px_minmax(0,1fr)_90px] items-center gap-3 rounded-md border border-gray-200 p-3"
+                        className="grid grid-cols-[44px_minmax(0,1fr)] items-start gap-3 rounded-md border border-gray-200 p-3 md:grid-cols-[44px_minmax(0,1fr)_180px_90px] md:items-center"
                       >
                         <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 font-semibold text-gray-600">
                           {item.number}
                         </span>
-                        <span className="font-semibold text-gray-700">{item.title}</span>
+                        <div>
+                          <span className="font-semibold text-gray-700">{item.title}</span>
+                          {savedItem?.detail && (
+                            <p className="mt-1 whitespace-pre-wrap text-sm text-gray-500">
+                              {savedItem.detail}
+                            </p>
+                          )}
+                        </div>
+                        <span className="col-start-2 text-sm font-medium text-gray-600 md:col-start-auto">
+                          Lider: {leaderName}
+                        </span>
                         <span className="text-right text-sm font-medium text-gray-500">
                           {item.time || ""}
                         </span>
                       </div>
+                        );
+                      })()
                     ))}
                   </div>
+                  </>
+                  )}
                 </section>
               ))}
             </div>

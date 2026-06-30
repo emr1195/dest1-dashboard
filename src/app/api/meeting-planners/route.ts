@@ -8,9 +8,10 @@ import { dateKeyToUtcDate } from "@/lib/timeZone";
 const plannerGroups = ["navegantes", "pioneros", "seguidores", "exploradores"];
 // Los planificadores de grupo solo contienen los cuatro momentos especificos.
 // Se conservan sus numeros historicos para que los planes guardados sigan siendo compatibles.
-const plannerItemNumbers = [4, 5, 6, 7];
+const groupPlannerItemNumbers = [4, 5, 6, 7];
+const generalPlannerItemNumbers = [1, 2, 3, 8, 9, 10];
 
-const parsePlannerPayload = (payload: unknown) => {
+const parsePlannerPayload = (payload: unknown, role: "admin" | "teacher") => {
   const data = payload as {
     id?: unknown;
     group?: unknown;
@@ -23,7 +24,11 @@ const parsePlannerPayload = (payload: unknown) => {
   const meetingDateValue =
     typeof data.meetingDate === "string" ? data.meetingDate.trim() : "";
 
-  if (!plannerGroups.includes(group)) {
+  if (role === "admin" && group !== "general") {
+    throw new Error("El administrador solo puede guardar el planificador general.");
+  }
+
+  if (role === "teacher" && !plannerGroups.includes(group)) {
     throw new Error("Selecciona un grupo valido.");
   }
 
@@ -40,7 +45,10 @@ const parsePlannerPayload = (payload: unknown) => {
     throw new Error("Completa la informacion del planificador.");
   }
 
-  const items = plannerItemNumbers.map((number) => {
+  const itemNumbers =
+    group === "general" ? generalPlannerItemNumbers : groupPlannerItemNumbers;
+
+  const items = itemNumbers.map((number) => {
     const item = data.items instanceof Array
       ? data.items.find((entry) => Number(entry?.number) === number)
       : null;
@@ -55,20 +63,23 @@ const parsePlannerPayload = (payload: unknown) => {
   return { id, group, meetingDate, items };
 };
 
-const ensureTeacher = async () => {
+const ensurePlannerManager = async () => {
   const currentUser = await getCurrentUser();
 
-  if (currentUser?.role !== "teacher") {
-    throw new Error("Solo los lideres pueden guardar planificadores.");
+  if (currentUser?.role !== "teacher" && currentUser?.role !== "admin") {
+    throw new Error("No tienes permiso para administrar planificadores.");
   }
 
-  return currentUser;
+  return {
+    ...currentUser,
+    role: currentUser.role as "admin" | "teacher",
+  };
 };
 
 export const POST = async (req: Request) => {
   try {
-    const currentUser = await ensureTeacher();
-    const payload = parsePlannerPayload(await req.json());
+    const currentUser = await ensurePlannerManager();
+    const payload = parsePlannerPayload(await req.json(), currentUser.role);
 
     const planner = await prisma.meetingPlanner.create({
       data: {
@@ -93,8 +104,8 @@ export const POST = async (req: Request) => {
 
 export const PATCH = async (req: Request) => {
   try {
-    const currentUser = await ensureTeacher();
-    const payload = parsePlannerPayload(await req.json());
+    const currentUser = await ensurePlannerManager();
+    const payload = parsePlannerPayload(await req.json(), currentUser.role);
 
     if (!payload.id) {
       throw new Error("No se encontro el planificador.");
@@ -134,7 +145,7 @@ export const PATCH = async (req: Request) => {
 
 export const DELETE = async (req: Request) => {
   try {
-    const currentUser = await ensureTeacher();
+    const currentUser = await ensurePlannerManager();
     const { id } = (await req.json()) as { id?: string };
 
     if (!id) {
