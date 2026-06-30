@@ -1,0 +1,2 @@
+ALTER TABLE "Assignment"
+ADD COLUMN IF NOT EXISTS "audience" TEXT NOT NULL DEFAULT 'group';

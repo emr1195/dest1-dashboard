@@ -616,6 +616,8 @@ export const createAssignment = async (
         startDate: data.startDate,
         dueDate: data.dueDate,
         category: data.category,
+        audience:
+          data.category === "Otros" && data.audience === "all" ? "all" : "group",
         points: data.points,
         createdById: creator.id,
         createdByName: creator.name,
@@ -657,6 +659,8 @@ export const updateAssignment = async (
         startDate: data.startDate,
         dueDate: data.dueDate,
         category: data.category,
+        audience:
+          data.category === "Otros" && data.audience === "all" ? "all" : "group",
         points: data.points,
         ...(creator
           ? {

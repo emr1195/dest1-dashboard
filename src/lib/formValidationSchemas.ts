@@ -171,6 +171,10 @@ export const assignmentSchema = z.object({
       .enum(["navegantes", "pioneros", "seguidores", "exploradores"])
       .optional()
   ),
+  audience: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.enum(["group", "all"]).optional()
+  ),
 });
 
 export type AssignmentSchema = z.infer<typeof assignmentSchema>;

@@ -37,12 +37,22 @@ const AssignmentDetailPage = async ({
       ...(role === "teacher"
         ? { lesson: { teacherId: currentUserId! } }
         : role === "student"
-          ? { lesson: { class: { students: { some: { id: currentUserId! } } } } }
+          ? {
+              OR: [
+                { audience: "all" },
+                { lesson: { class: { students: { some: { id: currentUserId! } } } } },
+              ],
+            }
           : role === "parent"
             ? {
-                lesson: {
-                  class: { students: { some: { id: { in: parentStudentIds } } } },
-                },
+                OR: [
+                  { audience: "all" },
+                  {
+                    lesson: {
+                      class: { students: { some: { id: { in: parentStudentIds } } } },
+                    },
+                  },
+                ],
               }
             : {}),
     },

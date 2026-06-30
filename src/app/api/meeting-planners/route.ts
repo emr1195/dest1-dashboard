@@ -20,13 +20,10 @@ const parsePlannerPayload = (payload: unknown, role: "admin" | "teacher") => {
   };
 
   const id = typeof data.id === "string" ? data.id.trim() : "";
-  const group = typeof data.group === "string" ? data.group.trim() : "";
+  const requestedGroup = typeof data.group === "string" ? data.group.trim() : "";
+  const group = role === "admin" ? "general" : requestedGroup;
   const meetingDateValue =
     typeof data.meetingDate === "string" ? data.meetingDate.trim() : "";
-
-  if (role === "admin" && group !== "general") {
-    throw new Error("El administrador solo puede guardar el planificador general.");
-  }
 
   if (role === "teacher" && !plannerGroups.includes(group)) {
     throw new Error("Selecciona un grupo valido.");

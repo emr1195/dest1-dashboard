@@ -120,6 +120,7 @@ model Assignment {
   startDate   DateTime
   dueDate     DateTime
   category    String                 @default("Premio de adiestramiento")
+  audience    String                 @default("group")
   points      Int                    @default(25)
   createdById String?
   createdByName String?

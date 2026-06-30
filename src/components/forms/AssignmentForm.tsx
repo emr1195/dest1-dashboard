@@ -52,6 +52,7 @@ const AssignmentForm = ({
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<AssignmentSchema>({
     resolver: zodResolver(assignmentSchema),
@@ -127,11 +128,16 @@ const AssignmentForm = ({
   const lessons = relatedData?.lessons || [];
   const isAdminCreate = type === "create" && relatedData?.currentRole === "admin";
   const canEditDisplayedLeader = relatedData?.currentRole === "admin";
+  const isTeacher = relatedData?.currentRole === "teacher";
   const assignmentCreators = relatedData?.assignmentCreators || [];
   const assignableGroups = leaderGroupOptions.filter(
     (group) => group.value !== "sin-grupo"
   );
   const defaultLessonId = data?.lessonId || lessons[0]?.id;
+  const selectedCategory = watch(
+    "category",
+    getAssignmentCategory(data?.category) as AssignmentSchema["category"]
+  );
 
   return (
     <form className="flex flex-col gap-8" onSubmit={onSubmit}>
@@ -272,6 +278,25 @@ const AssignmentForm = ({
             </p>
           )}
         </div>
+        {isTeacher && selectedCategory === "Otros" ? (
+          <div className="flex flex-col gap-2 w-full md:w-1/4">
+            <label className="text-xs text-gray-500">Dirigida a</label>
+            <select
+              className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+              {...register("audience")}
+              defaultValue={data?.audience || "group"}
+            >
+              <option value="group">Solo mi grupo</option>
+              <option value="all">Todos los grupos</option>
+            </select>
+          </div>
+        ) : (
+          <input
+            type="hidden"
+            value={data?.audience === "all" && selectedCategory === "Otros" ? "all" : "group"}
+            {...register("audience")}
+          />
+        )}
         <div className="flex flex-col gap-2 w-full md:w-1/4">
           <label className="text-xs text-gray-500">Puntaje</label>
           <select

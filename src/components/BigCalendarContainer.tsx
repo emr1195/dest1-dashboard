@@ -96,9 +96,14 @@ const BigCalendarContainer = async ({
 
     const assignments = await prisma.assignment.findMany({
       where: {
-        lesson: {
-          teacherId: { in: leaderIds.length ? leaderIds : ["__no_teacher__"] },
-        },
+        OR: [
+          { audience: "all" },
+          {
+            lesson: {
+              teacherId: { in: leaderIds.length ? leaderIds : ["__no_teacher__"] },
+            },
+          },
+        ],
       },
       select: {
         id: true,

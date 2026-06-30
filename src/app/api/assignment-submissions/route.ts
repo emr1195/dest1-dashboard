@@ -29,13 +29,18 @@ export const POST = async (request: Request) => {
   const assignment = await prisma.assignment.findFirst({
     where: {
       id: assignmentId,
-      lesson: {
-        class: {
-          students: {
-            some: { id: currentUser.id },
+      OR: [
+        { audience: "all" },
+        {
+          lesson: {
+            class: {
+              students: {
+                some: { id: currentUser.id },
+              },
+            },
           },
         },
-      },
+      ],
     },
     select: { id: true },
   });

@@ -357,16 +357,44 @@ const AssignmentListPage = async ({
     case "teacher":
       query.lesson.teacherId = currentUserId!;
       break;
-    case "student":
-      query.lesson.teacherId = {
-        in: visibleLeaderIds.length ? visibleLeaderIds : ["__no_teacher__"],
-      };
+    case "student": {
+      const studentSearch = query.OR;
+      const studentVisibility: Prisma.AssignmentWhereInput[] = [
+        { audience: "all" },
+        {
+          lesson: {
+            teacherId: {
+              in: visibleLeaderIds.length ? visibleLeaderIds : ["__no_teacher__"],
+            },
+          },
+        },
+      ];
+      delete query.OR;
+      query.AND = [
+        ...(studentSearch ? [{ OR: studentSearch }] : []),
+        { OR: studentVisibility },
+      ];
       break;
-    case "parent":
-      query.lesson.teacherId = {
-        in: visibleLeaderIds.length ? visibleLeaderIds : ["__no_teacher__"],
-      };
+    }
+    case "parent": {
+      const parentSearch = query.OR;
+      const parentVisibility: Prisma.AssignmentWhereInput[] = [
+        { audience: "all" },
+        {
+          lesson: {
+            teacherId: {
+              in: visibleLeaderIds.length ? visibleLeaderIds : ["__no_teacher__"],
+            },
+          },
+        },
+      ];
+      delete query.OR;
+      query.AND = [
+        ...(parentSearch ? [{ OR: parentSearch }] : []),
+        { OR: parentVisibility },
+      ];
       break;
+    }
     default:
       break;
   }
