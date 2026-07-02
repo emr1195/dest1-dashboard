@@ -15,17 +15,55 @@ type PlannerItemPayload = {
   number: number;
   leaderId: string;
   detail: string;
+  contributions?: PlannerContribution[];
+};
+
+type PlannerContribution = {
+  leaderId: string;
+  detail: string;
+};
+
+const normalizeContributions = (item: any): PlannerContribution[] => {
+  const contributions = Array.isArray(item?.contributions)
+    ? item.contributions
+        .map((contribution: any) => ({
+          leaderId:
+            typeof contribution?.leaderId === "string"
+              ? contribution.leaderId.trim()
+              : "",
+          detail:
+            typeof contribution?.detail === "string"
+              ? contribution.detail.trim()
+              : "",
+        }))
+        .filter(
+          (contribution: PlannerContribution) =>
+            contribution.leaderId || contribution.detail
+        )
+    : [];
+
+  if (contributions.length) return contributions;
+
+  const leaderId = typeof item?.leaderId === "string" ? item.leaderId.trim() : "";
+  const detail = typeof item?.detail === "string" ? item.detail.trim() : "";
+  return leaderId || detail ? [{ leaderId, detail }] : [];
 };
 
 const normalizeStoredItems = (value: unknown): PlannerItemPayload[] => {
   if (!Array.isArray(value)) return [];
 
   return value
-    .map((item) => ({
-      number: Number(item?.number),
-      leaderId: typeof item?.leaderId === "string" ? item.leaderId : "",
-      detail: typeof item?.detail === "string" ? item.detail : "",
-    }))
+    .map((item) => {
+      const contributions = normalizeContributions(item);
+      const latest = contributions[contributions.length - 1];
+
+      return {
+        number: Number(item?.number),
+        leaderId: latest?.leaderId || "",
+        detail: latest?.detail || "",
+        contributions,
+      };
+    })
     .filter((item) => Number.isFinite(item.number));
 };
 
@@ -39,10 +77,33 @@ const mergePlannerItems = (
 
   return incomingItems.map((incoming) => {
     const existing = existingItems.get(incoming.number);
+    const contributions = new Map(
+      (existing?.contributions || []).map((contribution) => [
+        contribution.leaderId || `legacy-${incoming.number}`,
+        contribution,
+      ])
+    );
+
+    for (const contribution of normalizeContributions(incoming)) {
+      const contributionKey =
+        contribution.leaderId || `anonymous-${incoming.number}`;
+      const previous = contributions.get(contributionKey);
+      contributions.set(contributionKey, {
+        leaderId: contribution.leaderId || previous?.leaderId || "",
+        detail: contribution.detail || previous?.detail || "",
+      });
+    }
+
+    const mergedContributions = Array.from(contributions.values()).filter(
+      (contribution) => contribution.leaderId || contribution.detail
+    );
+    const latest = mergedContributions[mergedContributions.length - 1];
+
     return {
       number: incoming.number,
-      leaderId: incoming.leaderId || existing?.leaderId || "",
-      detail: incoming.detail || existing?.detail || "",
+      leaderId: latest?.leaderId || existing?.leaderId || "",
+      detail: latest?.detail || existing?.detail || "",
+      contributions: mergedContributions,
     };
   });
 };
@@ -109,40 +170,10 @@ const ensurePlannerManager = async () => {
   };
 };
 
-const getTeacherPlannerGroup = async (user: {
-  id: string;
-  email?: string | null;
-}) => {
-  const account = await prisma.authUser.findFirst({
-    where: {
-      role: "teacher",
-      OR: [
-        { id: user.id },
-        ...(user.email ? [{ email: user.email.toLowerCase() }] : []),
-      ],
-    },
-    select: { leaderGroup: true },
-  });
-
-  return account?.leaderGroup && plannerGroups.includes(account.leaderGroup)
-    ? account.leaderGroup
-    : null;
-};
-
 export const POST = async (req: Request) => {
   try {
     const currentUser = await ensurePlannerManager();
     const payload = parsePlannerPayload(await req.json(), currentUser.role);
-
-    if (currentUser.role === "teacher") {
-      const teacherGroup = await getTeacherPlannerGroup(currentUser);
-      if (teacherGroup && payload.group !== teacherGroup) {
-        return NextResponse.json(
-          { message: "Solo puedes guardar el planificador de tu grupo." },
-          { status: 403 }
-        );
-      }
-    }
 
     const existingPlanner = await prisma.meetingPlanner.findFirst({
       where: {
@@ -196,21 +227,15 @@ export const PATCH = async (req: Request) => {
 
     const existingPlanner = await prisma.meetingPlanner.findUnique({
       where: { id: payload.id },
-      select: { createdById: true, group: true },
+      select: { createdById: true, group: true, items: true },
     });
 
-    const teacherGroup =
-      currentUser.role === "teacher"
-        ? await getTeacherPlannerGroup(currentUser)
-        : null;
     const canEdit =
       existingPlanner &&
       existingPlanner.group === payload.group &&
       (currentUser.role === "admin"
         ? existingPlanner.group === "general"
-        : teacherGroup
-          ? existingPlanner.group === teacherGroup
-          : existingPlanner.createdById === currentUser.id);
+        : plannerGroups.includes(existingPlanner.group));
 
     if (!canEdit) {
       return NextResponse.json(
@@ -224,7 +249,7 @@ export const PATCH = async (req: Request) => {
       data: {
         group: payload.group,
         meetingDate: payload.meetingDate,
-        items: payload.items,
+        items: mergePlannerItems(existingPlanner.items, payload.items),
       },
     });
 
@@ -253,17 +278,11 @@ export const DELETE = async (req: Request) => {
       select: { createdById: true, group: true },
     });
 
-    const teacherGroup =
-      currentUser.role === "teacher"
-        ? await getTeacherPlannerGroup(currentUser)
-        : null;
     const canDelete =
       existingPlanner &&
       (currentUser.role === "admin"
         ? existingPlanner.group === "general"
-        : teacherGroup
-          ? existingPlanner.group === teacherGroup
-          : existingPlanner.createdById === currentUser.id);
+        : plannerGroups.includes(existingPlanner.group));
 
     if (!canDelete) {
       return NextResponse.json(

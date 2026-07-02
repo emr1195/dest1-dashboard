@@ -149,18 +149,18 @@ const StudentAssignmentCalendar = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 items-start gap-3 overflow-y-auto pb-2 md:grid-cols-5">
+      <div className="grid grid-cols-2 items-start gap-2 pb-2 sm:gap-3 md:grid-cols-5">
         {days.map((day) => (
           <section
             key={day.dateKey}
-            className="flex flex-col rounded-md border border-gray-200 bg-gray-50"
+            className="flex min-w-0 flex-col rounded-md border border-gray-200 bg-gray-50 last:col-span-2 md:last:col-span-1"
           >
             <div className="border-b border-gray-200 bg-white p-3 text-center">
               <p className="text-sm font-bold uppercase text-gray-600">{day.label}</p>
               <p className="mt-1 text-xl font-semibold text-gray-900">{day.date.getDate()}</p>
             </div>
 
-            <div className="flex flex-col gap-2 p-3">
+            <div className="flex min-w-0 flex-col gap-2 p-2 sm:p-3">
               {day.tasks.length ? (
                 day.tasks.map((assignment) => {
                   const styles = statusStyles[assignment.deadlineStatus];
@@ -168,7 +168,7 @@ const StudentAssignmentCalendar = ({
                   return (
                     <article
                       key={assignment.id}
-                      className={`rounded-md border p-3 shadow-sm ${styles.card}`}
+                      className={`min-w-0 rounded-md border p-2 shadow-sm sm:p-3 ${styles.card}`}
                     >
                       <div className="mb-2 flex flex-wrap items-center gap-2">
                         <span

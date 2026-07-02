@@ -29,6 +29,10 @@ export type SavedPlannerItem = {
   number: number;
   leaderId: string;
   detail: string;
+  contributions?: Array<{
+    leaderId: string;
+    detail: string;
+  }>;
 };
 
 export type SavedMeetingPlanner = {
@@ -146,17 +150,59 @@ const formatDate = (value: string) =>
 
 const toInputDate = (value: string) => value.slice(0, 10);
 
+const getContributions = (item?: SavedPlannerItem) => {
+  if (!item) return [];
+  if (item.contributions?.length) return item.contributions;
+  return item.leaderId || item.detail
+    ? [{ leaderId: item.leaderId, detail: item.detail }]
+    : [];
+};
+
+const PlannerContributions = ({
+  item,
+  leaderNameById,
+  emptyText = "Sin informacion registrada.",
+}: {
+  item?: SavedPlannerItem;
+  leaderNameById: Map<string, string>;
+  emptyText?: string;
+}) => {
+  const contributions = getContributions(item);
+
+  if (!contributions.length) {
+    return <p className="text-gray-500">{emptyText}</p>;
+  }
+
+  return (
+    <div className="flex flex-col divide-y divide-gray-200">
+      {contributions.map((contribution, index) => (
+        <div
+          key={`${contribution.leaderId}-${index}`}
+          className="py-2 first:pt-0 last:pb-0"
+        >
+          <p className="font-semibold text-gray-700">
+            Lider: {contribution.leaderId
+              ? leaderNameById.get(contribution.leaderId) || "Lider eliminado"
+              : "Sin lider"}
+          </p>
+          <p className="mt-1 whitespace-pre-wrap text-gray-600">
+            {contribution.detail || "Sin informacion registrada."}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const MeetingPlanner = ({
   leaders,
   currentRole,
   currentUserId,
-  currentGroup,
   initialPlanners,
 }: {
   leaders: LeaderOption[];
   currentRole: "admin" | "teacher";
   currentUserId: string;
-  currentGroup?: string | null;
   initialPlanners: SavedMeetingPlanner[];
 }) => {
   const router = useRouter();
@@ -165,10 +211,7 @@ const MeetingPlanner = ({
   const [activeView, setActiveView] = useState<"general" | "group">(
     currentRole === "admin" ? "general" : "group"
   );
-  const navigationGroups =
-    currentRole === "teacher" && currentGroup
-      ? groups.filter((group) => group.id === currentGroup)
-      : groups;
+  const navigationGroups = groups;
   const [activeGroupId, setActiveGroupId] = useState(
     navigationGroups[0]?.id || groups[0].id
   );
@@ -395,19 +438,17 @@ const MeetingPlanner = ({
           </div>
 
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
-            {currentRole === "admin" && (
-              <button
-                type="button"
-                onClick={() => setActiveView("general")}
-                className={`col-span-2 rounded-md border px-4 py-2 text-sm font-semibold transition sm:col-span-1 ${
-                  activeView === "general"
-                    ? "border-lamaSky bg-lamaSky text-white"
-                    : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
-                }`}
-              >
-                Reunion general
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setActiveView("general")}
+              className={`col-span-2 rounded-md border px-4 py-2 text-sm font-semibold transition sm:col-span-1 ${
+                activeView === "general"
+                  ? "border-lamaSky bg-lamaSky text-white"
+                  : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              Reunion general
+            </button>
             {navigationGroups.map((group) => {
               const active = activeView === "group" && group.id === activeGroup.id;
 
@@ -593,10 +634,6 @@ const MeetingPlanner = ({
                           const savedItem = groupPlanner?.items.find(
                             (entry) => entry.number === item.number
                           );
-                          const leaderName = savedItem?.leaderId
-                            ? leaderNameById.get(savedItem.leaderId) || "Lider eliminado"
-                            : "Sin lider";
-
                           return (
                             <div
                               key={group.id}
@@ -613,14 +650,19 @@ const MeetingPlanner = ({
                                   height={34}
                                   className="h-8 w-9 object-contain"
                                 />
-                                {group.name} - Lider: {leaderName}
+                                {group.name}
                               </div>
-                              <p className="whitespace-pre-wrap text-gray-600">
-                                {!meetingDate
-                                  ? "Selecciona primero la fecha de la reunion."
-                                  : savedItem?.detail ||
-                                    "No hay informacion guardada para este punto."}
-                              </p>
+                              {!meetingDate ? (
+                                <p className="text-gray-500">
+                                  Selecciona primero la fecha de la reunion.
+                                </p>
+                              ) : (
+                                <PlannerContributions
+                                  item={savedItem}
+                                  leaderNameById={leaderNameById}
+                                  emptyText="No hay informacion guardada para este punto."
+                                />
+                              )}
                             </div>
                           );
                         })}
@@ -799,7 +841,10 @@ const MeetingPlanner = ({
                             const hasDetail = matchingPlanners.some((planner) =>
                               planner.items.some(
                                 (savedItem) =>
-                                  savedItem.number === item.number && Boolean(savedItem.detail)
+                                  savedItem.number === item.number &&
+                                  getContributions(savedItem).some(
+                                    (contribution) => Boolean(contribution.detail)
+                                  )
                               )
                             );
                             const openKey = `${dateKey}-${item.number}-${group.id}`;
@@ -842,16 +887,12 @@ const MeetingPlanner = ({
                                         const savedItem = planner.items.find(
                                           (entry) => entry.number === item.number
                                         );
-                                        const leaderName = savedItem?.leaderId
-                                          ? leaderNameById.get(savedItem.leaderId) || "Lider eliminado"
-                                          : "Sin lider";
-
                                         return (
-                                          <div key={planner.id} className="whitespace-pre-wrap text-gray-700">
-                                            <p className="font-semibold">Lider: {leaderName}</p>
-                                            <p className="mt-1">
-                                              {savedItem?.detail || "Sin informacion registrada."}
-                                            </p>
+                                          <div key={planner.id} className="text-gray-700">
+                                            <PlannerContributions
+                                              item={savedItem}
+                                              leaderNameById={leaderNameById}
+                                            />
                                           </div>
                                         );
                                       })
@@ -999,14 +1040,10 @@ const MeetingPlanner = ({
                           const savedItem = planner.items.find(
                             (entry) => entry.number === item.number
                           );
-                          const leaderName = savedItem?.leaderId
-                            ? leaderNameById.get(savedItem.leaderId) || "Lider eliminado"
-                            : "Sin lider";
-
                           return (
                             <div
                               key={item.number}
-                              className="grid gap-2 rounded-md border border-gray-200 bg-white p-3 md:grid-cols-[44px_minmax(0,1fr)_220px_110px]"
+                              className="grid gap-2 rounded-md border border-gray-200 bg-white p-3 md:grid-cols-[44px_minmax(0,1fr)_110px]"
                             >
                               <span className="font-semibold text-gray-500">
                                 {item.displayNumber}
@@ -1016,15 +1053,13 @@ const MeetingPlanner = ({
                                   {item.title}
                                   {item.starred ? " *" : ""}
                                 </p>
-                                {savedItem?.detail && (
-                                  <p className="mt-1 whitespace-pre-wrap text-sm text-gray-500">
-                                    {savedItem.detail}
-                                  </p>
-                                )}
+                                <div className="mt-2 text-sm">
+                                  <PlannerContributions
+                                    item={savedItem}
+                                    leaderNameById={leaderNameById}
+                                  />
+                                </div>
                               </div>
-                              <span className="text-sm font-medium text-gray-600">
-                                Lider: {leaderName}
-                              </span>
                               <span className="text-sm font-semibold text-gray-500 md:text-right">
                                 {item.time || ""}
                               </span>
