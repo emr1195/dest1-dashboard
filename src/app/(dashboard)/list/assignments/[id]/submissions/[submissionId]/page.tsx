@@ -57,7 +57,7 @@ const SubmissionReviewPage = async ({
   );
   const headerList = headers();
   const publicBaseUrl = getPublicBaseUrl(
-    headerList.get("host"),
+    headerList.get("x-forwarded-host") || headerList.get("host"),
     headerList.get("x-forwarded-proto")
   );
   const publicFileUrl = `${publicBaseUrl}/api/public-files/assignment-submission/${submission.id}`;
@@ -124,12 +124,12 @@ const SubmissionReviewPage = async ({
             </div>
           )}
           <a
-            href={submission.filePath}
+            href={publicFileUrl}
             target="_blank"
             rel="noreferrer"
             className="mt-3 inline-flex rounded-md border border-gray-200 px-4 py-2 text-sm text-gray-500 hover:border-lamaSky hover:text-lamaSky"
           >
-            Abrir documento
+            Abrir o descargar documento
           </a>
         </div>
         <div className="flex flex-col gap-4">

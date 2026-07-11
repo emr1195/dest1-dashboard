@@ -61,7 +61,7 @@ const SubmissionPreviewPage = async ({
 
   const headerList = headers();
   const publicBaseUrl = getPublicBaseUrl(
-    headerList.get("host"),
+    headerList.get("x-forwarded-host") || headerList.get("host"),
     headerList.get("x-forwarded-proto")
   );
   const publicFileUrl = `${publicBaseUrl}/api/public-files/assignment-submission/${submission.id}`;
@@ -102,7 +102,7 @@ const SubmissionPreviewPage = async ({
             </p>
           </div>
           <a
-            href={submission.filePath}
+            href={publicFileUrl}
             target="_blank"
             rel="noreferrer"
             className="w-max rounded-md bg-lamaSky px-5 py-2 text-sm font-semibold text-white"

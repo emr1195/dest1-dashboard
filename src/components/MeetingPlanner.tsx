@@ -47,6 +47,8 @@ export type SavedMeetingPlanner = {
 
 type PlannerNotes = Record<string, Record<number, { leaderId: string; detail: string }>>;
 
+const GUEST_LEADER_ID = "__guest__";
+
 const AutoResizeTextarea = ({
   value,
   onChange,
@@ -231,7 +233,11 @@ const MeetingPlanner = ({
   );
 
   const leaderNameById = useMemo(
-    () => new Map(leaders.map((leader) => [leader.id, leader.name])),
+    () =>
+      new Map([
+        ...leaders.map((leader) => [leader.id, leader.name] as const),
+        [GUEST_LEADER_ID, "Invitado"] as const,
+      ]),
     [leaders]
   );
 
@@ -574,6 +580,9 @@ const MeetingPlanner = ({
                             className="min-w-0 flex-1 rounded-md border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-600 outline-none focus:border-lamaSky"
                           >
                             <option value="">Seleccionar</option>
+                            {activeView === "general" && (
+                              <option value={GUEST_LEADER_ID}>Invitado</option>
+                            )}
                             {leaders.map((leader) => (
                               <option key={leader.id} value={leader.id}>
                                 {leader.name}

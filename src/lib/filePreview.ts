@@ -34,12 +34,10 @@ export const canPreviewFile = (fileName: string, fileType?: string | null) =>
   );
 
 export const getPublicBaseUrl = (host: string | null, protocol?: string | null) => {
-  const appUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL;
-  if (appUrl) return appUrl.replace(/\/$/, "");
+  if (host) return `${protocol || "https"}://${host}`;
 
-  if (!host) return "";
-
-  return `${protocol || "https"}://${host}`;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL;
+  return appUrl?.replace(/\/$/, "") || "";
 };
 
 export const getOfficePreviewUrl = (publicFileUrl: string) =>
