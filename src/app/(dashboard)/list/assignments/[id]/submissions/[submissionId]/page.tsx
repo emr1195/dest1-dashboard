@@ -2,6 +2,7 @@ import SubmissionReviewForm from "@/components/SubmissionReviewForm";
 import { getCurrentUser } from "@/lib/auth";
 import {
   canPreviewFile,
+  getOfficePreviewUrl,
   getPublicBaseUrl,
   isImageFile,
   isOfficeFile,
@@ -64,9 +65,9 @@ const SubmissionReviewPage = async ({
     submission.fileName,
     submission.fileType
   );
-  const canInlinePreview =
-    canPreviewFile(submission.fileName, submission.fileType) &&
-    !isOfficeSubmissionFile;
+  const previewSrc = isOfficeSubmissionFile
+    ? getOfficePreviewUrl(publicFileUrl)
+    : submission.filePath;
 
   return (
     <div className="flex-1 p-4">
@@ -100,7 +101,7 @@ const SubmissionReviewPage = async ({
               Archivo subido por {submission.student.name} {submission.student.surname}
             </p>
           </div>
-          {canInlinePreview ? (
+          {canPreviewFile(submission.fileName, submission.fileType) ? (
             isImageFile(submission.fileName, submission.fileType) ? (
               <div className="flex min-h-[60vh] items-center justify-center rounded-md border border-gray-200 bg-gray-50 p-4">
                 <img
@@ -111,7 +112,7 @@ const SubmissionReviewPage = async ({
               </div>
             ) : (
               <iframe
-                src={submission.filePath}
+                src={previewSrc}
                 title={submission.fileName}
                 className="h-[75vh] w-full rounded-md border border-gray-200"
               />
@@ -122,9 +123,7 @@ const SubmissionReviewPage = async ({
                 Vista previa no disponible para este tipo de archivo.
               </p>
               <p className="mt-2 max-w-md text-sm text-gray-500">
-                {isOfficeSubmissionFile
-                  ? "Los documentos de Word, Excel y PowerPoint se descargan desde el boton de abajo para evitar errores del visor externo."
-                  : "Usa el boton de abajo solo si decides abrirlo o descargarlo."}
+                Usa el boton de abajo solo si decides abrirlo o descargarlo.
               </p>
             </div>
           )}

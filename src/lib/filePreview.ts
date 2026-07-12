@@ -5,9 +5,25 @@ export const officeMimeTypes = [
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   "application/vnd.ms-powerpoint",
   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/vnd.ms-visio.drawing",
+  "application/vnd.ms-visio.drawing.macroenabled.12",
+  "application/vnd.ms-project",
+  "application/x-mspublisher",
 ];
 
-export const officeExtensions = ["doc", "docx", "xls", "xlsx", "ppt", "pptx"];
+export const officeExtensions = [
+  "doc",
+  "docx",
+  "xls",
+  "xlsx",
+  "ppt",
+  "pptx",
+  "vsd",
+  "vsdx",
+  "vsdm",
+  "mpp",
+  "pub",
+];
 
 export const getFileExtension = (fileName: string) =>
   fileName.split(".").pop()?.toLowerCase() || "";
