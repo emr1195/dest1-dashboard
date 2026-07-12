@@ -34,10 +34,10 @@ const SubmissionPreviewPage = async ({
       assignmentId,
       ...(currentUser.role === "student"
         ? { studentId: currentUser.id }
-        : currentUser.role === "parent"
-          ? { studentId: { in: parentStudentIds } }
+          : currentUser.role === "parent"
+            ? { studentId: { in: parentStudentIds } }
           : currentUser.role === "teacher"
-            ? { assignment: { lesson: { teacherId: currentUser.id } } }
+            ? {}
             : currentUser.role === "admin"
               ? {}
               : { id: "__no_access__" }),

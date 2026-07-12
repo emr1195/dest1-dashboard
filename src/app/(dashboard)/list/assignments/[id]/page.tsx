@@ -34,9 +34,7 @@ const AssignmentDetailPage = async ({
   const assignment = await prisma.assignment.findFirst({
     where: {
       id: assignmentId,
-      ...(role === "teacher"
-        ? { lesson: { teacherId: currentUserId! } }
-        : role === "student"
+      ...(role === "student"
           ? {
               OR: [
                 { audience: "all" },

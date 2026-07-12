@@ -27,9 +27,7 @@ const SubmissionReviewPage = async ({
     where: {
       id: params.submissionId,
       assignmentId,
-      ...(currentUser.role === "teacher"
-        ? { assignment: { lesson: { teacherId: currentUser.id } } }
-        : currentUser.role === "admin"
+      ...(currentUser.role === "teacher" || currentUser.role === "admin"
           ? {}
           : { id: "__no_access__" }),
     },

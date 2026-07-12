@@ -21,9 +21,6 @@ export const POST = async (request: Request) => {
   const submission = await prisma.assignmentSubmission.findFirst({
     where: {
       id: submissionId,
-      ...(currentUser.role === "teacher"
-        ? { assignment: { lesson: { teacherId: currentUser.id } } }
-        : {}),
     },
     include: { assignment: true },
   });

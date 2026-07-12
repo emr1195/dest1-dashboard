@@ -355,7 +355,6 @@ const AssignmentListPage = async ({
     case "admin":
       break;
     case "teacher":
-      query.lesson.teacherId = currentUserId!;
       break;
     case "student": {
       const studentSearch = query.OR;
