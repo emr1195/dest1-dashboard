@@ -141,6 +141,16 @@ const SubmissionPreviewPage = async ({
           </div>
         )}
       </div>
+      {submission.reviewNote && (
+        <div className="mt-4 rounded-md border border-lamaSky/30 bg-white p-5">
+          <h2 className="text-lg font-semibold text-lamaSky">
+            Observaciones del lider
+          </h2>
+          <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-600">
+            {submission.reviewNote}
+          </p>
+        </div>
+      )}
     </div>
   );
 };

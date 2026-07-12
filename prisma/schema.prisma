@@ -151,6 +151,7 @@ model AssignmentSubmission {
   fileName     String
   filePath     String
   fileType     String?
+  reviewNote   String?    @db.Text
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   assignment   Assignment @relation(fields: [assignmentId], references: [id])

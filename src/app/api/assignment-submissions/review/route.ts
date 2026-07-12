@@ -9,8 +9,10 @@ export const POST = async (request: Request) => {
     return NextResponse.json({ message: "No autorizado." }, { status: 401 });
   }
 
-  const { submissionId, score } = await request.json();
+  const { submissionId, score, reviewNote } = await request.json();
   const numericScore = Number(score);
+  const cleanedReviewNote =
+    typeof reviewNote === "string" ? reviewNote.trim().slice(0, 3000) : null;
 
   if (typeof submissionId !== "string" || !Number.isInteger(numericScore)) {
     return NextResponse.json({ message: "Datos invalidos." }, { status: 400 });
@@ -58,6 +60,11 @@ export const POST = async (request: Request) => {
           examId: null,
         },
       });
+
+  await prisma.assignmentSubmission.update({
+    where: { id: submission.id },
+    data: { reviewNote: cleanedReviewNote || null },
+  });
 
   return NextResponse.json({ ok: true, result });
 };

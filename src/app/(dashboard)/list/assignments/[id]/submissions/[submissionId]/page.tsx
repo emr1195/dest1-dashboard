@@ -149,6 +149,7 @@ const SubmissionReviewPage = async ({
             submissionId={submission.id}
             maxScore={submission.assignment.points}
             defaultScore={existingResult?.score}
+            defaultReviewNote={submission.reviewNote}
           />
         </div>
       </div>
