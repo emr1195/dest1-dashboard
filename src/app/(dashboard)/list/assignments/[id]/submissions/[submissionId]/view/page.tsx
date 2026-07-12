@@ -1,7 +1,6 @@
 import { getCurrentUser } from "@/lib/auth";
 import {
   canPreviewFile,
-  getOfficePreviewUrl,
   getPublicBaseUrl,
   isImageFile,
   isOfficeFile,
@@ -65,9 +64,13 @@ const SubmissionPreviewPage = async ({
     headerList.get("x-forwarded-proto")
   );
   const publicFileUrl = `${publicBaseUrl}/api/public-files/assignment-submission/${submission.id}`;
-  const previewSrc = isOfficeFile(submission.fileName, submission.fileType)
-    ? getOfficePreviewUrl(publicFileUrl)
-    : submission.filePath;
+  const isOfficeSubmissionFile = isOfficeFile(
+    submission.fileName,
+    submission.fileType
+  );
+  const canInlinePreview =
+    canPreviewFile(submission.fileName, submission.fileType) &&
+    !isOfficeSubmissionFile;
 
   return (
     <div className="flex-1 p-4">
@@ -110,7 +113,7 @@ const SubmissionPreviewPage = async ({
             Abrir o descargar
           </a>
         </div>
-        {canPreviewFile(submission.fileName, submission.fileType) ? (
+        {canInlinePreview ? (
           isImageFile(submission.fileName, submission.fileType) ? (
             <div className="flex min-h-[60vh] items-center justify-center rounded-md border border-gray-200 bg-gray-50 p-4">
               <img
@@ -121,7 +124,7 @@ const SubmissionPreviewPage = async ({
             </div>
           ) : (
             <iframe
-              src={previewSrc}
+              src={submission.filePath}
               title={submission.fileName}
               className="h-[75vh] w-full rounded-md border border-gray-200"
             />
@@ -132,9 +135,9 @@ const SubmissionPreviewPage = async ({
               Vista previa no disponible para este tipo de archivo.
             </p>
             <p className="mt-2 max-w-md text-sm text-gray-500">
-              Word, Excel y PowerPoint no se pueden visualizar directamente en el
-              navegador desde esta pagina. Usa el boton superior solo si decides
-              abrirlo o descargarlo.
+              {isOfficeSubmissionFile
+                ? "Los documentos de Word, Excel y PowerPoint se descargan desde el boton superior para evitar errores del visor externo."
+                : "Usa el boton superior solo si decides abrirlo o descargarlo."}
             </p>
           </div>
         )}
