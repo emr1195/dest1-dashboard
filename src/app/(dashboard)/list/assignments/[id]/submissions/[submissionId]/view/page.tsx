@@ -72,6 +72,19 @@ const SubmissionPreviewPage = async ({
   const previewSrc = isOfficeSubmissionFile
     ? getOfficePreviewUrl(publicFileUrl)
     : submission.filePath;
+  const reviewerLabel =
+    submission.reviewedByName ||
+    submission.assignment.createdByName ||
+    `${submission.assignment.lesson.teacher.name} ${submission.assignment.lesson.teacher.surname}`;
+  const reviewerRoleLabel =
+    submission.reviewedByRole === "admin" ? "Admin" : "Lider";
+  const reviewedAtLabel = submission.reviewedAt
+    ? new Intl.DateTimeFormat("es-PA", {
+        timeZone: "America/Panama",
+        dateStyle: "short",
+        timeStyle: "short",
+      }).format(submission.reviewedAt)
+    : null;
 
   return (
     <div className="flex-1 p-4">
@@ -126,11 +139,17 @@ const SubmissionPreviewPage = async ({
               submission.reviewNote ? "text-lamaSky" : "text-gray-700"
             }`}
           >
-            Observaciones del lider
+            Observaciones de {reviewerRoleLabel}
           </h2>
+          {submission.reviewNote && (
+            <p className="mt-1 text-xs text-gray-500">
+              {reviewerLabel}
+              {reviewedAtLabel ? ` - ${reviewedAtLabel}` : ""}
+            </p>
+          )}
           <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-gray-600">
             {submission.reviewNote ||
-              "Aun no hay observaciones registradas para esta entrega."}
+              "Aun no hay observaciones registradas para esta entrega. Si el admin o lider ya escribio una nota, revisa que haya presionado Revisado en la pantalla de revision."}
           </p>
         </div>
         {canPreviewFile(submission.fileName, submission.fileType) ? (

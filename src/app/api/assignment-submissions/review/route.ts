@@ -63,7 +63,13 @@ export const POST = async (request: Request) => {
 
   await prisma.assignmentSubmission.update({
     where: { id: submission.id },
-    data: { reviewNote: cleanedReviewNote || null },
+    data: {
+      reviewNote: cleanedReviewNote || null,
+      reviewedAt: new Date(),
+      reviewedById: currentUser.id,
+      reviewedByName: currentUser.name || currentUser.email || null,
+      reviewedByRole: currentUser.role,
+    },
   });
 
   return NextResponse.json({ ok: true, result });
