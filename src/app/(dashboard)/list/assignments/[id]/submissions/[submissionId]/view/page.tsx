@@ -114,6 +114,25 @@ const SubmissionPreviewPage = async ({
             Abrir o descargar
           </a>
         </div>
+        <div
+          className={`mb-4 rounded-md border p-4 ${
+            submission.reviewNote
+              ? "border-lamaSky/30 bg-lamaSkyLight"
+              : "border-gray-200 bg-gray-50"
+          }`}
+        >
+          <h2
+            className={`text-base font-semibold ${
+              submission.reviewNote ? "text-lamaSky" : "text-gray-700"
+            }`}
+          >
+            Observaciones del lider
+          </h2>
+          <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-gray-600">
+            {submission.reviewNote ||
+              "Aun no hay observaciones registradas para esta entrega."}
+          </p>
+        </div>
         {canPreviewFile(submission.fileName, submission.fileType) ? (
           isImageFile(submission.fileName, submission.fileType) ? (
             <div className="flex min-h-[60vh] items-center justify-center rounded-md border border-gray-200 bg-gray-50 p-4">
@@ -141,16 +160,6 @@ const SubmissionPreviewPage = async ({
           </div>
         )}
       </div>
-      {submission.reviewNote && (
-        <div className="mt-4 rounded-md border border-lamaSky/30 bg-white p-5">
-          <h2 className="text-lg font-semibold text-lamaSky">
-            Observaciones del lider
-          </h2>
-          <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-600">
-            {submission.reviewNote}
-          </p>
-        </div>
-      )}
     </div>
   );
 };
