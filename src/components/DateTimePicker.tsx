@@ -275,7 +275,7 @@ const DateTimePicker = ({
 
   return (
     <div>
-      <label htmlFor={id} className="mb-2 block text-sm font-semibold text-[#344054]">
+      <label htmlFor={id} className="mb-2 block text-sm font-semibold text-[#334155]">
         {label} {required && <span className="text-red-600">*</span>}
       </label>
       <button
@@ -288,11 +288,11 @@ const DateTimePicker = ({
         aria-describedby={`${id}-error`}
         data-invalid={Boolean(error) || undefined}
         onClick={() => setOpenPicker((current) => (current === id ? null : id))}
-        className={`flex h-12 w-full items-center justify-between gap-3 rounded-xl border bg-white px-4 text-left text-sm outline-none transition hover:border-[#9AA8B7] focus:border-[#07529A] focus:ring-4 focus:ring-[#07529A]/10 disabled:cursor-not-allowed disabled:bg-gray-50 ${
-          error ? "border-red-500 focus:border-red-600 focus:ring-red-100" : "border-[#D7DEE8]"
+        className={`date-picker-trigger flex h-12 w-full items-center justify-between gap-3 rounded-xl border px-4 text-left text-sm outline-none transition disabled:cursor-not-allowed disabled:bg-gray-50 ${
+          error ? "border-red-500" : ""
         }`}
       >
-        <span className={`min-w-0 truncate ${value ? "text-[#172033]" : "text-[#98A2B3]"}`}>
+        <span className={`min-w-0 truncate ${value ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}`}>
           {displayValue ||
             formatReadableValue(value, dateOnly) ||
             placeholder ||
@@ -303,7 +303,7 @@ const DateTimePicker = ({
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
-          className="h-5 w-5 shrink-0 text-[#667085]"
+          className="h-5 w-5 shrink-0 text-[var(--text-secondary)]"
           aria-hidden="true"
         >
           <path d="M8 2v4" />
@@ -323,7 +323,7 @@ const DateTimePicker = ({
           ref={popoverRef}
           role="dialog"
           aria-label={`Selector de ${label.toLowerCase()}`}
-          className="fixed z-[90] max-h-[calc(100vh-32px)] overflow-y-auto animate-[modalIn_160ms_ease-out] rounded-[14px] border border-[#D7DEE8] bg-white p-4 shadow-[0_20px_60px_rgba(15,23,42,0.22)]"
+          className="fixed z-[90] max-h-[calc(100vh-32px)] overflow-y-auto animate-[modalIn_160ms_ease-out] rounded-[14px] border border-[var(--border-default)] bg-white p-4 shadow-[0_20px_60px_rgba(15,23,42,0.22)]"
           style={{
             top:
               typeof window !== "undefined" && window.innerWidth < 640

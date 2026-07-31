@@ -102,13 +102,13 @@ const Navbar = async () => {
   const avatarLetter = displayName.charAt(0).toUpperCase();
 
   return (
-    <div className="flex min-h-16 shrink-0 items-center justify-between gap-2 px-3 py-2 pl-16 sm:px-4 md:pl-4">
-      <div className="hidden md:flex items-center gap-2 text-xs rounded-full ring-[1.5px] ring-gray-300 px-2">
+    <div className="app-topbar flex min-h-[68px] shrink-0 items-center justify-between gap-2 px-3 py-2 pl-16 sm:px-4 md:pl-4">
+      <div className="hidden min-h-11 items-center gap-2 rounded-xl border border-[var(--border-default)] bg-white px-3 text-xs shadow-[0_1px_3px_rgba(15,23,42,0.04)] transition focus-within:border-[var(--primary)] focus-within:ring-4 focus-within:ring-[var(--focus-ring)] md:flex">
         <Image src="/search.png" alt="" width={14} height={14} />
         <input
           type="text"
           placeholder="Buscar..."
-          className="w-[200px] p-2 bg-transparent outline-none"
+          className="w-[200px] bg-transparent py-2 text-[#334155] outline-none placeholder:text-[var(--text-muted)]"
         />
       </div>
       <div className="flex min-w-0 flex-1 items-center justify-end gap-3 sm:gap-6">
@@ -147,7 +147,7 @@ const Navbar = async () => {
         <Link
           href={profileHref}
           aria-label="Abrir perfil"
-          className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-lamaSky font-semibold text-white"
+          className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--primary)] font-semibold text-white transition hover:bg-[var(--primary-hover)] focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)]"
         >
           {user?.image ? (
             <Image

@@ -2,6 +2,279 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --page-background: #edf2f7;
+  --topbar-background: #f8fafc;
+  --card-background: #ffffff;
+  --surface-secondary: #f8fafc;
+  --surface-tertiary: #f1f5f9;
+  --primary: #07569f;
+  --primary-hover: #064a89;
+  --primary-soft: #eaf3fb;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --border-default: #cbd5e1;
+  --border-soft: #e2e8f0;
+  --border-decorative: #d7e0ea;
+  --focus-ring: rgba(7, 86, 159, 0.22);
+  --success: #15803d;
+  --warning: #b45309;
+  --danger: #b91c1c;
+  --group-navegantes-soft: #fff7e6;
+  --group-navegantes-hover: #ffedc2;
+  --group-navegantes-active: #f59e0b;
+  --group-navegantes-text: #9a5b00;
+  --group-pioneros-soft: #eff6ff;
+  --group-pioneros-hover: #dbeafe;
+  --group-pioneros-active: #2563eb;
+  --group-pioneros-text: #1d4ed8;
+  --group-seguidores-soft: #faf5ff;
+  --group-seguidores-hover: #f3e8ff;
+  --group-seguidores-active: #9333ea;
+  --group-seguidores-text: #7e22ce;
+  --group-exploradores-soft: #f0fdf4;
+  --group-exploradores-hover: #dcfce7;
+  --group-exploradores-active: #22c55e;
+  --group-exploradores-text: #15803d;
+}
+
+.app-topbar {
+  background: var(--topbar-background);
+  border-bottom: 1px solid var(--border-decorative);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+}
+
+.planner-page {
+  background: var(--page-background);
+  color: var(--text-primary);
+}
+
+.planner-primary-card {
+  background: var(--card-background);
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.07);
+  padding: 16px;
+}
+
+.planner-controls {
+  background: var(--surface-secondary);
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  margin-top: 24px;
+  padding: 16px;
+}
+
+.planner-logo-tile {
+  align-items: center;
+  background: var(--card-background);
+  border: 1px solid var(--border-decorative);
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+  display: inline-flex;
+  height: 48px;
+  justify-content: center;
+  width: 48px;
+}
+
+.planner-action-secondary,
+.planner-action-primary {
+  align-items: center;
+  border-radius: 11px;
+  display: inline-flex;
+  font-size: 0.875rem;
+  font-weight: 800;
+  gap: 0.5rem;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 20px;
+  transition: background-color 160ms ease, border-color 160ms ease,
+    box-shadow 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.planner-action-secondary {
+  background: var(--card-background);
+  border: 1.5px solid var(--primary);
+  color: var(--primary);
+}
+
+.planner-action-secondary:hover {
+  background: var(--primary-soft);
+  border-color: var(--primary-hover);
+  color: var(--primary-hover);
+}
+
+.planner-action-primary {
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  box-shadow: 0 4px 12px rgba(7, 86, 159, 0.18);
+  color: #ffffff;
+}
+
+.planner-action-primary:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.planner-action-secondary:focus-visible,
+.planner-action-primary:focus-visible,
+.planner-tab:focus-visible {
+  box-shadow: 0 0 0 4px rgba(7, 86, 159, 0.16);
+  outline: none;
+}
+
+.planner-action-secondary:active,
+.planner-action-primary:active,
+.planner-tab:active {
+  transform: translateY(1px);
+}
+
+.planner-action-secondary:disabled,
+.planner-action-primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.planner-tabs {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 2px 2px 4px;
+  scrollbar-width: none;
+}
+
+.planner-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.planner-tab {
+  align-items: center;
+  border-radius: 11px;
+  display: inline-flex;
+  flex: 0 0 174px;
+  font-size: 0.875rem;
+  font-weight: 800;
+  gap: 8px;
+  justify-content: center;
+  min-height: 50px;
+  min-width: 0;
+  padding: 0 10px;
+  transition: background-color 160ms ease, border-color 160ms ease,
+    box-shadow 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.planner-general-tab {
+  background: var(--primary-soft);
+  border: 1px solid #9bc2e4;
+  color: var(--primary);
+}
+
+.planner-general-tab:hover {
+  background: #dcecf9;
+}
+
+.planner-general-tab[aria-selected="true"] {
+  background: var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(7, 86, 159, 0.2);
+  color: #ffffff;
+}
+
+.planner-general-tab[aria-selected="true"]:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.planner-group-tab {
+  background: var(--tab-background);
+  border: 1px solid var(--tab-border);
+  color: var(--tab-text);
+}
+
+.planner-group-tab:hover {
+  background: var(--tab-hover);
+}
+
+.planner-group-tab[aria-selected="true"] {
+  background: var(--tab-active);
+  border-color: var(--tab-active);
+  box-shadow: var(--tab-shadow);
+  color: #ffffff;
+}
+
+.planner-tab-count {
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 999px;
+  color: inherit;
+  font-size: 0.6875rem;
+  padding: 2px 8px;
+}
+
+.planner-tab[aria-selected="true"] .planner-tab-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.date-picker-trigger {
+  background: var(--card-background);
+  border-color: var(--border-default);
+  color: var(--text-primary);
+}
+
+.date-picker-trigger:hover {
+  border-color: var(--text-muted);
+}
+
+.date-picker-trigger:focus-visible {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(7, 86, 159, 0.14);
+}
+
+.date-picker-trigger[data-invalid="true"] {
+  border-color: #ef4444;
+}
+
+.date-picker-trigger[data-invalid="true"]:focus-visible {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 4px rgba(185, 28, 28, 0.14);
+}
+
+@media (min-width: 640px) {
+  .planner-primary-card {
+    padding: 24px;
+  }
+
+  .planner-tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+    padding: 0;
+  }
+
+  .planner-tab {
+    flex: initial;
+    width: 100%;
+  }
+}
+
+@media (min-width: 768px) {
+  .planner-tabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .planner-primary-card {
+    padding: 28px;
+  }
+
+  .planner-tabs {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
 @keyframes modalIn {
   from {
     opacity: 0;

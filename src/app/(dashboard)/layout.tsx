@@ -49,7 +49,7 @@ export default function DashboardLayout({
         <Menu />
       </aside>
 
-      <main className="flex min-w-0 flex-1 flex-col overflow-x-hidden bg-[#EEF1F5]">
+      <main className="flex min-w-0 flex-1 flex-col overflow-x-hidden bg-[var(--page-background)]">
         <Navbar />
         {children}
       </main>

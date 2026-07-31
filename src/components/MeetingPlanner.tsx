@@ -1,7 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -75,7 +82,7 @@ type PlannerKey = "general" | string;
 type PlannerStatus = "draft" | "published";
 
 const GUEST_LEADER_ID = "__guest__";
-const primaryBlue = "#07529A";
+const primaryBlue = "var(--primary)";
 
 const groups: PlannerGroup[] = [
   {
@@ -107,6 +114,91 @@ const groups: PlannerGroup[] = [
     light: "#E8F6E8",
   },
 ];
+
+type GroupTabStyle = {
+  background: string;
+  hover: string;
+  active: string;
+  border: string;
+  text: string;
+  shadow: string;
+};
+
+const groupStyles: Record<string, GroupTabStyle> = {
+  navegantes: {
+    background: "var(--group-navegantes-soft)",
+    hover: "var(--group-navegantes-hover)",
+    active: "var(--group-navegantes-active)",
+    border: "var(--group-navegantes-active)",
+    text: "var(--group-navegantes-text)",
+    shadow: "0 4px 12px rgba(245, 158, 11, 0.22)",
+  },
+  pioneros: {
+    background: "var(--group-pioneros-soft)",
+    hover: "var(--group-pioneros-hover)",
+    active: "var(--group-pioneros-active)",
+    border: "var(--group-pioneros-active)",
+    text: "var(--group-pioneros-text)",
+    shadow: "0 4px 12px rgba(37, 99, 235, 0.2)",
+  },
+  seguidores: {
+    background: "var(--group-seguidores-soft)",
+    hover: "var(--group-seguidores-hover)",
+    active: "var(--group-seguidores-active)",
+    border: "var(--group-seguidores-active)",
+    text: "var(--group-seguidores-text)",
+    shadow: "0 4px 12px rgba(147, 51, 234, 0.2)",
+  },
+  exploradores: {
+    background: "var(--group-exploradores-soft)",
+    hover: "var(--group-exploradores-hover)",
+    active: "var(--group-exploradores-active)",
+    border: "var(--group-exploradores-active)",
+    text: "var(--group-exploradores-text)",
+    shadow: "0 4px 12px rgba(34, 197, 94, 0.2)",
+  },
+};
+
+const getGroupTabStyle = (groupId: string) => {
+  const visual = groupStyles[groupId];
+
+  return {
+    "--tab-background": visual.background,
+    "--tab-hover": visual.hover,
+    "--tab-active": visual.active,
+    "--tab-border": visual.border,
+    "--tab-text": visual.text,
+    "--tab-shadow": visual.shadow,
+  } as CSSProperties;
+};
+
+const handlePlannerTabKeyDown = (
+  event: ReactKeyboardEvent<HTMLButtonElement>
+) => {
+  if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
+    return;
+  }
+
+  const tabList = event.currentTarget.closest('[role="tablist"]');
+  const tabs = Array.from(
+    tabList?.querySelectorAll<HTMLButtonElement>('[role="tab"]') || []
+  );
+  const currentIndex = tabs.indexOf(event.currentTarget);
+  if (currentIndex < 0 || tabs.length === 0) return;
+
+  event.preventDefault();
+  const nextIndex =
+    event.key === "Home"
+      ? 0
+      : event.key === "End"
+        ? tabs.length - 1
+        : event.key === "ArrowRight"
+          ? (currentIndex + 1) % tabs.length
+          : (currentIndex - 1 + tabs.length) % tabs.length;
+
+  tabs[nextIndex].focus();
+  tabs[nextIndex].click();
+};
 
 const plannerItems: PlannerItem[] = [
   { number: 4, displayNumber: 1, title: "Estudio biblico", time: "15-20 min." },
@@ -1003,16 +1095,16 @@ const MeetingPlanner = ({
   };
 
   return (
-    <main className="min-h-screen bg-[#F5F7FA] px-2 py-3 text-[#172033] sm:px-4 sm:py-5">
+    <main className="planner-page min-h-screen px-3 py-4 sm:px-4 sm:py-6">
       <section className="mx-auto flex w-full max-w-[1500px] flex-col gap-5">
-        <div className="rounded-[14px] border border-[#E2E8F0] bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)] sm:p-5">
+        <div className="planner-primary-card">
           <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
             <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start">
               <div className="flex shrink-0 flex-wrap gap-2 sm:w-28">
                 {(activeView === "group" ? [activeGroup] : groups).map((group) => (
                   <span
                     key={group.id}
-                    className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-[#E2E8F0] bg-[#F8FAFC]"
+                    className="planner-logo-tile"
                   >
                     <Image
                       src={group.icon}
@@ -1026,15 +1118,15 @@ const MeetingPlanner = ({
               </div>
 
               <div className="min-w-0">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#07529A]">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--primary)]">
                   Programa semanal
                 </p>
-                <h1 className="mt-1 text-2xl font-black leading-tight text-[#172033] sm:text-3xl">
+                <h1 className="mt-1 text-2xl font-black leading-tight text-[var(--text-primary)] sm:text-3xl">
                   {activeView === "general"
                     ? "Planificador semanal general"
                     : `Planificador de ${activeGroup.name}`}
                 </h1>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-[#667085]">
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--text-secondary)]">
                   Organiza las actividades, lideres y tiempos de la reunion.
                 </p>
               </div>
@@ -1046,7 +1138,7 @@ const MeetingPlanner = ({
                   type="button"
                   onClick={() => savePlanner("draft")}
                   disabled={saving}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#07529A] bg-white px-5 text-sm font-black text-[#07529A] transition hover:bg-[#EAF2FA] focus:outline-none focus:ring-4 focus:ring-[#07529A]/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="planner-action-secondary"
                 >
                   {savingStatus === "draft" && (
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#07529A]/30 border-t-[#07529A]" />
@@ -1059,7 +1151,7 @@ const MeetingPlanner = ({
                   type="button"
                   onClick={() => savePlanner("published")}
                   disabled={saving}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#07529A] px-5 text-sm font-black text-white shadow-sm transition hover:bg-[#064780] focus:outline-none focus:ring-4 focus:ring-[#07529A]/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="planner-action-primary"
                 >
                   {savingStatus === "published" && (
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/50 border-t-white" />
@@ -1070,7 +1162,7 @@ const MeetingPlanner = ({
             )}
           </div>
 
-          <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(280px,360px)_minmax(0,1fr)] xl:items-end">
+          <div className="planner-controls grid gap-4 xl:grid-cols-[minmax(280px,360px)_minmax(0,1fr)] xl:items-end">
             <WeekSelector
               id="meeting-week"
               value={meetingDate}
@@ -1087,7 +1179,7 @@ const MeetingPlanner = ({
             />
 
             <div
-              className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5"
+              className="planner-tabs"
               role="tablist"
               aria-label="Grupos del planificador"
             >
@@ -1096,12 +1188,10 @@ const MeetingPlanner = ({
                 role="tab"
                 aria-selected={activeView === "general"}
                 aria-current={activeView === "general" ? "page" : undefined}
+                tabIndex={activeView === "general" ? 0 : -1}
                 onClick={() => setActiveView("general")}
-                className={`inline-flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-xl border px-2 text-sm font-black transition focus:outline-none focus:ring-4 focus:ring-[#07529A]/10 ${
-                  activeView === "general"
-                    ? "border-[#07529A] bg-[#07529A] text-white"
-                    : "border-[#D7DEE8] bg-white text-[#344054] hover:bg-[#F4F7FB]"
-                }`}
+                onKeyDown={handlePlannerTabKeyDown}
+                className="planner-tab planner-general-tab"
               >
                 <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center">
                   <Image
@@ -1114,7 +1204,7 @@ const MeetingPlanner = ({
                 </span>
                 <span className="min-w-0 truncate">Reunion general</span>
                 {!weekLoading && generalTabCount > 0 && (
-                  <span className="rounded-full bg-white/20 px-2 py-0.5 text-[11px]">
+                  <span className="planner-tab-count">
                     {generalTabCount}
                   </span>
                 )}
@@ -1133,21 +1223,18 @@ const MeetingPlanner = ({
                     role="tab"
                     aria-selected={active}
                     aria-current={active ? "page" : undefined}
+                    tabIndex={active ? 0 : -1}
                     onClick={() => {
                       setActiveView("group");
                       setActiveGroupId(group.id);
                     }}
-                    className={`inline-flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-xl border px-2 text-sm font-black transition focus:outline-none focus:ring-4 focus:ring-[#07529A]/10 ${
-                      active ? "text-white" : "bg-white text-[#344054] hover:bg-[#F4F7FB]"
-                    }`}
-                    style={{
-                      borderColor: group.color,
-                      backgroundColor: active ? group.color : undefined,
-                    }}
+                    onKeyDown={handlePlannerTabKeyDown}
+                    className="planner-tab planner-group-tab"
+                    style={getGroupTabStyle(group.id)}
                   >
                     <Image
                       src={group.icon}
-                      alt=""
+                      alt={`Logo de ${group.name}`}
                       width={28}
                       height={28}
                       className="h-7 w-7 object-contain"
@@ -1156,7 +1243,7 @@ const MeetingPlanner = ({
                     {!weekLoading && summary.activities > 0 && (
                       <span
                         aria-live="polite"
-                        className={`rounded-full px-2 py-0.5 text-[11px] ${active ? "bg-white/20" : "bg-[#F4F7FB]"}`}
+                        className="planner-tab-count"
                       >
                         {summary.activities}
                       </span>
@@ -1516,7 +1603,7 @@ const MeetingPlanner = ({
                   type="button"
                   onClick={() => savePlanner("draft")}
                   disabled={saving}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#07529A] bg-white px-5 text-sm font-black text-[#07529A] transition hover:bg-[#EAF2FA] disabled:opacity-60"
+                  className="planner-action-secondary"
                 >
                   {savingStatus === "draft" && (
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#07529A]/30 border-t-[#07529A]" />
@@ -1527,7 +1614,7 @@ const MeetingPlanner = ({
                   type="button"
                   onClick={() => savePlanner("published")}
                   disabled={saving}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#07529A] px-5 text-sm font-black text-white transition hover:bg-[#064780] disabled:opacity-60"
+                  className="planner-action-primary"
                 >
                   {savingStatus === "published" && (
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/50 border-t-white" />
