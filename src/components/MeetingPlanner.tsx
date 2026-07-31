@@ -131,6 +131,21 @@ const pad2 = (value: number) => String(value).padStart(2, "0");
 
 const toInputDate = (value: string) => value.slice(0, 10);
 
+const getWeekKey = (dateValue: string) => {
+  if (!dateValue) return "";
+
+  const selected = new Date(`${dateValue.slice(0, 10)}T12:00:00`);
+  if (Number.isNaN(selected.getTime())) return dateValue.slice(0, 10);
+
+  const monday = new Date(selected);
+  const offset = (selected.getDay() + 6) % 7;
+  monday.setDate(selected.getDate() - offset);
+
+  return `${monday.getFullYear()}-${pad2(monday.getMonth() + 1)}-${pad2(
+    monday.getDate()
+  )}`;
+};
+
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat("es-PA", {
     day: "2-digit",
@@ -329,7 +344,7 @@ const MeetingPlanner = ({
     const weeks = new Map<string, SavedMeetingPlanner[]>();
 
     initialPlanners.forEach((planner) => {
-      const dateKey = toInputDate(planner.meetingDate);
+      const dateKey = getWeekKey(toInputDate(planner.meetingDate));
       weeks.set(dateKey, [...(weeks.get(dateKey) || []), planner]);
     });
 
@@ -453,7 +468,8 @@ const MeetingPlanner = ({
         return;
       }
 
-      resetForm();
+      setEditingPlannerId(data?.id || editingPlannerId);
+      setOpenItems({});
       setStatus(
         editingPlannerId
           ? "Planificador actualizado."
@@ -670,7 +686,9 @@ const MeetingPlanner = ({
               <div>
                 <h2 className="text-lg font-black text-[#172033]">Actividades del programa</h2>
                 <p className="text-sm text-[#667085]">
-                  Usa subir y bajar para ajustar el orden visual antes de guardar.
+                  {activeView === "group"
+                    ? `Selecciona la semana y completa los 4 puntos de ${activeGroup.name}; esta informacion se mostrara en el planificador general de esa semana.`
+                    : "Usa subir y bajar para ajustar el orden visual antes de guardar."}
                 </p>
               </div>
               <p aria-live="polite" className={`text-sm font-semibold ${isErrorStatus(status) ? "text-red-600" : "text-[#667085]"}`}>
@@ -751,7 +769,8 @@ const MeetingPlanner = ({
                               const groupPlanner = initialPlanners.find(
                                 (planner) =>
                                   planner.group === group.id &&
-                                  toInputDate(planner.meetingDate) === meetingDate
+                                  getWeekKey(toInputDate(planner.meetingDate)) ===
+                                    getWeekKey(meetingDate)
                               );
                               const savedItem = groupPlanner?.items.find(
                                 (entry) => entry.number === item.number
@@ -888,7 +907,8 @@ const MeetingPlanner = ({
                           const groupPlanner = initialPlanners.find(
                             (planner) =>
                               planner.group === group.id &&
-                              toInputDate(planner.meetingDate) === meetingDate
+                              getWeekKey(toInputDate(planner.meetingDate)) ===
+                                getWeekKey(meetingDate)
                           );
                           const savedItem = groupPlanner?.items.find(
                             (entry) => entry.number === item.number
