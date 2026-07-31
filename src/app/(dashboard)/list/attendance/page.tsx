@@ -108,7 +108,7 @@ const AttendanceListPage = async ({
   const activeView = canViewTeachers ? view : "students";
 
   const attendanceManager = (people: AttendancePerson[], titleNote?: string) => (
-    <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
+    <div className="m-4 mt-0 flex-1 rounded-md bg-[#F5F7FA] p-4">
       {(role === "admin" || role === "teacher") && <FirebaseAttendanceSync />}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>

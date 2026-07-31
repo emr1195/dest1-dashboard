@@ -51,7 +51,7 @@ const fullDateFormatter = new Intl.DateTimeFormat("es-PA", {
 
 const shortDateFormatter = new Intl.DateTimeFormat("es-PA", {
   day: "numeric",
-  month: "long",
+  month: "short",
 });
 
 const toMonthKey = (date: Date) =>
@@ -93,6 +93,16 @@ const ChartMessageState = ({
         : "border-[#CBD5E1] bg-[#F8FAFC]"
     }`}
   >
+    {tone === "neutral" && (
+      <span className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#E2E8F0] text-[#64748B]">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5" aria-hidden="true">
+          <path d="M4 19V9" />
+          <path d="M10 19V5" />
+          <path d="M16 19v-7" />
+          <path d="M22 19V3" />
+        </svg>
+      </span>
+    )}
     <p className={`font-bold ${tone === "error" ? "text-red-700" : "text-[#334155]"}`}>
       {title}
     </p>
@@ -118,7 +128,7 @@ const CustomTooltip = ({
   );
 
   return (
-    <div className="min-w-52 rounded-xl border border-[#E2E8F0] bg-white p-4 shadow-[0_14px_36px_rgba(15,23,42,0.14)]">
+    <div className="min-w-52 rounded-xl border border-[#E2E8F0] bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.12)]">
       <p className="font-bold capitalize text-[#0F172A]">
         {fullDateFormatter.format(
           getDateForMonthDay(selectedMonth, Number(label))
@@ -226,7 +236,7 @@ const MonthlyAttendanceChart = ({
 
   return (
     <section
-      className="mt-8 rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)] sm:p-6"
+      className="mx-auto mt-8 w-full max-w-[1280px] rounded-2xl border border-[#E2E8F0] bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)] sm:p-6"
       aria-labelledby="monthly-attendance-title"
     >
       <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
@@ -235,7 +245,7 @@ const MonthlyAttendanceChart = ({
             Asistencias vs Ausencias
           </h2>
           <p className="mt-1 text-sm text-[#64748B]">
-            Comportamiento de la asistencia durante el mes
+            Seguimiento de la participación durante el período seleccionado
           </p>
           <p className="mt-2 text-sm font-semibold capitalize text-[#334155]">
             {getMonthLabel(selectedMonth)}
@@ -288,7 +298,7 @@ const MonthlyAttendanceChart = ({
         ))}
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-2" role="group" aria-label="Series del gráfico">
+      <div className="mt-5 flex flex-wrap items-center gap-2 xl:justify-end" role="group" aria-label="Series del gráfico">
         {(Object.keys(seriesConfig) as SeriesKey[]).map((key) => {
           const series = seriesConfig[key];
           const visible = visibleSeries[key];
@@ -300,9 +310,10 @@ const MonthlyAttendanceChart = ({
               aria-pressed={visible}
               aria-label={`${visible ? "Ocultar" : "Mostrar"} ${series.label.toLowerCase()}`}
               onClick={() => toggleSeries(key)}
-              className={`inline-flex min-h-10 items-center gap-2 rounded-full border border-[#E2E8F0] px-4 text-sm font-semibold text-[#334155] transition hover:bg-[#F8FAFC] focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)] ${
-                visible ? "bg-white" : "bg-[#F8FAFC] opacity-45"
+              className={`inline-flex min-h-11 items-center gap-2 rounded-full border border-[#E2E8F0] px-4 text-sm font-semibold text-[#334155] transition hover:brightness-[0.98] focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)] ${
+                visible ? "opacity-100" : "opacity-45"
               }`}
+              style={{ backgroundColor: visible ? series.soft : "#F8FAFC" }}
             >
               <span className="h-1 w-7 rounded-full" style={{ backgroundColor: series.color }} />
               {series.label}
