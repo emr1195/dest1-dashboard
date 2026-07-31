@@ -123,6 +123,7 @@ type DateTimePickerProps = {
   required?: boolean;
   disabled?: boolean;
   dateOnly?: boolean;
+  placeholder?: string;
   openPicker: string | null;
   setOpenPicker: Dispatch<SetStateAction<string | null>>;
 };
@@ -136,6 +137,7 @@ const DateTimePicker = ({
   required,
   disabled,
   dateOnly,
+  placeholder,
   openPicker,
   setOpenPicker,
 }: DateTimePickerProps) => {
@@ -278,6 +280,7 @@ const DateTimePicker = ({
       >
         <span className={`min-w-0 truncate ${value ? "text-[#172033]" : "text-[#98A2B3]"}`}>
           {formatReadableValue(value, dateOnly) ||
+            placeholder ||
             (dateOnly ? "Seleccionar fecha" : "Seleccionar fecha y hora")}
         </span>
         <svg

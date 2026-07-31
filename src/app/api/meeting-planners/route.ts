@@ -142,7 +142,19 @@ const parsePlannerPayload = (payload: unknown, role: "admin" | "teacher") => {
   const itemNumbers =
     group === "general" ? generalPlannerItemNumbers : groupPlannerItemNumbers;
 
-  const items = itemNumbers.map((number) => {
+  const incomingItems = data.items instanceof Array ? data.items : [];
+  const orderedItemNumbers = incomingItems
+    .map((entry) => Number(entry?.number))
+    .filter(
+      (number, index, values) =>
+        itemNumbers.includes(number) && values.indexOf(number) === index
+    );
+  const completeItemNumbers = [
+    ...orderedItemNumbers,
+    ...itemNumbers.filter((number) => !orderedItemNumbers.includes(number)),
+  ];
+
+  const items = completeItemNumbers.map((number) => {
     const item = data.items instanceof Array
       ? data.items.find((entry) => Number(entry?.number) === number)
       : null;
