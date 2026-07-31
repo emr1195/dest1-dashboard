@@ -394,27 +394,30 @@ const MonthlyAttendanceChart = ({
                   return (
                     <Line
                       key={key}
-                      type="monotone"
+                      type="linear"
                       dataKey={key}
                       name={series.label}
                       hide={!visibleSeries[key]}
                       stroke={series.color}
-                      strokeWidth={3}
+                      strokeWidth={2.75}
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       dot={{
-                        r: 3.5,
+                        r: 3.25,
                         fill: series.color,
                         stroke: "#FFFFFF",
                         strokeWidth: 2,
+                        cursor: "pointer",
                       }}
                       activeDot={{
-                        r: 6,
+                        r: 5.5,
                         fill: series.hover,
                         stroke: "#FFFFFF",
                         strokeWidth: 3,
+                        cursor: "pointer",
                       }}
-                      animationDuration={350}
+                      animationDuration={380}
+                      animationEasing="ease-out"
                     />
                   );
                 })}
