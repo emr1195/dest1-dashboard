@@ -138,34 +138,6 @@ const formatDate = (value: string) =>
     year: "numeric",
   }).format(new Date(value));
 
-const formatShortDate = (date: Date) =>
-  new Intl.DateTimeFormat("es-PA", {
-    day: "numeric",
-    month: "short",
-  }).format(date);
-
-const getWeekRangeLabel = (dateValue: string) => {
-  if (!dateValue) return "Selecciona una semana para comenzar";
-
-  const selected = new Date(`${dateValue}T12:00:00`);
-  if (Number.isNaN(selected.getTime())) return "Semana sin fecha valida";
-
-  const monday = new Date(selected);
-  const day = (selected.getDay() + 6) % 7;
-  monday.setDate(selected.getDate() - day);
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-
-  return `${formatShortDate(monday)} - ${formatShortDate(sunday)} ${sunday.getFullYear()}`;
-};
-
-const getDurationMinutes = (time?: string) => {
-  if (!time) return 0;
-  const numbers = time.match(/\d+/g)?.map(Number) || [];
-  if (!numbers.length) return 0;
-  return numbers[numbers.length - 1];
-};
-
 const getInitials = (name: string) =>
   name
     .split(" ")
@@ -366,28 +338,6 @@ const MeetingPlanner = ({
     );
   }, [initialPlanners]);
 
-  const summary = useMemo(() => {
-    const editableItems = activeItems.filter(
-      (item) => activeView !== "general" || !plannerItems.some((plannerItem) => plannerItem.number === item.number)
-    );
-    const completed = editableItems.filter((item) => {
-      const itemNotes = notes[plannerKey]?.[item.number];
-      return Boolean(itemNotes?.leaderId || itemNotes?.detail);
-    });
-    const assignedLeaderIds = new Set(
-      completed.map((item) => notes[plannerKey]?.[item.number]?.leaderId).filter(Boolean)
-    );
-
-    return {
-      totalActivities: activeItems.length,
-      editableActivities: editableItems.length,
-      duration: activeItems.reduce((total, item) => total + getDurationMinutes(item.time), 0),
-      assignedLeaders: assignedLeaderIds.size,
-      pending: Math.max(0, editableItems.length - completed.length),
-      groups: activeView === "general" ? groups.length : 1,
-    };
-  }, [activeItems, activeView, notes, plannerKey]);
-
   const hasDraftChanges = useMemo(
     () =>
       Boolean(
@@ -575,23 +525,6 @@ const MeetingPlanner = ({
     }
   };
 
-  const openAllEditable = () => {
-    const nextOpen: Record<string, boolean> = {};
-    activeItems.forEach((item) => {
-      const isSpecificGeneralItem =
-        activeView === "general" &&
-        plannerItems.some((plannerItem) => plannerItem.number === item.number);
-      if (!isSpecificGeneralItem) nextOpen[`${plannerKey}-${item.number}`] = true;
-    });
-    setOpenItems((current) => ({ ...current, ...nextOpen }));
-    setStatus("Vista previa preparada.");
-  };
-
-  const duplicateDraft = () => {
-    setEditingPlannerId(null);
-    setStatus("Semana duplicada en borrador. Elige otra fecha y guarda.");
-  };
-
   return (
     <main className="min-h-screen bg-[#F5F7FA] px-2 py-3 text-[#172033] sm:px-4 sm:py-5">
       <section className="mx-auto flex w-full max-w-[1500px] flex-col gap-5">
@@ -633,27 +566,6 @@ const MeetingPlanner = ({
             <div className="grid gap-2 sm:flex sm:flex-wrap sm:justify-end">
               <button
                 type="button"
-                onClick={openAllEditable}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D7DEE8] bg-white px-4 text-sm font-bold text-[#344054] transition hover:bg-[#F4F7FB] focus:outline-none focus:ring-4 focus:ring-[#07529A]/10"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true">
-                  <rect x="4" y="5" width="16" height="14" rx="2" />
-                  <path d="M8 9h8" />
-                  <path d="M8 13h5" />
-                </svg>
-                Vista previa
-              </button>
-              <button
-                type="button"
-                onClick={duplicateDraft}
-                disabled={!hasDraftChanges}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#D7DEE8] bg-white px-4 text-sm font-bold text-[#344054] transition hover:bg-[#F4F7FB] focus:outline-none focus:ring-4 focus:ring-[#07529A]/10 disabled:cursor-not-allowed disabled:opacity-45"
-              >
-                <span aria-hidden="true">+</span>
-                Duplicar semana
-              </button>
-              <button
-                type="button"
                 onClick={savePlanner}
                 disabled={saving || !canEditCurrent}
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#07529A] px-5 text-sm font-black text-white shadow-sm transition hover:bg-[#064780] focus:outline-none focus:ring-4 focus:ring-[#07529A]/20 disabled:cursor-not-allowed disabled:opacity-60"
@@ -683,9 +595,6 @@ const MeetingPlanner = ({
                   openPicker={openDatePicker}
                   setOpenPicker={setOpenDatePicker}
                 />
-                <p className="mt-2 text-sm font-semibold text-[#667085]">
-                  {getWeekRangeLabel(meetingDate)}
-                </p>
               </div>
             ) : (
               <p className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-sm text-[#667085]">
@@ -753,24 +662,6 @@ const MeetingPlanner = ({
             </div>
           </div>
 
-          <div className="mt-4 grid gap-2 md:grid-cols-4">
-            {[
-              `${summary.totalActivities} actividades`,
-              `${summary.duration} min programados`,
-              `${summary.assignedLeaders} lideres asignados`,
-              `${summary.pending} pendientes`,
-            ].map((label) => (
-              <div key={label} className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-4 py-3 text-sm font-bold text-[#344054]">
-                {label}
-              </div>
-            ))}
-          </div>
-
-          {summary.pending > 0 && canEditCurrent && (
-            <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900" role="status">
-              Faltan lideres o detalles por completar en {summary.pending} actividades.
-            </div>
-          )}
         </div>
 
         {canEditCurrent && (
@@ -1042,7 +933,7 @@ const MeetingPlanner = ({
 
             <div className="mt-4 flex flex-col gap-3 border-t border-[#E2E8F0] pt-4 sm:flex-row sm:items-center sm:justify-between">
               <p aria-live="polite" className={`text-sm font-semibold ${isErrorStatus(status) ? "text-red-600" : "text-[#667085]"}`}>
-                {status || (summary.pending ? "Programa en borrador." : "Programa listo para guardar.")}
+                {status || "Programa listo para guardar."}
               </p>
               <div className="flex flex-col gap-2 sm:flex-row">
                 {editingPlannerId && (
