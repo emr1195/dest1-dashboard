@@ -16,13 +16,13 @@ const SidebarHeader = ({ collapsible = false }: { collapsible?: boolean }) => {
         className="group/logo flex min-w-0 items-center gap-3 rounded-xl focus:outline-none focus:ring-4 focus:ring-[var(--sidebar-focus)]"
         title={collapsed ? "Exploradores del Rey - Destacamento #1" : undefined}
       >
-        <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-[var(--sidebar-border)] bg-white p-1 shadow-[0_2px_6px_rgba(15,23,42,0.04)]">
+        <span className="grid h-12 w-12 shrink-0 place-items-center">
           <Image
             src="/logo-catedral-de-vida.png"
             alt="Exploradores del Rey - Destacamento #1"
             width={48}
             height={48}
-            className="h-full w-full object-contain"
+            className="h-12 w-12 object-contain"
             priority
           />
         </span>
