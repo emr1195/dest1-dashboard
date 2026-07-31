@@ -10,6 +10,7 @@ import {
   getPlannerWeek,
   getWeekKey,
 } from "@/lib/plannerWeek";
+import { getTodayDateKey } from "@/lib/timeZone";
 
 import WeekSelector from "./WeekSelector";
 
@@ -177,6 +178,9 @@ const getPlannerDateValue = (planner: SavedMeetingPlanner) =>
 
 const getPlannerWeekKey = (planner: SavedMeetingPlanner) =>
   planner.weekKey || getWeekKey(getPlannerDateValue(planner));
+
+const isPlannerExpired = (planner: SavedMeetingPlanner) =>
+  getPlannerDateValue(planner) < getTodayDateKey();
 
 const getDefaultDuration = (itemNumber: number) =>
   defaultDurations[itemNumber] || 0;
@@ -549,7 +553,13 @@ const MeetingPlanner = ({
   const plannerKey = activeView === "general" ? "general" : activeGroup.id;
   const activeOrder = itemOrder[plannerKey] || defaultGroupOrder;
   const activeItems = activeOrder.map(getItemByNumber);
-  const canEditCurrent = (canManage && activeView === "group") || (canManageGeneral && activeView === "general");
+  const selectedDateExpired = Boolean(
+    meetingDate && meetingDate < getTodayDateKey()
+  );
+  const canEditCurrent =
+    !selectedDateExpired &&
+    ((canManage && activeView === "group") ||
+      (canManageGeneral && activeView === "general"));
   const selectedWeekKey = getWeekKey(meetingDate);
 
   const leaderNameById = useMemo(
@@ -1194,7 +1204,7 @@ const MeetingPlanner = ({
                     planner={planner}
                     loading={weekLoading}
                     error={Boolean(groupLoadErrors[group.id])}
-                    canEdit={canManage}
+                    canEdit={canManage && !selectedDateExpired}
                     onView={() => {
                       setActiveView("group");
                       setActiveGroupId(group.id);
@@ -1204,6 +1214,15 @@ const MeetingPlanner = ({
               </div>
             )}
           </section>
+        )}
+
+        {selectedDateExpired && (
+          <div
+            role="status"
+            className="rounded-xl border border-[#D7DEE8] bg-[#F8FAFC] px-4 py-3 text-sm font-semibold text-[#667085]"
+          >
+            Esta fecha ya finalizo. Los planificadores estan disponibles solo para consulta.
+          </div>
         )}
 
         {canEditCurrent && (
@@ -1556,7 +1575,10 @@ const MeetingPlanner = ({
                   const generalPlanner = weekPlanners.find(
                     (planner) => planner.group === "general"
                   );
-                  const canEditGeneral = canManageGeneral && Boolean(generalPlanner);
+                  const canEditGeneral =
+                    canManageGeneral &&
+                    Boolean(generalPlanner) &&
+                    !isPlannerExpired(generalPlanner!);
                   const open = Boolean(openGeneralWeeks[dateKey]);
 
                   return (
@@ -1788,6 +1810,7 @@ const MeetingPlanner = ({
                 {visibleGroupPlanners.map((planner) => {
                   const open = Boolean(openSaved[planner.id]);
                   const plannerSummary = getPlannerSummary(planner);
+                  const plannerExpired = isPlannerExpired(planner);
 
                   return (
                     <div key={planner.id} className="overflow-hidden rounded-[14px] border border-[#E2E8F0] bg-white">
@@ -1839,7 +1862,7 @@ const MeetingPlanner = ({
                           >
                             <Chevron open={open} />
                           </button>
-                          {canManage && (
+                          {canManage && !plannerExpired && (
                             <>
                               <button
                                 type="button"

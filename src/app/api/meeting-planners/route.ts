@@ -8,7 +8,7 @@ import {
   getPlannerWeek,
 } from "@/lib/plannerWeek";
 import prisma from "@/lib/prisma";
-import { dateKeyToUtcDate } from "@/lib/timeZone";
+import { dateKeyToUtcDate, getTodayDateKey } from "@/lib/timeZone";
 
 const plannerGroups = ["navegantes", "pioneros", "seguidores", "exploradores"];
 // Los planificadores de grupo solo contienen los cuatro momentos especificos.
@@ -36,6 +36,22 @@ const defaultDurations: Record<number, number> = {
 };
 
 class PlannerUserError extends Error {}
+
+const getStoredPlannerDateKey = (planner: {
+  selectedDate: Date | null;
+  meetingDate: Date;
+}) => (planner.selectedDate || planner.meetingDate).toISOString().slice(0, 10);
+
+const ensurePlannerIsNotExpired = (planner: {
+  selectedDate: Date | null;
+  meetingDate: Date;
+}) => {
+  if (getStoredPlannerDateKey(planner) < getTodayDateKey()) {
+    throw new PlannerUserError(
+      "Este planificador corresponde a una fecha finalizada y ya no se puede editar ni eliminar."
+    );
+  }
+};
 
 const getPlannerErrorMessage = (error: unknown, fallback: string) => {
   if (error instanceof PlannerUserError) return error.message;
@@ -398,6 +414,8 @@ export const POST = async (req: Request) => {
       }));
 
     if (existingPlanner) {
+      ensurePlannerIsNotExpired(existingPlanner);
+
       const planner = await prisma.meetingPlanner.update({
         where: { id: existingPlanner.id },
         data: {
@@ -466,8 +484,11 @@ export const PATCH = async (req: Request) => {
         group: true,
         items: true,
         meetingDate: true,
+        selectedDate: true,
       },
     });
+
+    if (existingPlanner) ensurePlannerIsNotExpired(existingPlanner);
 
     const canEdit =
       existingPlanner &&
@@ -547,8 +568,15 @@ export const DELETE = async (req: Request) => {
 
     const existingPlanner = await prisma.meetingPlanner.findUnique({
       where: { id },
-      select: { createdById: true, group: true },
+      select: {
+        createdById: true,
+        group: true,
+        meetingDate: true,
+        selectedDate: true,
+      },
     });
+
+    if (existingPlanner) ensurePlannerIsNotExpired(existingPlanner);
 
     const canDelete =
       existingPlanner &&
