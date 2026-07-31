@@ -16,7 +16,14 @@ import {
 } from "@/lib/actions";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useFormState } from "react-dom";
 import { toast } from "react-toastify";
 import { FormContainerProps } from "./FormContainer";
@@ -159,6 +166,61 @@ const FormModal = ({
   };
 
   const [open, setOpen] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const isAssignmentForm = table === "assignment" && type !== "delete";
+  const requestClose = useCallback(() => {
+    const closeEvent = new CustomEvent("codex:modal-close-request", {
+      cancelable: true,
+      detail: { table, type },
+    });
+
+    if (!window.dispatchEvent(closeEvent)) return;
+
+    setOpen(false);
+  }, [table, type]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const triggerElement = triggerRef.current;
+    document.body.style.overflow = "hidden";
+    modalRef.current?.focus();
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        requestClose();
+        return;
+      }
+
+      if (event.key !== "Tab" || !modalRef.current) return;
+
+      const focusable = modalRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusable.length) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+      triggerElement?.focus();
+    };
+  }, [open, requestClose]);
 
   const Form = () => {
     const [state, formAction] = useFormState(deleteActionMap[table], {
@@ -200,24 +262,45 @@ const FormModal = ({
   return (
     <>
       <button
+        ref={triggerRef}
         className={
           triggerClassName ||
           buttonClass
         }
+        type="button"
         onClick={() => setOpen(true)}
       >
         {triggerLabel || <TriggerIcon />}
       </button>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black bg-opacity-60 p-3">
-          <div className="relative max-h-[92vh] w-full overflow-y-auto rounded-md bg-white p-4 sm:w-[92%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%]">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 backdrop-blur-[2px]"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) requestClose();
+          }}
+        >
+          <div
+            ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            tabIndex={-1}
+            className={
+              isAssignmentForm
+                ? "relative flex max-h-[90vh] w-[calc(100%-32px)] max-w-[850px] animate-[modalIn_180ms_ease-out] flex-col overflow-hidden rounded-2xl bg-white shadow-[0_24px_80px_rgba(15,23,42,0.28)] outline-none"
+                : "relative max-h-[92vh] w-full animate-[modalIn_180ms_ease-out] overflow-y-auto rounded-md bg-white p-4 shadow-[0_24px_80px_rgba(15,23,42,0.28)] outline-none sm:w-[92%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%]"
+            }
+          >
             <Form />
-            <div
-              className="absolute top-4 right-4 cursor-pointer"
-              onClick={() => setOpen(false)}
-            >
-              <Image src="/close.png" alt="" width={14} height={14} />
-            </div>
+            {!isAssignmentForm && (
+              <button
+                type="button"
+                aria-label="Cerrar modal"
+                className="absolute right-4 top-4 rounded-full p-2 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-lamaSky"
+                onClick={requestClose}
+              >
+                <Image src="/close.png" alt="" width={14} height={14} />
+              </button>
+            )}
           </div>
         </div>
       )}
