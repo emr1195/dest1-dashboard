@@ -14,6 +14,8 @@ type UserNameEditorProps = {
   type: EditableProfileType;
   name: string;
   surname: string;
+  triggerLabel?: React.ReactNode;
+  triggerClassName?: string;
 };
 
 type UserForm = {
@@ -51,7 +53,7 @@ const emptyForm: UserForm = {
 const inputClass =
   "w-full rounded-md border border-gray-300 px-4 py-3 text-sm outline-none focus:border-lamaSky";
 
-const UserNameEditor = ({ id, type, name, surname }: UserNameEditorProps) => {
+const UserNameEditor = ({ id, type, name, surname, triggerLabel, triggerClassName }: UserNameEditorProps) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -145,10 +147,10 @@ const UserNameEditor = ({ id, type, name, surname }: UserNameEditorProps) => {
       <button
         type="button"
         onClick={openEditor}
-        className="flex h-7 w-7 items-center justify-center rounded-full bg-transparent text-lamaSky transition hover:bg-gray-100"
+        className={triggerClassName || "flex h-7 w-7 items-center justify-center rounded-full bg-transparent text-lamaSky transition hover:bg-gray-100"}
         aria-label="Editar usuario"
       >
-        <svg
+        {triggerLabel || <svg
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -160,7 +162,7 @@ const UserNameEditor = ({ id, type, name, surname }: UserNameEditorProps) => {
         >
           <path d="M12 20h9" />
           <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-        </svg>
+        </svg>}
       </button>
 
       {open && (

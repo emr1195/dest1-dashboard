@@ -24,7 +24,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { useFormState } from "react-dom";
+import { useFormState, useFormStatus } from "react-dom";
 import { toast } from "react-toastify";
 import { FormContainerProps } from "./FormContainer";
 import AssignmentForm from "./forms/AssignmentForm";
@@ -105,6 +105,17 @@ const forms: {
       relatedData={relatedData}
     />
   ),
+};
+
+const DeleteSubmitButton = ({ label }: { label: string }) => {
+  const { pending } = useFormStatus();
+
+  return (
+    <button disabled={pending} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-red-600 px-5 text-sm font-bold text-white transition hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-100 disabled:cursor-wait disabled:opacity-60">
+      {pending && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true" />}
+      {pending ? "Eliminando..." : label}
+    </button>
+  );
 };
 
 const FormModal = ({
@@ -242,15 +253,24 @@ const FormModal = ({
       }
     }, [state, router]);
 
+    const displayName = data?.displayName as string | undefined;
+
     return type === "delete" && id ? (
-      <form action={formAction} className="p-4 flex flex-col gap-4">
+      <form action={formAction} className="flex flex-col gap-5 p-5 sm:p-7">
         <input type="hidden" name="id" value={id} readOnly />
-        <span className="text-center font-medium">
-          Se perderan todos los datos. Seguro que quieres eliminar este registro?
-        </span>
-        <button className="bg-lamaPurple text-white py-2 px-4 rounded-md border-none w-max self-center">
-          Eliminar
-        </button>
+        <div className="pr-10">
+          <h2 className="text-xl font-extrabold text-[var(--text-primary)]">{table === "teacher" ? "Eliminar líder" : "Eliminar registro"}</h2>
+          <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
+            {table === "teacher" && displayName
+              ? `¿Estás seguro de que deseas eliminar a ${displayName}? Esta acción no se puede deshacer.`
+              : "¿Estás seguro de que deseas eliminar este registro? Esta acción no se puede deshacer."}
+          </p>
+        </div>
+        {state.error && <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">No se pudo eliminar el registro. Inténtalo nuevamente.</p>}
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button type="button" onClick={requestClose} className="min-h-11 rounded-xl border border-[var(--border-default)] px-5 text-sm font-bold text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)]">Cancelar</button>
+          <DeleteSubmitButton label={table === "teacher" ? "Eliminar líder" : "Eliminar"} />
+        </div>
       </form>
     ) : type === "create" || type === "update" ? (
       forms[table](setOpen, type, data, relatedData)
@@ -287,7 +307,9 @@ const FormModal = ({
             className={
               isAssignmentForm
                 ? "relative flex max-h-[90vh] w-[calc(100%-32px)] max-w-[850px] animate-[modalIn_180ms_ease-out] flex-col overflow-hidden rounded-2xl bg-white shadow-[0_24px_80px_rgba(15,23,42,0.28)] outline-none"
-                : "relative max-h-[92vh] w-full animate-[modalIn_180ms_ease-out] overflow-y-auto rounded-md bg-white p-4 shadow-[0_24px_80px_rgba(15,23,42,0.28)] outline-none sm:w-[92%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%]"
+                : type === "delete"
+                  ? "relative max-h-[92vh] w-full max-w-[520px] animate-[modalIn_180ms_ease-out] overflow-y-auto rounded-2xl border border-[var(--border-soft)] bg-white shadow-[0_24px_80px_rgba(15,23,42,0.28)] outline-none"
+                  : "relative max-h-[92vh] w-full animate-[modalIn_180ms_ease-out] overflow-y-auto rounded-md bg-white p-4 shadow-[0_24px_80px_rgba(15,23,42,0.28)] outline-none sm:w-[92%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%]"
             }
           >
             <Form />

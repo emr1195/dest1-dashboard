@@ -1,6 +1,7 @@
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import FormModal from "./FormModal";
+import { ReactNode } from "react";
 
 export type FormContainerProps = {
   table:
@@ -19,7 +20,7 @@ export type FormContainerProps = {
   type: "create" | "update" | "delete";
   data?: any;
   id?: number | string;
-  triggerLabel?: string;
+  triggerLabel?: ReactNode;
   triggerClassName?: string;
 };
 
