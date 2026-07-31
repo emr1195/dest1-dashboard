@@ -12,7 +12,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { FieldError, useForm } from "react-hook-form";
+import { FieldError, UseFormSetValue, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { createAssignment, updateAssignment } from "@/lib/actions";
 import {
@@ -65,6 +65,98 @@ const toDateTimeLocal = (value?: Date | string) => {
   date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
   return date.toISOString().slice(0, 16);
 };
+
+const monthNames = [
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
+];
+
+const shortMonthNames = [
+  "ene",
+  "feb",
+  "mar",
+  "abr",
+  "may",
+  "jun",
+  "jul",
+  "ago",
+  "sep",
+  "oct",
+  "nov",
+  "dic",
+];
+
+const weekdayLabels = ["Lu", "Ma", "Mi", "Ju", "Vi", "Sa", "Do"];
+
+const pad2 = (value: number) => String(value).padStart(2, "0");
+
+const dateToLocalInputValue = (date: Date) =>
+  `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}T${pad2(
+    date.getHours()
+  )}:${pad2(date.getMinutes())}`;
+
+const parseLocalDateTime = (value?: string | Date) => {
+  if (!value) return null;
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+  if (!match) {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  const [, year, month, day, hour, minute] = match;
+  return new Date(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+    Number(hour),
+    Number(minute)
+  );
+};
+
+const formatReadableDateTime = (value?: string | Date) => {
+  const date = parseLocalDateTime(value);
+  if (!date) return "";
+
+  const hour24 = date.getHours();
+  const minute = pad2(date.getMinutes());
+  const period = hour24 >= 12 ? "p. m." : "a. m.";
+  const hour12 = hour24 % 12 || 12;
+
+  return `${date.getDate()} ${shortMonthNames[date.getMonth()]} ${date.getFullYear()} - ${hour12}:${minute} ${period}`;
+};
+
+const getCalendarDays = (monthDate: Date) => {
+  const firstDay = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+  const mondayOffset = (firstDay.getDay() + 6) % 7;
+  const gridStart = new Date(firstDay);
+  gridStart.setDate(firstDay.getDate() - mondayOffset);
+
+  return Array.from({ length: 42 }, (_, index) => {
+    const day = new Date(gridStart);
+    day.setDate(gridStart.getDate() + index);
+    return day;
+  });
+};
+
+const isSameDay = (left: Date, right: Date) =>
+  left.getFullYear() === right.getFullYear() &&
+  left.getMonth() === right.getMonth() &&
+  left.getDate() === right.getDate();
+
+const clampHour = (value: number) => Math.min(12, Math.max(1, value || 1));
+const clampMinute = (value: number) => Math.min(59, Math.max(0, value || 0));
 
 const formatFileSize = (bytes: number) => {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
@@ -306,6 +398,412 @@ const FileUploadCard = ({
   );
 };
 
+const DateTimePicker = ({
+  id,
+  label,
+  required,
+  value,
+  fieldName,
+  setValue,
+  error,
+  openPicker,
+  setOpenPicker,
+  disabled,
+}: {
+  id: string;
+  label: string;
+  required?: boolean;
+  value?: string;
+  fieldName: "startDate" | "dueDate";
+  setValue: UseFormSetValue<AssignmentSchema>;
+  error?: FieldError;
+  openPicker: string | null;
+  setOpenPicker: Dispatch<SetStateAction<string | null>>;
+  disabled?: boolean;
+}) => {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const isOpen = openPicker === id;
+  const selectedDate = parseLocalDateTime(value);
+  const [draftDate, setDraftDate] = useState<Date>(
+    selectedDate || new Date()
+  );
+  const [visibleMonth, setVisibleMonth] = useState<Date>(
+    selectedDate || new Date()
+  );
+  const [popoverPosition, setPopoverPosition] = useState({
+    top: 0,
+    left: 0,
+    width: 340,
+    placement: "bottom" as "bottom" | "top",
+  });
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const current = parseLocalDateTime(value) || new Date();
+    setDraftDate(current);
+    setVisibleMonth(new Date(current.getFullYear(), current.getMonth(), 1));
+  }, [isOpen, value]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const updatePosition = () => {
+      const button = buttonRef.current;
+      if (!button) return;
+
+      const rect = button.getBoundingClientRect();
+      const isMobile = window.innerWidth < 640;
+      const popoverWidth = isMobile
+        ? Math.max(0, window.innerWidth - 32)
+        : Math.min(360, Math.max(320, rect.width));
+      const estimatedHeight = 464;
+      const spaceBelow = window.innerHeight - rect.bottom - 16;
+      const placement =
+        !isMobile && spaceBelow < estimatedHeight && rect.top > estimatedHeight
+          ? "top"
+          : "bottom";
+      const top =
+        placement === "top"
+          ? Math.max(16, rect.top - estimatedHeight - 10)
+          : rect.bottom + 10;
+      const left = isMobile
+        ? 16
+        : Math.min(
+            Math.max(16, rect.left),
+            window.innerWidth - popoverWidth - 16
+          );
+
+      setPopoverPosition({ top, left, width: popoverWidth, placement });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (
+        popoverRef.current?.contains(target) ||
+        buttonRef.current?.contains(target)
+      ) {
+        return;
+      }
+
+      setOpenPicker(null);
+    };
+
+    window.addEventListener("pointerdown", onPointerDown);
+
+    return () => window.removeEventListener("pointerdown", onPointerDown);
+  }, [isOpen, setOpenPicker]);
+
+  const selectedHour24 = draftDate.getHours();
+  const draftHour = selectedHour24 % 12 || 12;
+  const draftMinute = draftDate.getMinutes();
+  const draftPeriod = selectedHour24 >= 12 ? "pm" : "am";
+  const calendarDays = getCalendarDays(visibleMonth);
+  const today = new Date();
+
+  const updateDraftDate = (next: Date) => {
+    const updated = new Date(next);
+    updated.setHours(draftDate.getHours(), draftDate.getMinutes(), 0, 0);
+    setDraftDate(updated);
+  };
+
+  const updateDraftTime = (hour12: number, minute: number, period: "am" | "pm") => {
+    let hour24 = clampHour(hour12) % 12;
+    if (period === "pm") hour24 += 12;
+
+    const updated = new Date(draftDate);
+    updated.setHours(hour24, clampMinute(minute), 0, 0);
+    setDraftDate(updated);
+  };
+
+  const applyValue = () => {
+    setValue(fieldName, dateToLocalInputValue(draftDate) as any, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setOpenPicker(null);
+  };
+
+  const cancel = () => {
+    const current = parseLocalDateTime(value) || new Date();
+    setDraftDate(current);
+    setVisibleMonth(new Date(current.getFullYear(), current.getMonth(), 1));
+    setOpenPicker(null);
+  };
+
+  const pickToday = () => {
+    const now = new Date();
+    setDraftDate(now);
+    setVisibleMonth(new Date(now.getFullYear(), now.getMonth(), 1));
+  };
+
+  const onCalendarKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Enter"].includes(event.key)) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (event.key === "Enter") {
+      applyValue();
+      return;
+    }
+
+    const next = new Date(draftDate);
+    if (event.key === "ArrowLeft") next.setDate(next.getDate() - 1);
+    if (event.key === "ArrowRight") next.setDate(next.getDate() + 1);
+    if (event.key === "ArrowUp") next.setDate(next.getDate() - 7);
+    if (event.key === "ArrowDown") next.setDate(next.getDate() + 7);
+
+    setDraftDate(next);
+    setVisibleMonth(new Date(next.getFullYear(), next.getMonth(), 1));
+  };
+
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className="mb-2 block text-sm font-semibold text-[#344054]"
+      >
+        {label} {required && <span className="text-red-600">*</span>}
+      </label>
+      <button
+        ref={buttonRef}
+        id={id}
+        type="button"
+        disabled={disabled}
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        aria-describedby={`${id}-error`}
+        data-invalid={Boolean(error) || undefined}
+        onClick={() => setOpenPicker((current) => (current === id ? null : id))}
+        className={`flex h-12 w-full items-center justify-between gap-3 rounded-xl border bg-white px-4 text-left text-sm outline-none transition hover:border-[#9AA8B7] focus:border-[#07529A] focus:ring-4 focus:ring-[#07529A]/10 disabled:cursor-not-allowed disabled:bg-gray-50 ${
+          error ? "border-red-500 focus:border-red-600 focus:ring-red-100" : "border-[#D7DEE8]"
+        }`}
+      >
+        <span
+          className={`min-w-0 truncate ${
+            value ? "text-[#172033]" : "text-[#98A2B3]"
+          }`}
+        >
+          {formatReadableDateTime(value) || "Seleccionar fecha y hora"}
+        </span>
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          className="h-5 w-5 shrink-0 text-[#667085]"
+          aria-hidden="true"
+        >
+          <path d="M8 2v4" />
+          <path d="M16 2v4" />
+          <rect x="3" y="4" width="18" height="18" rx="2" />
+          <path d="M3 10h18" />
+        </svg>
+      </button>
+      <FieldErrorMessage id={`${id}-error`} error={error} />
+
+      {isOpen && (
+        <div
+          ref={popoverRef}
+          role="dialog"
+          aria-label={`Selector de ${label.toLowerCase()}`}
+          className="fixed z-[90] animate-[modalIn_160ms_ease-out] rounded-[14px] border border-[#D7DEE8] bg-white p-4 shadow-[0_20px_60px_rgba(15,23,42,0.22)] sm:max-h-[calc(100vh-32px)]"
+          style={{
+            top:
+              typeof window !== "undefined" && window.innerWidth < 640
+                ? "auto"
+                : popoverPosition.top,
+            bottom:
+              typeof window !== "undefined" && window.innerWidth < 640
+                ? 16
+                : "auto",
+            left: popoverPosition.left,
+            width: popoverPosition.width,
+          }}
+          onKeyDown={onCalendarKeyDown}
+        >
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() =>
+                setVisibleMonth(
+                  new Date(
+                    visibleMonth.getFullYear(),
+                    visibleMonth.getMonth() - 1,
+                    1
+                  )
+                )
+              }
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#D7DEE8] text-[#344054] transition hover:bg-[#F4F7FB] focus:outline-none focus:ring-2 focus:ring-[#07529A]/20"
+              aria-label="Mes anterior"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+                <path d="m15 18-6-6 6-6" />
+              </svg>
+            </button>
+            <div className="text-center">
+              <p className="text-sm font-bold capitalize text-[#172033]">
+                {monthNames[visibleMonth.getMonth()]} {visibleMonth.getFullYear()}
+              </p>
+              <button
+                type="button"
+                onClick={pickToday}
+                className="mt-1 text-xs font-semibold text-[#07529A] hover:underline focus:outline-none focus:ring-2 focus:ring-[#07529A]/20"
+              >
+                Hoy
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                setVisibleMonth(
+                  new Date(
+                    visibleMonth.getFullYear(),
+                    visibleMonth.getMonth() + 1,
+                    1
+                  )
+                )
+              }
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#D7DEE8] text-[#344054] transition hover:bg-[#F4F7FB] focus:outline-none focus:ring-2 focus:ring-[#07529A]/20"
+              aria-label="Mes siguiente"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+                <path d="m9 18 6-6-6-6" />
+              </svg>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-7 gap-1 text-center">
+            {weekdayLabels.map((weekday) => (
+              <span
+                key={weekday}
+                className="py-1 text-[11px] font-bold uppercase text-[#667085]"
+              >
+                {weekday}
+              </span>
+            ))}
+            {calendarDays.map((day) => {
+              const outsideMonth = day.getMonth() !== visibleMonth.getMonth();
+              const selected = isSameDay(day, draftDate);
+              const currentDay = isSameDay(day, today);
+
+              return (
+                <button
+                  key={day.toISOString()}
+                  type="button"
+                  onClick={() => updateDraftDate(day)}
+                  className={`flex h-9 min-h-9 items-center justify-center rounded-full text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#07529A]/30 ${
+                    selected
+                      ? "bg-[#07529A] text-white hover:bg-[#064780]"
+                      : currentDay
+                        ? "border border-[#07529A]/35 text-[#172033] hover:bg-[#F4F7FB]"
+                        : "text-[#172033] hover:bg-[#F4F7FB]"
+                  } ${outsideMonth && !selected ? "opacity-35" : ""}`}
+                  aria-label={`${day.getDate()} de ${monthNames[day.getMonth()]} de ${day.getFullYear()}`}
+                  aria-pressed={selected}
+                >
+                  {day.getDate()}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-4 rounded-xl border border-[#E6ECF3] bg-[#F9FAFB] p-3">
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-[#667085]">
+              Hora
+            </p>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={1}
+                max={12}
+                value={draftHour}
+                onChange={(event) =>
+                  updateDraftTime(Number(event.target.value), draftMinute, draftPeriod)
+                }
+                className="h-11 w-16 rounded-lg border border-[#D7DEE8] bg-white px-2 text-center text-sm font-semibold text-[#172033] outline-none focus:border-[#07529A] focus:ring-2 focus:ring-[#07529A]/15"
+                aria-label="Hora"
+              />
+              <span className="text-lg font-bold text-[#667085]">:</span>
+              <input
+                type="number"
+                min={0}
+                max={59}
+                value={pad2(draftMinute)}
+                onChange={(event) =>
+                  updateDraftTime(draftHour, Number(event.target.value), draftPeriod)
+                }
+                onBlur={(event) => {
+                  event.currentTarget.value = pad2(clampMinute(Number(event.currentTarget.value)));
+                }}
+                className="h-11 w-16 rounded-lg border border-[#D7DEE8] bg-white px-2 text-center text-sm font-semibold text-[#172033] outline-none focus:border-[#07529A] focus:ring-2 focus:ring-[#07529A]/15"
+                aria-label="Minutos"
+              />
+              <select
+                value={draftPeriod}
+                onChange={(event) =>
+                  updateDraftTime(
+                    draftHour,
+                    draftMinute,
+                    event.target.value === "pm" ? "pm" : "am"
+                  )
+                }
+                className="h-11 flex-1 rounded-lg border border-[#D7DEE8] bg-white px-3 text-sm font-semibold text-[#172033] outline-none focus:border-[#07529A] focus:ring-2 focus:ring-[#07529A]/15"
+                aria-label="Periodo"
+              >
+                <option value="am">a. m.</option>
+                <option value="pm">p. m.</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={pickToday}
+              className="text-sm font-semibold text-[#07529A] transition hover:underline focus:outline-none focus:ring-2 focus:ring-[#07529A]/20"
+            >
+              Hoy
+            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={cancel}
+                className="h-10 rounded-lg border border-[#D7DEE8] px-4 text-sm font-semibold text-[#344054] transition hover:bg-[#F4F7FB] focus:outline-none focus:ring-2 focus:ring-[#07529A]/20"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={applyValue}
+                className="h-10 rounded-lg bg-[#07529A] px-4 text-sm font-semibold text-white transition hover:bg-[#064780] focus:outline-none focus:ring-2 focus:ring-[#07529A]/25"
+              >
+                Aplicar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const AssignmentForm = ({
   type,
   data,
@@ -323,9 +821,22 @@ const AssignmentForm = ({
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors, isDirty },
   } = useForm<AssignmentSchema>({
     resolver: zodResolver(assignmentSchema),
+    defaultValues: {
+      title: data?.title || "",
+      description: data?.description || "",
+      startDate: toDateTimeLocal(data?.startDate) as any,
+      dueDate: toDateTimeLocal(data?.dueDate) as any,
+      category: getAssignmentCategory(data?.category) as AssignmentSchema["category"],
+      points: data?.points || 25,
+      audience:
+        data?.audience === "all" && getAssignmentCategory(data?.category) === "Otros"
+          ? "all"
+          : "group",
+    },
   });
 
   const router = useRouter();
@@ -336,6 +847,7 @@ const AssignmentForm = ({
   const [fileError, setFileError] = useState("");
   const [imageError, setImageError] = useState("");
   const [awardPreviewUrl, setAwardPreviewUrl] = useState<string>();
+  const [openDatePicker, setOpenDatePicker] = useState<string | null>(null);
 
   useEffect(() => {
     if (!selectedAwardImage) {
@@ -352,6 +864,12 @@ const AssignmentForm = ({
   const descriptionValue = watch("description", data?.description || "");
   const startDateValue = watch("startDate", toDateTimeLocal(data?.startDate) as any);
   const dueDateValue = watch("dueDate", toDateTimeLocal(data?.dueDate) as any);
+  const dateRangeError =
+    startDateValue &&
+    dueDateValue &&
+    new Date(dueDateValue as any).getTime() < new Date(startDateValue as any).getTime()
+      ? "La fecha limite no puede ser anterior a la fecha de inicio."
+      : "";
 
   const uploadAssignmentFile = async (
     assignmentId: number,
@@ -459,8 +977,8 @@ const AssignmentForm = ({
   const onSubmit = handleSubmit(async (formData) => {
     setErrorMessage("");
 
-    if (new Date(formData.dueDate).getTime() < new Date(formData.startDate).getTime()) {
-      setErrorMessage("La fecha limite no puede ser anterior a la fecha de inicio.");
+    if (dateRangeError) {
+      setErrorMessage(dateRangeError);
       return;
     }
 
@@ -618,83 +1136,39 @@ const AssignmentForm = ({
 
           <Section title="Programacion">
             <div className="grid gap-4 md:grid-cols-2">
+              <input type="hidden" {...register("startDate")} />
+              <input type="hidden" {...register("dueDate")} />
+              <DateTimePicker
+                id="assignment-start-date"
+                label="Fecha de inicio"
+                required
+                value={startDateValue as unknown as string | undefined}
+                fieldName="startDate"
+                setValue={setValue}
+                error={errors.startDate as FieldError}
+                openPicker={openDatePicker}
+                setOpenPicker={setOpenDatePicker}
+                disabled={saving}
+              />
               <div>
-                <label
-                  htmlFor="assignment-start-date"
-                  className="mb-2 block text-sm font-semibold text-[#344054]"
-                >
-                  Fecha de inicio <span className="text-red-600">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    id="assignment-start-date"
-                    type="datetime-local"
-                    defaultValue={toDateTimeLocal(data?.startDate)}
-                    aria-invalid={Boolean(errors.startDate)}
-                    aria-describedby="assignment-start-date-error"
-                    className={`${fieldBaseClass} pr-11 ${errors.startDate ? fieldErrorClass : ""}`}
-                    {...register("startDate")}
-                  />
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#667085]"
-                    aria-hidden="true"
-                  >
-                    <path d="M8 2v4" />
-                    <path d="M16 2v4" />
-                    <rect x="3" y="4" width="18" height="18" rx="2" />
-                    <path d="M3 10h18" />
-                  </svg>
-                </div>
-                <FieldErrorMessage
-                  id="assignment-start-date-error"
-                  error={errors.startDate as FieldError}
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="assignment-due-date"
-                  className="mb-2 block text-sm font-semibold text-[#344054]"
-                >
-                  Fecha limite <span className="text-red-600">*</span>
-                </label>
-                <div className="relative">
-                  <input
-                    id="assignment-due-date"
-                    type="datetime-local"
-                    defaultValue={toDateTimeLocal(data?.dueDate)}
-                    aria-invalid={Boolean(errors.dueDate || errorMessage.includes("fecha"))}
-                    aria-describedby="assignment-due-date-error"
-                    className={`${fieldBaseClass} pr-11 ${
-                      errors.dueDate || errorMessage.includes("fecha")
-                        ? fieldErrorClass
-                        : ""
-                    }`}
-                    {...register("dueDate")}
-                  />
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#667085]"
-                    aria-hidden="true"
-                  >
-                    <path d="M8 2v4" />
-                    <path d="M16 2v4" />
-                    <rect x="3" y="4" width="18" height="18" rx="2" />
-                    <path d="M3 10h18" />
-                  </svg>
-                </div>
-                <FieldErrorMessage
-                  id="assignment-due-date-error"
+                <DateTimePicker
+                  id="assignment-due-date"
+                  label="Fecha limite"
+                  required
+                  value={dueDateValue as unknown as string | undefined}
+                  fieldName="dueDate"
+                  setValue={setValue}
                   error={errors.dueDate as FieldError}
+                  openPicker={openDatePicker}
+                  setOpenPicker={setOpenDatePicker}
+                  disabled={saving}
                 />
-                {startDateValue && dueDateValue && !errorMessage.includes("fecha") && (
+                {dateRangeError && (
+                  <p className="mt-2 text-xs font-medium text-red-600" role="alert">
+                    {dateRangeError}
+                  </p>
+                )}
+                {startDateValue && dueDateValue && !dateRangeError && (
                   <p className="mt-2 text-xs text-[#667085]">
                     La tarea se activa y vence en la fecha seleccionada.
                   </p>
