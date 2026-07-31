@@ -24,7 +24,7 @@ const DesktopSidebar = ({ children }: { children: ReactNode }) => {
   return (
     <SidebarProvider collapsed={collapsed} toggleCollapsed={toggleCollapsed}>
       <aside
-        className={`sticky top-0 hidden h-screen shrink-0 flex-col border-r border-[var(--sidebar-border)] bg-[var(--sidebar-background)] shadow-[4px_0_18px_rgba(15,23,42,0.04)] transition-[width] duration-[220ms] md:flex ${collapsed ? "w-[76px]" : "w-[272px]"}`}
+        className={`hidden min-h-screen shrink-0 self-stretch flex-col border-r border-[var(--sidebar-border)] bg-[var(--sidebar-background)] shadow-[4px_0_18px_rgba(15,23,42,0.04)] transition-[width] duration-[220ms] md:flex ${collapsed ? "w-[76px]" : "w-[272px]"}`}
         aria-label="Barra lateral"
       >
         <SidebarHeader collapsible />

@@ -70,7 +70,7 @@ const MobileMenuDrawer = ({ children }: { children: ReactNode }) => {
           <aside
             id="mobile-sidebar"
             aria-label="Menú principal móvil"
-            className={`relative flex h-full w-[88vw] max-w-[320px] flex-col border-r border-[var(--sidebar-border)] bg-[var(--sidebar-background)] shadow-2xl transition-transform duration-[240ms] ${open ? "translate-x-0" : "-translate-x-full"}`}
+            className={`sidebar-scrollbar relative flex h-full w-[88vw] max-w-[320px] flex-col overflow-y-auto border-r border-[var(--sidebar-border)] bg-[var(--sidebar-background)] shadow-2xl transition-transform duration-[240ms] ${open ? "translate-x-0" : "-translate-x-full"}`}
             onClick={(event) => {
               const target = event.target as HTMLElement;
               if (target.closest("a") || target.closest("button[type='submit']")) closeDrawer(false);

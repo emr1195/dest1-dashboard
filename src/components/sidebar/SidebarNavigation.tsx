@@ -107,7 +107,7 @@ const SidebarNavigation = ({
 
   return (
     <nav aria-label="Navegación principal" className="flex min-h-0 flex-1 flex-col">
-      <div className="sidebar-scrollbar min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 pb-4 pt-3">
+      <div className="min-h-0 flex-1 overflow-x-hidden px-3 pb-4 pt-3">
         {sections.map((section, sectionIndex) => (
           <section
             key={section.label}
