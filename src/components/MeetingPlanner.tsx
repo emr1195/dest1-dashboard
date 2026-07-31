@@ -1,9 +1,17 @@
 "use client";
 
-import DateTimePicker from "./DateTimePicker";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+
+import {
+  formatPlannerDate,
+  formatPlannerWeek,
+  getPlannerWeek,
+  getWeekKey,
+} from "@/lib/plannerWeek";
+
+import WeekSelector from "./WeekSelector";
 
 type PlannerGroup = {
   id: string;
@@ -30,6 +38,7 @@ export type SavedPlannerItem = {
   number: number;
   leaderId: string;
   detail: string;
+  durationMinutes?: number;
   contributions?: Array<{
     leaderId: string;
     detail: string;
@@ -39,15 +48,30 @@ export type SavedPlannerItem = {
 export type SavedMeetingPlanner = {
   id: string;
   group: string;
+  groupName?: string | null;
   meetingDate: string;
+  selectedDate?: string | null;
+  weekStart?: string | null;
+  weekEnd?: string | null;
+  weekKey?: string | null;
+  year?: number | null;
+  status?: "draft" | "published";
   items: SavedPlannerItem[];
   createdById: string;
   createdByName: string | null;
   createdAt: string;
+  updatedAt?: string;
 };
 
-type PlannerNotes = Record<string, Record<number, { leaderId: string; detail: string }>>;
+type PlannerDraftItem = {
+  leaderId: string;
+  detail: string;
+  durationMinutes: number;
+};
+
+type PlannerNotes = Record<string, Record<number, PlannerDraftItem>>;
 type PlannerKey = "general" | string;
+type PlannerStatus = "draft" | "published";
 
 const GUEST_LEADER_ID = "__guest__";
 const primaryBlue = "#07529A";
@@ -112,6 +136,18 @@ const generalItems: PlannerItem[] = [
 const defaultGeneralOrder = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 const defaultGroupOrder = [4, 5, 6, 7];
 const allItems = [...generalItems, ...plannerItems];
+const defaultDurations: Record<number, number> = {
+  1: 0,
+  2: 1,
+  3: 3,
+  4: 15,
+  5: 15,
+  6: 5,
+  7: 10,
+  8: 5,
+  9: 1,
+  10: 0,
+};
 
 const getItemByNumber = (number: number) =>
   allItems.find((item) => item.number === number) || allItems[0];
@@ -129,29 +165,26 @@ const mergeOrder = (incoming: number[], fallback: number[]) => {
 
 const pad2 = (value: number) => String(value).padStart(2, "0");
 
-const toInputDate = (value: string) => value.slice(0, 10);
+const toInputDate = (value?: string | null) => value?.slice(0, 10) || "";
 
-const getWeekKey = (dateValue: string) => {
-  if (!dateValue) return "";
+const getPlannerDateValue = (planner: SavedMeetingPlanner) =>
+  toInputDate(
+    planner.selectedDate ||
+      planner.weekStart ||
+      planner.weekKey ||
+      planner.meetingDate
+  );
 
-  const selected = new Date(`${dateValue.slice(0, 10)}T12:00:00`);
-  if (Number.isNaN(selected.getTime())) return dateValue.slice(0, 10);
+const getPlannerWeekKey = (planner: SavedMeetingPlanner) =>
+  planner.weekKey || getWeekKey(getPlannerDateValue(planner));
 
-  const monday = new Date(selected);
-  const offset = (selected.getDay() + 6) % 7;
-  monday.setDate(selected.getDate() - offset);
+const getDefaultDuration = (itemNumber: number) =>
+  defaultDurations[itemNumber] || 0;
 
-  return `${monday.getFullYear()}-${pad2(monday.getMonth() + 1)}-${pad2(
-    monday.getDate()
-  )}`;
-};
-
-const formatDate = (value: string) =>
-  new Intl.DateTimeFormat("es-PA", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  }).format(new Date(value));
+const getItemDuration = (item?: SavedPlannerItem) =>
+  item && Number.isFinite(Number(item.durationMinutes))
+    ? Math.max(0, Math.round(Number(item.durationMinutes)))
+    : getDefaultDuration(item?.number || 0);
 
 const getInitials = (name: string) =>
   name
@@ -169,8 +202,85 @@ const getContributions = (item?: SavedPlannerItem) => {
     : [];
 };
 
+const hasActivityInformation = (item?: SavedPlannerItem) =>
+  getContributions(item).some(
+    (contribution) => contribution.leaderId || contribution.detail
+  );
+
+const isActivityComplete = (item?: SavedPlannerItem) =>
+  getContributions(item).some(
+    (contribution) => contribution.leaderId && contribution.detail
+  );
+
+const getPlannerTimestamp = (planner: SavedMeetingPlanner) =>
+  new Date(planner.updatedAt || planner.createdAt).getTime();
+
+const getLatestPlanner = (
+  planners: SavedMeetingPlanner[],
+  group: string,
+  weekKey: string
+) =>
+  planners
+    .filter(
+      (planner) =>
+        planner.group === group && getPlannerWeekKey(planner) === weekKey
+    )
+    .sort((left, right) => getPlannerTimestamp(right) - getPlannerTimestamp(left))[0];
+
+const getPlannerSummary = (planner?: SavedMeetingPlanner) => {
+  if (!planner) {
+    return {
+      activities: 0,
+      duration: 0,
+      leaders: 0,
+      pending: 0,
+      statusLabel: "Sin planificar",
+      statusTone: "empty" as const,
+    };
+  }
+
+  const leaders = new Set(
+    planner.items
+      .flatMap((item) => getContributions(item))
+      .map((contribution) => contribution.leaderId)
+      .filter(Boolean)
+  );
+  const pending = planner.items.filter((item) => !isActivityComplete(item)).length;
+  const persistedStatus = planner.status || "draft";
+
+  return {
+    activities: planner.items.length,
+    duration: planner.items.reduce(
+      (total, item) => total + getItemDuration(item),
+      0
+    ),
+    leaders: leaders.size,
+    pending,
+    statusLabel:
+      persistedStatus === "published"
+        ? pending
+          ? "Publicado incompleto"
+          : "Publicado"
+        : pending
+          ? "Incompleto"
+          : "Borrador",
+    statusTone:
+      persistedStatus === "published"
+        ? pending
+          ? ("warning" as const)
+          : ("published" as const)
+        : pending
+          ? ("warning" as const)
+          : ("draft" as const),
+  };
+};
+
 const isErrorStatus = (value: string) =>
-  value.includes("No se") || value.includes("Selecciona") || value.includes("error");
+  value.includes("No se") ||
+  value.includes("Selecciona") ||
+  value.includes("error") ||
+  value.includes("existe") ||
+  value.includes("conectar");
 
 const AutoResizeTextarea = ({
   value,
@@ -250,6 +360,117 @@ const StatusBadge = ({ complete, general }: { complete: boolean; general?: boole
   </span>
 );
 
+const PlannerStateBadge = ({
+  label,
+  tone,
+}: {
+  label: string;
+  tone: "empty" | "warning" | "draft" | "published";
+}) => {
+  const toneClass = {
+    empty: "bg-[#F1F5F9] text-[#667085] ring-[#D7DEE8]",
+    warning: "bg-amber-50 text-amber-800 ring-amber-200",
+    draft: "bg-blue-50 text-blue-700 ring-blue-200",
+    published: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  }[tone];
+
+  return (
+    <span
+      className={`inline-flex min-h-7 items-center rounded-full px-3 text-xs font-black ring-1 ${toneClass}`}
+    >
+      {label}
+    </span>
+  );
+};
+
+const GroupPlannerSummaryCard = ({
+  group,
+  planner,
+  loading,
+  error,
+  canEdit,
+  onView,
+}: {
+  group: PlannerGroup;
+  planner?: SavedMeetingPlanner;
+  loading?: boolean;
+  error?: boolean;
+  canEdit?: boolean;
+  onView: () => void;
+}) => {
+  if (loading) {
+    return (
+      <div
+        className="min-h-[210px] animate-pulse rounded-[14px] border border-[#E2E8F0] bg-white p-4"
+        aria-label={`Cargando planificación de ${group.name}`}
+      >
+        <div className="h-12 w-12 rounded-xl bg-[#E8EDF3]" />
+        <div className="mt-4 h-5 w-32 rounded bg-[#E8EDF3]" />
+        <div className="mt-3 h-4 w-full rounded bg-[#EEF2F6]" />
+        <div className="mt-2 h-4 w-3/4 rounded bg-[#EEF2F6]" />
+      </div>
+    );
+  }
+
+  const summary = getPlannerSummary(planner);
+
+  return (
+    <article
+      className="flex min-h-[210px] flex-col rounded-[14px] border border-[#E2E8F0] border-t-4 bg-white p-4"
+      style={{ borderTopColor: group.color }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-[#F8FAFC]">
+          <Image
+            src={group.icon}
+            alt=""
+            width={44}
+            height={44}
+            className="h-10 w-10 object-contain"
+          />
+        </span>
+        <PlannerStateBadge
+          label={error ? "Error al cargar" : summary.statusLabel}
+          tone={error ? "warning" : summary.statusTone}
+        />
+      </div>
+
+      <h3 className="mt-3 text-base font-black text-[#172033]">{group.name}</h3>
+      {error ? (
+        <p className="mt-2 text-sm leading-6 text-[#667085]">
+          No se pudo actualizar este grupo. Los demás datos siguen disponibles.
+        </p>
+      ) : (
+        <>
+          <p className="mt-1 text-sm font-semibold text-[#344054]">
+            {summary.activities} actividades · {summary.duration} min
+          </p>
+          <p className="mt-1 text-xs leading-5 text-[#667085]">
+            {summary.leaders} líderes asignados · {summary.pending} pendientes
+          </p>
+          <p className="mt-1 text-xs text-[#667085]">
+            {planner
+              ? `Actualizado ${formatPlannerDate(
+                  planner.updatedAt || planner.createdAt
+                )}`
+              : "Aún no se ha creado un planificador."}
+          </p>
+        </>
+      )}
+
+      <button
+        type="button"
+        onClick={onView}
+        className="mt-auto min-h-11 rounded-xl border border-[#07529A] px-3 text-sm font-black text-[#07529A] transition hover:bg-[#EAF2FA] focus:outline-none focus:ring-4 focus:ring-[#07529A]/10"
+      >
+        {canEdit
+          ? `Editar en el planificador de ${group.name}`
+          : "Ver planificación"}
+      </button>
+    </article>
+  );
+};
+
 const IconButton = ({
   label,
   onClick,
@@ -284,12 +505,10 @@ const Chevron = ({ open }: { open: boolean }) => (
 const MeetingPlanner = ({
   leaders,
   currentRole,
-  currentUserId,
   initialPlanners,
 }: {
   leaders: LeaderOption[];
   currentRole: "admin" | "teacher";
-  currentUserId: string;
   initialPlanners: SavedMeetingPlanner[];
 }) => {
   const router = useRouter();
@@ -307,7 +526,12 @@ const MeetingPlanner = ({
   const [meetingDate, setMeetingDate] = useState("");
   const [openDatePicker, setOpenDatePicker] = useState<string | null>(null);
   const [editingPlannerId, setEditingPlannerId] = useState<string | null>(null);
+  const [planners, setPlanners] = useState(initialPlanners);
+  const [weekLoading, setWeekLoading] = useState(false);
+  const [groupLoadErrors, setGroupLoadErrors] = useState<Record<string, boolean>>({});
+  const [weekError, setWeekError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [savingStatus, setSavingStatus] = useState<PlannerStatus | null>(null);
   const [status, setStatus] = useState("");
   const [draggingItem, setDraggingItem] = useState<number | null>(null);
   const [itemOrder, setItemOrder] = useState<Record<PlannerKey, number[]>>({
@@ -326,6 +550,7 @@ const MeetingPlanner = ({
   const activeOrder = itemOrder[plannerKey] || defaultGroupOrder;
   const activeItems = activeOrder.map(getItemByNumber);
   const canEditCurrent = (canManage && activeView === "group") || (canManageGeneral && activeView === "general");
+  const selectedWeekKey = getWeekKey(meetingDate);
 
   const leaderNameById = useMemo(
     () =>
@@ -336,22 +561,68 @@ const MeetingPlanner = ({
     [leaders]
   );
 
-  const filteredPlanners = initialPlanners.filter(
+  const filteredPlanners = planners.filter(
     (planner) => planner.group === activeGroupId
   );
+  const visibleGroupPlanners = selectedWeekKey
+    ? filteredPlanners.filter(
+        (planner) => getPlannerWeekKey(planner) === selectedWeekKey
+      )
+    : filteredPlanners;
 
   const generalWeeks = useMemo(() => {
-    const weeks = new Map<string, SavedMeetingPlanner[]>();
+    const weeks = new Map<string, Map<string, SavedMeetingPlanner>>();
 
-    initialPlanners.forEach((planner) => {
-      const dateKey = getWeekKey(toInputDate(planner.meetingDate));
-      weeks.set(dateKey, [...(weeks.get(dateKey) || []), planner]);
+    planners.forEach((planner) => {
+      const dateKey = getPlannerWeekKey(planner);
+      const groupPlanners = weeks.get(dateKey) || new Map();
+      const currentPlanner = groupPlanners.get(planner.group);
+
+      if (
+        !currentPlanner ||
+        getPlannerTimestamp(planner) > getPlannerTimestamp(currentPlanner)
+      ) {
+        groupPlanners.set(planner.group, planner);
+      }
+
+      weeks.set(dateKey, groupPlanners);
     });
 
-    return Array.from(weeks.entries()).sort(([dateA], [dateB]) =>
-      dateB.localeCompare(dateA)
-    );
-  }, [initialPlanners]);
+    return Array.from(weeks.entries())
+      .map(([dateKey, groupPlanners]) => [
+        dateKey,
+        Array.from(groupPlanners.values()),
+      ] as const)
+      .sort(([dateA], [dateB]) => dateB.localeCompare(dateA));
+  }, [planners]);
+
+  const groupSummaries = useMemo(
+    () =>
+      groups.map((group) => ({
+        group,
+        planner: selectedWeekKey
+          ? getLatestPlanner(planners, group.id, selectedWeekKey)
+          : undefined,
+      })),
+    [planners, selectedWeekKey]
+  );
+  const visibleGeneralWeeks = selectedWeekKey
+    ? generalWeeks.filter(([dateKey]) => dateKey === selectedWeekKey)
+    : generalWeeks;
+
+  const activeWeekPlanner = selectedWeekKey
+    ? getLatestPlanner(planners, plannerKey, selectedWeekKey)
+    : undefined;
+  const generalTabCount = selectedWeekKey
+    ? getPlannerSummary(
+        getLatestPlanner(planners, "general", selectedWeekKey)
+      ).activities +
+      plannerItems.filter((item) =>
+        groupSummaries.some(({ planner }) =>
+          planner?.items.some((savedItem) => savedItem.number === item.number)
+        )
+      ).length
+    : 0;
 
   const hasDraftChanges = useMemo(
     () =>
@@ -366,6 +637,137 @@ const MeetingPlanner = ({
   );
 
   useEffect(() => {
+    setPlanners(initialPlanners);
+  }, [initialPlanners]);
+
+  useEffect(() => {
+    const queryWeek = new URLSearchParams(window.location.search).get("week");
+    const normalizedWeek = getPlannerWeek(queryWeek);
+    if (normalizedWeek) setMeetingDate(normalizedWeek.weekStart);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedWeekKey) return;
+
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("week") === selectedWeekKey) return;
+
+    url.searchParams.set("week", selectedWeekKey);
+    window.history.replaceState(window.history.state, "", url);
+  }, [selectedWeekKey]);
+
+  useEffect(() => {
+    if (!selectedWeekKey) {
+      setGroupLoadErrors({});
+      return;
+    }
+
+    const controller = new AbortController();
+    const plannerGroupsToLoad = ["general", ...groups.map((group) => group.id)];
+
+    const loadWeek = async () => {
+      setWeekLoading(true);
+      setGroupLoadErrors({});
+
+      const results = await Promise.allSettled(
+        plannerGroupsToLoad.map(async (group) => {
+          const response = await fetch(
+            `/api/meeting-planners?weekKey=${encodeURIComponent(
+              selectedWeekKey
+            )}&group=${encodeURIComponent(group)}`,
+            { signal: controller.signal }
+          );
+
+          if (!response.ok) throw new Error(group);
+          const data = await response.json();
+
+          return {
+            group,
+            planners: Array.isArray(data?.planners)
+              ? (data.planners as SavedMeetingPlanner[])
+              : [],
+          };
+        })
+      );
+
+      if (controller.signal.aborted) return;
+
+      const successfulGroups = new Set<string>();
+      const loadedPlanners: SavedMeetingPlanner[] = [];
+      const errors: Record<string, boolean> = {};
+
+      results.forEach((result, index) => {
+        const group = plannerGroupsToLoad[index];
+        if (result.status === "fulfilled") {
+          successfulGroups.add(group);
+          loadedPlanners.push(...result.value.planners);
+        } else {
+          errors[group] = true;
+        }
+      });
+
+      setPlanners((current) => [
+        ...current.filter(
+          (planner) =>
+            !(
+              successfulGroups.has(planner.group) &&
+              getPlannerWeekKey(planner) === selectedWeekKey
+            )
+        ),
+        ...loadedPlanners,
+      ]);
+      setGroupLoadErrors(errors);
+      setWeekLoading(false);
+    };
+
+    loadWeek().catch(() => {
+      if (controller.signal.aborted) return;
+      setWeekLoading(false);
+      setGroupLoadErrors(
+        Object.fromEntries(plannerGroupsToLoad.map((group) => [group, true]))
+      );
+    });
+
+    return () => controller.abort();
+  }, [selectedWeekKey]);
+
+  useEffect(() => {
+    if (!selectedWeekKey) {
+      setEditingPlannerId(null);
+      return;
+    }
+
+    setEditingPlannerId(activeWeekPlanner?.id || null);
+    setNotes((current) => ({
+      ...current,
+      [plannerKey]: Object.fromEntries(
+        (activeWeekPlanner?.items || []).map((item) => [
+          item.number,
+          {
+            leaderId: item.leaderId || "",
+            detail: item.detail || "",
+            durationMinutes: getItemDuration(item),
+          },
+        ])
+      ),
+    }));
+    setItemOrder((current) => ({
+      ...current,
+      [plannerKey]: mergeOrder(
+        (activeWeekPlanner?.items || []).map((item) => item.number),
+        plannerKey === "general" ? defaultGeneralOrder : defaultGroupOrder
+      ),
+    }));
+    setOpenItems({});
+  }, [
+    activeWeekPlanner?.id,
+    activeWeekPlanner?.items,
+    activeWeekPlanner?.updatedAt,
+    plannerKey,
+    selectedWeekKey,
+  ]);
+
+  useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
       if (!hasDraftChanges) return;
       event.preventDefault();
@@ -377,8 +779,7 @@ const MeetingPlanner = ({
   }, [hasDraftChanges]);
 
   const resetForm = () => {
-    setMeetingDate("");
-    setNotes({});
+    setNotes((current) => ({ ...current, [plannerKey]: {} }));
     setEditingPlannerId(null);
     setOpenItems({});
     setStatus("");
@@ -386,8 +787,7 @@ const MeetingPlanner = ({
 
   const updateItem = (
     itemNumber: number,
-    field: "leaderId" | "detail",
-    value: string
+    patch: Partial<PlannerDraftItem>
   ) => {
     setNotes((current) => ({
       ...current,
@@ -396,7 +796,10 @@ const MeetingPlanner = ({
         [itemNumber]: {
           leaderId: current[plannerKey]?.[itemNumber]?.leaderId || "",
           detail: current[plannerKey]?.[itemNumber]?.detail || "",
-          [field]: value,
+          durationMinutes:
+            current[plannerKey]?.[itemNumber]?.durationMinutes ??
+            getDefaultDuration(itemNumber),
+          ...patch,
         },
       },
     }));
@@ -429,37 +832,55 @@ const MeetingPlanner = ({
     });
   };
 
-  const buildPayload = () => ({
-    id: editingPlannerId || undefined,
-    group: plannerKey,
-    meetingDate,
-    items: activeItems
-      .filter((item) =>
-        plannerKey === "general"
-          ? generalItems.some((generalItem) => generalItem.number === item.number)
-          : plannerItems.some((plannerItem) => plannerItem.number === item.number)
-      )
-      .map((item) => ({
-        number: item.number,
-        leaderId: notes[plannerKey]?.[item.number]?.leaderId || "",
-        detail: notes[plannerKey]?.[item.number]?.detail || "",
-      })),
-  });
+  const buildPayload = (nextStatus: PlannerStatus) => {
+    const week = getPlannerWeek(meetingDate);
 
-  const savePlanner = async () => {
+    return {
+      id: editingPlannerId || undefined,
+      group: plannerKey,
+      groupName:
+        plannerKey === "general" ? "Reunion general" : activeGroup.name,
+      meetingDate,
+      selectedDate: week?.selectedDate,
+      weekStart: week?.weekStart,
+      weekEnd: week?.weekEnd,
+      weekKey: week?.weekKey,
+      year: week?.year,
+      status: nextStatus,
+      items: activeItems
+        .filter((item) =>
+          plannerKey === "general"
+            ? generalItems.some((generalItem) => generalItem.number === item.number)
+            : plannerItems.some((plannerItem) => plannerItem.number === item.number)
+        )
+        .map((item) => ({
+          number: item.number,
+          leaderId: notes[plannerKey]?.[item.number]?.leaderId || "",
+          detail: notes[plannerKey]?.[item.number]?.detail || "",
+          durationMinutes:
+            notes[plannerKey]?.[item.number]?.durationMinutes ??
+            getDefaultDuration(item.number),
+        })),
+    };
+  };
+
+  const savePlanner = async (nextStatus: PlannerStatus = "draft") => {
     if (!meetingDate) {
-      setStatus("Selecciona la fecha de la semana.");
+      setWeekError("Selecciona la semana de la reunion.");
+      setStatus("Selecciona la semana de la reunion.");
       return;
     }
 
+    setWeekError("");
     setSaving(true);
+    setSavingStatus(nextStatus);
     setStatus("");
 
     try {
       const response = await fetch("/api/meeting-planners", {
         method: editingPlannerId ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildPayload()),
+        body: JSON.stringify(buildPayload(nextStatus)),
       });
       const data = await response.json().catch(() => null);
 
@@ -468,18 +889,35 @@ const MeetingPlanner = ({
         return;
       }
 
-      setEditingPlannerId(data?.id || editingPlannerId);
+      const savedPlanner = data as SavedMeetingPlanner;
+      const savedWeekKey = getPlannerWeekKey(savedPlanner);
+
+      setPlanners((current) => [
+        ...current.filter(
+          (planner) =>
+            planner.id !== savedPlanner.id &&
+            !(
+              planner.group === savedPlanner.group &&
+              getPlannerWeekKey(planner) === savedWeekKey
+            )
+        ),
+        savedPlanner,
+      ]);
+      setEditingPlannerId(savedPlanner.id || editingPlannerId);
       setOpenItems({});
       setStatus(
-        editingPlannerId
-          ? "Planificador actualizado."
-          : "Planificador guardado. Puedes crear uno nuevo."
+        nextStatus === "published"
+          ? "Planificador publicado y sincronizado."
+          : editingPlannerId
+            ? "Borrador actualizado y sincronizado."
+            : "Borrador guardado y sincronizado."
       );
       router.refresh();
     } catch {
       setStatus("No se pudo conectar con el servidor.");
     } finally {
       setSaving(false);
+      setSavingStatus(null);
     }
   };
 
@@ -487,7 +925,7 @@ const MeetingPlanner = ({
     const nextView = planner.group === "general" ? "general" : "group";
     setActiveView(nextView);
     if (planner.group !== "general") setActiveGroupId(planner.group);
-    setMeetingDate(toInputDate(planner.meetingDate));
+    setMeetingDate(getPlannerDateValue(planner));
     setEditingPlannerId(planner.id);
     setStatus("Editando planificador guardado.");
     setNotes({
@@ -497,6 +935,7 @@ const MeetingPlanner = ({
           {
             leaderId: item.leaderId || "",
             detail: item.detail || "",
+            durationMinutes: getItemDuration(item),
           },
         ])
       ),
@@ -532,6 +971,9 @@ const MeetingPlanner = ({
       }
 
       if (editingPlannerId === plannerId) resetForm();
+      setPlanners((current) =>
+        current.filter((planner) => planner.id !== plannerId)
+      );
       setStatus("Planificador eliminado.");
       router.refresh();
     } catch {
@@ -579,52 +1021,58 @@ const MeetingPlanner = ({
               </div>
             </div>
 
-            <div className="grid gap-2 sm:flex sm:flex-wrap sm:justify-end">
-              <button
-                type="button"
-                onClick={savePlanner}
-                disabled={saving || !canEditCurrent}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#07529A] px-5 text-sm font-black text-white shadow-sm transition hover:bg-[#064780] focus:outline-none focus:ring-4 focus:ring-[#07529A]/20 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {saving && (
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/50 border-t-white" />
-                )}
-                {saving
-                  ? "Guardando..."
-                  : editingPlannerId
-                    ? "Guardar cambios"
+            {canEditCurrent && (
+              <div className="grid gap-2 sm:flex sm:flex-wrap sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => savePlanner("draft")}
+                  disabled={saving}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#07529A] bg-white px-5 text-sm font-black text-[#07529A] transition hover:bg-[#EAF2FA] focus:outline-none focus:ring-4 focus:ring-[#07529A]/20 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {savingStatus === "draft" && (
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#07529A]/30 border-t-[#07529A]" />
+                  )}
+                  {savingStatus === "draft"
+                    ? "Guardando..."
                     : "Guardar borrador"}
-              </button>
-            </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => savePlanner("published")}
+                  disabled={saving}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#07529A] px-5 text-sm font-black text-white shadow-sm transition hover:bg-[#064780] focus:outline-none focus:ring-4 focus:ring-[#07529A]/20 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {savingStatus === "published" && (
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/50 border-t-white" />
+                  )}
+                  {savingStatus === "published" ? "Publicando..." : "Publicar"}
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(260px,410px)_minmax(0,1fr)] lg:items-end">
-            {canEditCurrent ? (
-              <div>
-                <DateTimePicker
-                  id="meeting-date"
-                  label="Semana"
-                  value={meetingDate}
-                  onChange={setMeetingDate}
-                  dateOnly
-                  placeholder="Seleccionar semana"
-                  openPicker={openDatePicker}
-                  setOpenPicker={setOpenDatePicker}
-                />
-              </div>
-            ) : (
-              <p className="rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] p-4 text-sm text-[#667085]">
-                {activeView === "general"
-                  ? "Vista conjunta de los momentos compartidos y los puntos especificos de cada grupo."
-                  : "Listado de planificadores guardados por grupo."}
-              </p>
-            )}
+            <WeekSelector
+              id="meeting-week"
+              value={meetingDate}
+              onChange={(value) => {
+                setMeetingDate(value);
+                setWeekError("");
+                setStatus("");
+              }}
+              error={weekError}
+              disabled={saving}
+              loading={false}
+              openPicker={openDatePicker}
+              setOpenPicker={setOpenDatePicker}
+            />
 
             <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1" role="tablist" aria-label="Grupos del planificador">
               <button
                 type="button"
                 role="tab"
                 aria-selected={activeView === "general"}
+                aria-current={activeView === "general" ? "page" : undefined}
                 onClick={() => setActiveView("general")}
                 className={`inline-flex min-h-12 shrink-0 items-center gap-2 rounded-xl border px-4 text-sm font-black transition focus:outline-none focus:ring-4 focus:ring-[#07529A]/10 ${
                   activeView === "general"
@@ -637,18 +1085,23 @@ const MeetingPlanner = ({
                 </span>
                 Reunion general
                 <span className="rounded-full bg-white/20 px-2 py-0.5 text-[11px]">
-                  {defaultGeneralOrder.length}
+                  {weekLoading ? "..." : generalTabCount}
                 </span>
               </button>
 
               {groups.map((group) => {
                 const active = activeView === "group" && group.id === activeGroup.id;
+                const groupSummary = groupSummaries.find(
+                  (summary) => summary.group.id === group.id
+                );
+                const summary = getPlannerSummary(groupSummary?.planner);
                 return (
                   <button
                     key={group.id}
                     type="button"
                     role="tab"
                     aria-selected={active}
+                    aria-current={active ? "page" : undefined}
                     onClick={() => {
                       setActiveView("group");
                       setActiveGroupId(group.id);
@@ -669,9 +1122,17 @@ const MeetingPlanner = ({
                       className="h-7 w-7 object-contain"
                     />
                     {group.name}
-                    <span className={`rounded-full px-2 py-0.5 text-[11px] ${active ? "bg-white/20" : "bg-[#F4F7FB]"}`}>
-                      {defaultGroupOrder.length}
+                    <span
+                      aria-live="polite"
+                      className={`rounded-full px-2 py-0.5 text-[11px] ${active ? "bg-white/20" : "bg-[#F4F7FB]"}`}
+                    >
+                      {weekLoading ? "..." : summary.activities}
                     </span>
+                    {!weekLoading && !groupSummary?.planner && (
+                      <span className="text-[10px] font-bold opacity-75">
+                        Sin planificar
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -680,8 +1141,70 @@ const MeetingPlanner = ({
 
         </div>
 
+        {activeView === "general" && (
+          <section
+            className="rounded-[14px] border border-[#E2E8F0] bg-[#F8FAFC] p-4 sm:p-5"
+            aria-labelledby="group-planning-title"
+          >
+            <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h2
+                  id="group-planning-title"
+                  className="text-lg font-black text-[#172033]"
+                >
+                  Planificación de los grupos
+                </h2>
+                <p className="mt-1 text-sm text-[#667085]">
+                  {meetingDate
+                    ? formatPlannerWeek(meetingDate)
+                    : "Selecciona una semana para consultar los cuatro grupos."}
+                </p>
+              </div>
+              {meetingDate && !weekLoading && (
+                <span
+                  aria-live="polite"
+                  className="text-xs font-bold text-[#667085]"
+                >
+                  Datos sincronizados
+                </span>
+              )}
+            </div>
+
+            {!meetingDate ? (
+              <div className="rounded-xl border border-dashed border-[#CBD5E1] bg-white p-6 text-sm font-semibold text-[#667085]">
+                Selecciona la semana de la reunión para cargar la planificación.
+              </div>
+            ) : (
+              <div
+                className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4"
+                aria-live="polite"
+              >
+                {groupSummaries.map(({ group, planner }) => (
+                  <GroupPlannerSummaryCard
+                    key={group.id}
+                    group={group}
+                    planner={planner}
+                    loading={weekLoading}
+                    error={Boolean(groupLoadErrors[group.id])}
+                    canEdit={canManage}
+                    onView={() => {
+                      setActiveView("group");
+                      setActiveGroupId(group.id);
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
         {canEditCurrent && (
-          <section className="rounded-[14px] border border-[#E2E8F0] bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)] sm:p-4">
+          <section
+            aria-busy={weekLoading}
+            className={`rounded-[14px] border border-[#E2E8F0] bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)] transition sm:p-4 ${
+              weekLoading ? "pointer-events-none opacity-60" : ""
+            }`}
+          >
             <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-lg font-black text-[#172033]">Actividades del programa</h2>
@@ -692,7 +1215,7 @@ const MeetingPlanner = ({
                 </p>
               </div>
               <p aria-live="polite" className={`text-sm font-semibold ${isErrorStatus(status) ? "text-red-600" : "text-[#667085]"}`}>
-                {status}
+                {weekLoading ? "Cargando planificadores..." : status}
               </p>
             </div>
 
@@ -706,10 +1229,13 @@ const MeetingPlanner = ({
                 const itemNotes = {
                   leaderId: notes[plannerKey]?.[item.number]?.leaderId || "",
                   detail: notes[plannerKey]?.[item.number]?.detail || "",
+                  durationMinutes:
+                    notes[plannerKey]?.[item.number]?.durationMinutes ??
+                    getDefaultDuration(item.number),
                 };
                 const complete = isSpecificGeneralItem
                   ? true
-                  : Boolean(itemNotes.leaderId || itemNotes.detail);
+                  : Boolean(itemNotes.leaderId && itemNotes.detail);
                 const selectedLeader = itemNotes.leaderId
                   ? leaderNameById.get(itemNotes.leaderId) || "Lider eliminado"
                   : "";
@@ -766,17 +1292,16 @@ const MeetingPlanner = ({
                           </p>
                           <div className="grid grid-cols-2 gap-2">
                             {groups.map((group) => {
-                              const groupPlanner = initialPlanners.find(
-                                (planner) =>
-                                  planner.group === group.id &&
-                                  getWeekKey(toInputDate(planner.meetingDate)) ===
-                                    getWeekKey(meetingDate)
+                              const groupPlanner = getLatestPlanner(
+                                planners,
+                                group.id,
+                                selectedWeekKey
                               );
                               const savedItem = groupPlanner?.items.find(
                                 (entry) => entry.number === item.number
                               );
-                              const hasPlan = Boolean(savedItem?.detail || savedItem?.leaderId);
-                              const openKey = `form-${meetingDate}-${item.number}-${group.id}`;
+                              const hasPlan = hasActivityInformation(savedItem);
+                              const openKey = `form-${selectedWeekKey}-${item.number}-${group.id}`;
                               const open = Boolean(openGeneralGroup[openKey]);
 
                               return (
@@ -819,7 +1344,9 @@ const MeetingPlanner = ({
                             <select
                               value={itemNotes.leaderId}
                               onChange={(event) =>
-                                updateItem(item.number, "leaderId", event.target.value)
+                                updateItem(item.number, {
+                                  leaderId: event.target.value,
+                                })
                               }
                               className="min-w-0 flex-1 bg-transparent py-2 text-sm font-semibold text-[#172033] outline-none"
                             >
@@ -837,14 +1364,43 @@ const MeetingPlanner = ({
                         </label>
                       )}
 
-                      <div className="flex items-center justify-between gap-2 lg:block lg:text-right">
-                        <p className="text-xs font-black uppercase tracking-[0.1em] text-[#667085]">
-                          Duracion
-                        </p>
-                        <span className="mt-0 inline-flex min-h-8 items-center rounded-full bg-[#F1F5F9] px-3 text-sm font-black text-[#344054] lg:mt-2">
-                          {item.time || "Sin tiempo"}
-                        </span>
-                      </div>
+                      {isSpecificGeneralItem ? (
+                        <div className="flex items-center justify-between gap-2 lg:block lg:text-right">
+                          <p className="text-xs font-black uppercase tracking-[0.1em] text-[#667085]">
+                            Duracion
+                          </p>
+                          <span className="mt-0 inline-flex min-h-8 items-center rounded-full bg-[#F1F5F9] px-3 text-sm font-black text-[#344054] lg:mt-2">
+                            Por grupo
+                          </span>
+                        </div>
+                      ) : (
+                        <label className="min-w-0">
+                          <span className="mb-2 block text-xs font-black uppercase tracking-[0.1em] text-[#667085]">
+                            Duracion
+                          </span>
+                          <span className="flex min-h-11 items-center rounded-xl border border-[#D7DEE8] bg-white px-2 focus-within:border-[#07529A] focus-within:ring-4 focus-within:ring-[#07529A]/10">
+                            <input
+                              type="number"
+                              min={0}
+                              max={240}
+                              value={itemNotes.durationMinutes}
+                              onChange={(event) =>
+                                updateItem(item.number, {
+                                  durationMinutes: Math.max(
+                                    0,
+                                    Number(event.target.value) || 0
+                                  ),
+                                })
+                              }
+                              className="min-w-0 flex-1 bg-transparent px-1 text-right text-sm font-black text-[#172033] outline-none"
+                              aria-label={`Duracion en minutos de ${item.title}`}
+                            />
+                            <span className="px-1 text-xs font-bold text-[#667085]">
+                              min
+                            </span>
+                          </span>
+                        </label>
+                      )}
 
                       <div className="flex items-center justify-end gap-2">
                         <IconButton
@@ -891,7 +1447,9 @@ const MeetingPlanner = ({
                           Desarrollo, materiales y observaciones
                           <AutoResizeTextarea
                             value={itemNotes.detail}
-                            onChange={(value) => updateItem(item.number, "detail", value)}
+                            onChange={(value) =>
+                              updateItem(item.number, { detail: value })
+                            }
                             placeholder="Coloca aqui los detalles, instrucciones, materiales necesarios u observaciones."
                           />
                         </label>
@@ -901,14 +1459,13 @@ const MeetingPlanner = ({
                     {isSpecificGeneralItem && (
                       <div className="mt-3 flex flex-col gap-2">
                         {groups.map((group) => {
-                          const openKey = `form-${meetingDate}-${item.number}-${group.id}`;
+                          const openKey = `form-${selectedWeekKey}-${item.number}-${group.id}`;
                           if (!openGeneralGroup[openKey]) return null;
 
-                          const groupPlanner = initialPlanners.find(
-                            (planner) =>
-                              planner.group === group.id &&
-                              getWeekKey(toInputDate(planner.meetingDate)) ===
-                                getWeekKey(meetingDate)
+                          const groupPlanner = getLatestPlanner(
+                            planners,
+                            group.id,
+                            selectedWeekKey
                           );
                           const savedItem = groupPlanner?.items.find(
                             (entry) => entry.number === item.number
@@ -967,18 +1524,25 @@ const MeetingPlanner = ({
                 )}
                 <button
                   type="button"
-                  onClick={savePlanner}
+                  onClick={() => savePlanner("draft")}
+                  disabled={saving}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#07529A] bg-white px-5 text-sm font-black text-[#07529A] transition hover:bg-[#EAF2FA] disabled:opacity-60"
+                >
+                  {savingStatus === "draft" && (
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#07529A]/30 border-t-[#07529A]" />
+                  )}
+                  {savingStatus === "draft" ? "Guardando..." : "Guardar borrador"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => savePlanner("published")}
                   disabled={saving}
                   className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#07529A] px-5 text-sm font-black text-white transition hover:bg-[#064780] disabled:opacity-60"
                 >
-                  {saving && (
+                  {savingStatus === "published" && (
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/50 border-t-white" />
                   )}
-                  {saving
-                    ? "Guardando..."
-                    : editingPlannerId
-                      ? "Actualizar planificador"
-                      : "Guardar planificador"}
+                  {savingStatus === "published" ? "Publicando..." : "Publicar"}
                 </button>
               </div>
             </div>
@@ -990,21 +1554,23 @@ const MeetingPlanner = ({
             <div className="mb-5">
               <h2 className="text-xl font-black text-[#172033]">Reuniones generales guardadas</h2>
               <p className="mt-1 text-sm text-[#667085]">
-                Abre el logo de un grupo para consultar su planificacion en cada punto especifico.
+                Abre el logo de un grupo para consultar su planificación en cada punto específico.
               </p>
             </div>
 
-            {generalWeeks.length === 0 ? (
+            {visibleGeneralWeeks.length === 0 ? (
               <div className="rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-6 text-sm font-semibold text-[#667085]">
-                No hay planificadores guardados.
+                {meetingDate
+                  ? "No hay planificadores guardados para la semana seleccionada."
+                  : "No hay planificadores guardados."}
               </div>
             ) : (
               <div className="flex flex-col gap-4">
-                {generalWeeks.map(([dateKey, weekPlanners]) => {
+                {visibleGeneralWeeks.map(([dateKey, weekPlanners]) => {
                   const generalPlanner = weekPlanners.find(
                     (planner) => planner.group === "general"
                   );
-                  const canEditGeneral = generalPlanner?.createdById === currentUserId;
+                  const canEditGeneral = canManageGeneral && Boolean(generalPlanner);
                   const open = Boolean(openGeneralWeeks[dateKey]);
 
                   return (
@@ -1023,11 +1589,19 @@ const MeetingPlanner = ({
                         >
                           <span>
                             <span className="block text-lg font-black text-[#172033]">
-                              Semana del {formatDate(`${dateKey}T12:00:00`)}
+                              {formatPlannerWeek(dateKey)}
                             </span>
                             <span className="text-sm font-semibold text-[#667085]">
                               {weekPlanners.length} planificadores guardados
                             </span>
+                            {generalPlanner && (
+                              <span className="mt-2 block">
+                                <PlannerStateBadge
+                                  label={getPlannerSummary(generalPlanner).statusLabel}
+                                  tone={getPlannerSummary(generalPlanner).statusTone}
+                                />
+                              </span>
+                            )}
                           </span>
                           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#D7DEE8] bg-white text-[#344054]">
                             <Chevron open={open} />
@@ -1119,7 +1693,7 @@ const MeetingPlanner = ({
                                                 style={{ borderLeftColor: group.color }}
                                               >
                                                 {matchingPlanners.length === 0 ? (
-                                                  <p className="text-[#667085]">Sin planificacion para esta semana.</p>
+                                                  <p className="text-[#667085]">Sin planificación para esta semana.</p>
                                                 ) : (
                                                   matchingPlanners.map((planner) => {
                                                     const savedItem = planner.items.find(
@@ -1131,6 +1705,11 @@ const MeetingPlanner = ({
                                                           item={savedItem}
                                                           leaderNameById={leaderNameById}
                                                         />
+                                                        {savedItem && (
+                                                          <p className="mt-2 text-xs font-bold text-[#667085]">
+                                                            Duracion: {getItemDuration(savedItem)} min
+                                                          </p>
+                                                        )}
                                                       </div>
                                                     );
                                                   })
@@ -1172,7 +1751,9 @@ const MeetingPlanner = ({
                                     Lider: {leaderName}
                                   </span>
                                   <span className="text-sm font-bold text-[#667085] md:text-right">
-                                    {item.time || ""}
+                                    {savedItem
+                                      ? `${getItemDuration(savedItem)} min`
+                                      : item.time || ""}
                                   </span>
                                 </div>
                               );
@@ -1204,25 +1785,53 @@ const MeetingPlanner = ({
               </div>
             </div>
 
-            {filteredPlanners.length === 0 ? (
+            {visibleGroupPlanners.length === 0 ? (
               <div className="rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-6 text-sm font-semibold text-[#667085]">
-                No hay planificadores guardados para este grupo.
+                {meetingDate
+                  ? `No hay planificación de ${activeGroup.name} para ${formatPlannerWeek(
+                      meetingDate,
+                      { compact: true }
+                    )}.`
+                  : "No hay planificadores guardados para este grupo."}
               </div>
             ) : (
               <div className="flex flex-col gap-3">
-                {filteredPlanners.map((planner) => {
+                {visibleGroupPlanners.map((planner) => {
                   const open = Boolean(openSaved[planner.id]);
+                  const plannerSummary = getPlannerSummary(planner);
 
                   return (
                     <div key={planner.id} className="overflow-hidden rounded-[14px] border border-[#E2E8F0] bg-white">
                       <div className="flex flex-col gap-3 p-4 transition hover:bg-[#F8FAFC] sm:flex-row sm:items-center sm:justify-between">
-                        <div>
+                        <div className="min-w-0">
                           <h3 className="text-base font-black text-[#172033]">
-                            Semana del {formatDate(planner.meetingDate)}
+                            {formatPlannerWeek(getPlannerDateValue(planner))}
                           </h3>
-                          <p className="text-sm text-[#667085]">
+                          <p className="mt-1 text-sm text-[#667085]">
+                            {planner.groupName || activeGroup.name} · Creado por{" "}
+                            {planner.createdByName || "Lider"} el{" "}
+                            {formatPlannerDate(planner.createdAt)}
+                          </p>
+                          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-[#667085]">
+                            <span>{plannerSummary.activities} actividades</span>
+                            <span aria-hidden="true">·</span>
+                            <span>{plannerSummary.duration} min</span>
+                            <span aria-hidden="true">·</span>
+                            <span>{plannerSummary.pending} pendientes</span>
+                            <PlannerStateBadge
+                              label={plannerSummary.statusLabel}
+                              tone={plannerSummary.statusTone}
+                            />
+                          </div>
+                          <p className="mt-2 text-xs text-[#667085]">
+                            Última actualización:{" "}
+                            {formatPlannerDate(
+                              planner.updatedAt || planner.createdAt
+                            )}
+                          </p>
+                          <p className="sr-only">
                             Creado por {planner.createdByName || "Lider"} el{" "}
-                            {formatDate(planner.createdAt)}
+                            {formatPlannerDate(planner.createdAt)}
                           </p>
                         </div>
 
@@ -1291,7 +1900,7 @@ const MeetingPlanner = ({
                                     </div>
                                   </div>
                                   <span className="text-sm font-bold text-[#667085] md:text-right">
-                                    {item.time || ""}
+                                    {getItemDuration(savedItem)} min
                                   </span>
                                 </div>
                               );

@@ -28,7 +28,6 @@ const PlannerPage = async () => {
     <div className="flex flex-1 flex-col gap-4 p-4">
       <MeetingPlanner
         currentRole={currentUser.role}
-        currentUserId={currentUser.id}
         leaders={leaders.map((leader) => ({
           id: leader.id,
           name: `${leader.name} ${leader.surname}`,
@@ -36,11 +35,20 @@ const PlannerPage = async () => {
         initialPlanners={planners.map((planner) => ({
           id: planner.id,
           group: planner.group,
+          groupName: planner.groupName,
           meetingDate: planner.meetingDate.toISOString(),
+          selectedDate: planner.selectedDate?.toISOString() || null,
+          weekStart: planner.weekStart?.toISOString() || null,
+          weekEnd: planner.weekEnd?.toISOString() || null,
+          weekKey: planner.weekKey,
+          year: planner.year,
+          status:
+            planner.status === "published" ? "published" : "draft",
           items: planner.items as SavedPlannerItem[],
           createdById: planner.createdById,
           createdByName: planner.createdByName,
           createdAt: planner.createdAt.toISOString(),
+          updatedAt: planner.updatedAt.toISOString(),
         }))}
       />
     </div>

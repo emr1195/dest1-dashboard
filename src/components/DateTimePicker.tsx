@@ -119,6 +119,7 @@ type DateTimePickerProps = {
   label: string;
   value?: string;
   onChange: (value: string) => void;
+  displayValue?: string;
   error?: string;
   required?: boolean;
   disabled?: boolean;
@@ -133,6 +134,7 @@ const DateTimePicker = ({
   label,
   value,
   onChange,
+  displayValue,
   error,
   required,
   disabled,
@@ -174,7 +176,7 @@ const DateTimePicker = ({
       const width = isMobile
         ? Math.max(0, window.innerWidth - 32)
         : Math.min(360, Math.max(320, rect.width));
-      const estimatedHeight = dateOnly ? 382 : 464;
+      const estimatedHeight = dateOnly ? 440 : 522;
       const spaceBelow = window.innerHeight - rect.bottom - 16;
       const top =
         !isMobile && spaceBelow < estimatedHeight && rect.top > estimatedHeight
@@ -259,6 +261,18 @@ const DateTimePicker = ({
     setVisibleMonth(new Date(now.getFullYear(), now.getMonth(), 1));
   };
 
+  const moveCalendarFocus = (day: Date, offset: number) => {
+    const nextDay = new Date(day);
+    nextDay.setDate(day.getDate() + offset);
+    setVisibleMonth(new Date(nextDay.getFullYear(), nextDay.getMonth(), 1));
+
+    window.requestAnimationFrame(() => {
+      document
+        .getElementById(`${id}-day-${toPickerValue(nextDay, true)}`)
+        ?.focus();
+    });
+  };
+
   return (
     <div>
       <label htmlFor={id} className="mb-2 block text-sm font-semibold text-[#344054]">
@@ -279,7 +293,8 @@ const DateTimePicker = ({
         }`}
       >
         <span className={`min-w-0 truncate ${value ? "text-[#172033]" : "text-[#98A2B3]"}`}>
-          {formatReadableValue(value, dateOnly) ||
+          {displayValue ||
+            formatReadableValue(value, dateOnly) ||
             placeholder ||
             (dateOnly ? "Seleccionar fecha" : "Seleccionar fecha y hora")}
         </span>
@@ -308,7 +323,7 @@ const DateTimePicker = ({
           ref={popoverRef}
           role="dialog"
           aria-label={`Selector de ${label.toLowerCase()}`}
-          className="fixed z-[90] animate-[modalIn_160ms_ease-out] rounded-[14px] border border-[#D7DEE8] bg-white p-4 shadow-[0_20px_60px_rgba(15,23,42,0.22)]"
+          className="fixed z-[90] max-h-[calc(100vh-32px)] overflow-y-auto animate-[modalIn_160ms_ease-out] rounded-[14px] border border-[#D7DEE8] bg-white p-4 shadow-[0_20px_60px_rgba(15,23,42,0.22)]"
           style={{
             top:
               typeof window !== "undefined" && window.innerWidth < 640
@@ -328,7 +343,7 @@ const DateTimePicker = ({
                   new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1)
                 )
               }
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#D7DEE8] text-[#344054] transition hover:bg-[#F4F7FB] focus:outline-none focus:ring-2 focus:ring-[#07529A]/20"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-[#D7DEE8] text-[#344054] transition hover:bg-[#F4F7FB] focus:outline-none focus:ring-2 focus:ring-[#07529A]/20"
               aria-label="Mes anterior"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
@@ -354,7 +369,7 @@ const DateTimePicker = ({
                   new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1)
                 )
               }
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[#D7DEE8] text-[#344054] transition hover:bg-[#F4F7FB] focus:outline-none focus:ring-2 focus:ring-[#07529A]/20"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-[#D7DEE8] text-[#344054] transition hover:bg-[#F4F7FB] focus:outline-none focus:ring-2 focus:ring-[#07529A]/20"
               aria-label="Mes siguiente"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
@@ -377,9 +392,29 @@ const DateTimePicker = ({
               return (
                 <button
                   key={day.toISOString()}
+                  id={`${id}-day-${toPickerValue(day, true)}`}
                   type="button"
                   onClick={() => updateDraftDate(day)}
-                  className={`flex h-9 min-h-9 items-center justify-center rounded-full text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#07529A]/30 ${
+                  onKeyDown={(event) => {
+                    const offsets: Record<string, number> = {
+                      ArrowLeft: -1,
+                      ArrowRight: 1,
+                      ArrowUp: -7,
+                      ArrowDown: 7,
+                    };
+                    const offset = offsets[event.key];
+                    if (!offset) return;
+
+                    event.preventDefault();
+                    moveCalendarFocus(day, offset);
+                  }}
+                  aria-label={new Intl.DateTimeFormat("es-PA", {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  }).format(day)}
+                  className={`flex h-11 min-h-11 items-center justify-center rounded-full text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#07529A]/30 ${
                     selected
                       ? "bg-[#07529A] text-white hover:bg-[#064780]"
                       : currentDay
@@ -442,7 +477,7 @@ const DateTimePicker = ({
             </div>
           )}
 
-          <div className="mt-4 flex items-center justify-between gap-3">
+          <div className="sticky bottom-0 mt-4 flex items-center justify-between gap-3 border-t border-[#EEF2F6] bg-white pt-3">
             <button
               type="button"
               onClick={pickToday}

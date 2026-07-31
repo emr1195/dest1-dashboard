@@ -233,7 +233,14 @@ model FinanceTransaction {
 model MeetingPlanner {
   id            String   @id @default(uuid())
   group         String
+  groupName     String?
   meetingDate   DateTime
+  selectedDate  DateTime?
+  weekStart     DateTime?
+  weekEnd       DateTime?
+  weekKey       String?
+  year          Int?
+  status        String   @default("draft")
   items         Json
   createdById   String
   createdByName String?
@@ -243,6 +250,9 @@ model MeetingPlanner {
   @@index([group])
   @@index([createdById])
   @@index([meetingDate])
+  @@index([weekKey])
+  @@index([group, weekKey])
+  @@unique([group, weekKey])
   @@unique([group, meetingDate])
 }
 
