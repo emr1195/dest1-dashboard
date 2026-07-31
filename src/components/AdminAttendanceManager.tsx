@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { getTodayDateKey } from "@/lib/timeZone";
 import DateTimePicker from "./DateTimePicker";
+import MonthlyAttendanceChart from "./MonthlyAttendanceChart";
 
 type AttendanceRecord = {
   id: number;
@@ -307,6 +308,12 @@ const AdminAttendanceManager = ({
           )}
         </section>
         ))}
+      <MonthlyAttendanceChart
+        records={history.map((record) => ({
+          dateValue: record.dateValue,
+          present: record.present,
+        }))}
+      />
       <section className="mt-8">
         <h2 className="mb-3 text-lg font-semibold">Registro de asistencia</h2>
         {historyByDate.length ? (
