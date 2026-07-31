@@ -9,7 +9,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="flex min-h-screen min-w-0 overflow-x-hidden">
+    <div className="flex min-h-screen min-w-0 overflow-x-clip">
       <MobileMenuDrawer>
         <Menu forceLabels />
       </MobileMenuDrawer>
@@ -18,7 +18,7 @@ export default function DashboardLayout({
         <Menu />
       </DesktopSidebar>
 
-      <main className="flex min-w-0 flex-1 flex-col overflow-x-hidden bg-[var(--page-background)]">
+      <main className="flex min-w-0 flex-1 flex-col overflow-x-clip bg-[var(--page-background)]">
         <Navbar />
         {children}
       </main>
