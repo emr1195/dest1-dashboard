@@ -56,24 +56,17 @@ const UploadedFilesList = ({
   };
 
   return (
-    <div className="flex flex-col gap-3">
-      <h3 className="text-base font-semibold">{title}</h3>
+  <div className="flex flex-col gap-3">
+      <h3 className="text-lg font-extrabold text-[var(--text-primary)]">{title}</h3>
       {files.length ? (
         files.map((file) => (
-          <a
-            key={file.id}
-            href={file.href || file.filePath}
-            target={file.href ? undefined : "_blank"}
-            rel={file.href ? undefined : "noreferrer"}
-            title={file.fileName}
-            className="flex flex-wrap items-center gap-3 border border-gray-200 bg-white p-3 hover:border-lamaSky sm:flex-nowrap"
-          >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-lamaSky text-[10px] font-bold text-white">
+          <div key={file.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--border-soft)] bg-white p-3 transition hover:border-[var(--primary)] sm:flex-nowrap">
+            <span className="grid h-11 min-w-11 shrink-0 place-items-center rounded-lg bg-[var(--primary-soft)] px-1 text-[10px] font-extrabold text-[var(--primary)]">
               {fileIcon(file.fileName)}
             </span>
             <span className="min-w-0 flex-1 basis-[calc(100%-3.5rem)] sm:basis-auto">
-              <span className="block truncate text-sm text-gray-600">{file.fileName}</span>
-              <span className="block truncate text-xs text-gray-500">
+              <span className="block truncate text-sm font-bold text-[var(--text-primary)]">{file.fileName}</span>
+              <span className="mt-1 block truncate text-xs text-[var(--text-secondary)]">
                 {file.ownerName || "Completado"}
               </span>
               {file.detail && (
@@ -91,26 +84,23 @@ const UploadedFilesList = ({
                 {file.statusLabel}
               </span>
             )}
-            <span className="ml-auto text-xs text-lamaBrown sm:ml-0">Ver</span>
+            <a href={file.href || file.filePath} target={file.href ? undefined : "_blank"} rel={file.href ? undefined : "noreferrer"} title={`Ver ${file.fileName}`} className="ml-auto inline-flex min-h-10 items-center rounded-lg px-3 text-xs font-bold text-[var(--primary)] hover:bg-[var(--primary-soft)] focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)] sm:ml-0">Ver</a>
             {file.deleteUrl && (
               <button
                 type="button"
                 disabled={deleting === file.id}
-                onClick={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  deleteFile(file);
-                }}
-                className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-50"
+                onClick={() => deleteFile(file)}
+                className="min-h-10 rounded-lg px-3 text-xs font-bold text-red-600 hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-100 disabled:opacity-50"
               >
                 {deleting === file.id ? "Eliminando..." : "Eliminar"}
               </button>
             )}
-          </a>
+          </div>
         ))
       ) : (
-        <div className="border border-dashed border-gray-200 p-4 text-sm text-gray-500">
-          {emptyLabel}
+        <div className="rounded-xl border border-dashed border-[var(--border-default)] bg-[var(--surface-secondary)] p-5 text-center text-sm text-[var(--text-secondary)]">
+          <p className="font-bold text-[var(--text-primary)]">Sin archivos</p>
+          <p className="mt-1">{emptyLabel}</p>
         </div>
       )}
     </div>
@@ -173,11 +163,11 @@ const AssignmentUploadBox = ({
   };
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+    <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
       <div>
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-lamaSky">{title}</h3>
-          <p className="mt-1 text-sm text-gray-500">{subtitle}</p>
+          <h3 className="text-lg font-extrabold text-[var(--text-primary)]">{title}</h3>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">{subtitle}</p>
         </div>
         <input
           ref={inputRef}
@@ -193,21 +183,21 @@ const AssignmentUploadBox = ({
           }}
           onDragLeave={() => setDragging(false)}
           onDrop={onDrop}
-          className={`flex min-h-[220px] flex-col items-center justify-center border-2 border-dashed p-6 text-center ${
-            dragging ? "border-lamaPurple bg-lamaPurpleLight" : "border-lamaSky"
-          } ${canUpload ? "bg-white" : "bg-gray-50 opacity-70"}`}
+          className={`flex min-h-[210px] flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 text-center transition ${
+            dragging ? "border-[var(--primary)] bg-[var(--primary-soft)]" : "border-[var(--border-default)]"
+          } ${canUpload ? "bg-[var(--surface-secondary)]" : "bg-gray-50 opacity-70"}`}
         >
-          <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-lamaSkyLight text-3xl text-lamaSky">
-            ^
+          <div className="mb-4 grid h-12 w-12 place-items-center rounded-full bg-[var(--primary-soft)] text-[var(--primary)]">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-6 w-6" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M5 20h14" /></svg>
           </div>
-          <p className="text-lg font-semibold text-lamaSky">Arrastra archivos aqui</p>
-          <p className="mt-2 text-sm text-gray-500">Un archivo por vez</p>
-          <p className="my-3 font-semibold text-lamaSky">-O-</p>
+          <p className="font-bold text-[var(--text-primary)]">Arrastra tu archivo aquí</p>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">Un archivo por entrega</p>
+          <span className="my-3 text-xs font-bold uppercase text-[var(--text-muted)]">o</span>
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={!canUpload || saving}
-            className="bg-lamaSky px-8 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+            className="min-h-11 rounded-xl bg-[var(--primary)] px-6 text-sm font-bold text-white transition hover:bg-[var(--primary-hover)] focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)] disabled:cursor-not-allowed disabled:opacity-60"
           >
             {saving ? "Subiendo..." : buttonLabel}
           </button>
