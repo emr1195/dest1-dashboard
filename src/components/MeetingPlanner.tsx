@@ -564,11 +564,18 @@ const MeetingPlanner = ({
   const filteredPlanners = planners.filter(
     (planner) => planner.group === activeGroupId
   );
-  const visibleGroupPlanners = selectedWeekKey
-    ? filteredPlanners.filter(
-        (planner) => getPlannerWeekKey(planner) === selectedWeekKey
-      )
-    : filteredPlanners;
+  const visibleGroupPlanners = [...filteredPlanners].sort((plannerA, plannerB) => {
+    const plannerAIsSelected =
+      getPlannerWeekKey(plannerA) === selectedWeekKey;
+    const plannerBIsSelected =
+      getPlannerWeekKey(plannerB) === selectedWeekKey;
+
+    if (plannerAIsSelected !== plannerBIsSelected) {
+      return plannerAIsSelected ? -1 : 1;
+    }
+
+    return getPlannerTimestamp(plannerB) - getPlannerTimestamp(plannerA);
+  });
 
   const generalWeeks = useMemo(() => {
     const weeks = new Map<string, Map<string, SavedMeetingPlanner>>();
@@ -606,9 +613,13 @@ const MeetingPlanner = ({
       })),
     [planners, selectedWeekKey]
   );
-  const visibleGeneralWeeks = selectedWeekKey
-    ? generalWeeks.filter(([dateKey]) => dateKey === selectedWeekKey)
-    : generalWeeks;
+  const visibleGeneralWeeks = [...generalWeeks].sort(
+    ([dateA], [dateB]) => {
+      if (dateA === selectedWeekKey) return -1;
+      if (dateB === selectedWeekKey) return 1;
+      return dateB.localeCompare(dateA);
+    }
+  );
 
   const activeWeekPlanner = selectedWeekKey
     ? getLatestPlanner(planners, plannerKey, selectedWeekKey)
