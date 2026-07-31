@@ -27,6 +27,8 @@ export type AttendancePerson = {
 const todayValue = () => getTodayDateKey();
 
 const groupOrder = ["Navegantes", "Pioneros", "Seguidores", "Exploradores", "Sin grupo asignado"];
+// Paneles por grupo ocultos temporalmente en la ventana de asistencia.
+const SHOW_GROUP_ATTENDANCE_PANELS = false;
 
 const dedupeRecordsByPersonDate = (records: AttendanceRecord[]) => {
   const recordByDate = new Map<string, AttendanceRecord>();
@@ -214,7 +216,8 @@ const AdminAttendanceManager = ({
         </div>
       )}
 
-      {groups.map((group) => (
+      {(view === "teachers" || SHOW_GROUP_ATTENDANCE_PANELS) &&
+        groups.map((group) => (
         <section key={group.name} className="mb-4 overflow-hidden rounded-md border border-gray-100">
           {view === "students" && (
             <button
@@ -303,7 +306,7 @@ const AdminAttendanceManager = ({
           </div>
           )}
         </section>
-      ))}
+        ))}
       <section className="mt-8">
         <h2 className="mb-3 text-lg font-semibold">Registro de asistencia</h2>
         {historyByDate.length ? (
