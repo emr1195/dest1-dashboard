@@ -10,7 +10,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="flex h-screen min-w-0 overflow-hidden">
+    <div className="flex min-h-screen min-w-0 overflow-x-hidden">
       <MobileMenuDrawer>
         <Link
           href="/auth/redirect"
@@ -30,7 +30,7 @@ export default function DashboardLayout({
         <Menu forceLabels />
       </MobileMenuDrawer>
 
-      <aside className="hidden shrink-0 overflow-y-auto overflow-x-hidden p-2 md:block md:w-[8%] md:p-4 lg:w-56 xl:w-60 2xl:w-[14%]">
+      <aside className="hidden shrink-0 overflow-x-hidden p-2 md:block md:w-[8%] md:p-4 lg:w-56 xl:w-60 2xl:w-[14%]">
         <Link
           href="/auth/redirect"
           className="flex min-w-0 items-center justify-center gap-2 lg:flex-col lg:items-start 2xl:flex-row 2xl:items-center 2xl:justify-start"
@@ -49,7 +49,7 @@ export default function DashboardLayout({
         <Menu />
       </aside>
 
-      <main className="flex min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden bg-[#EEF1F5]">
+      <main className="flex min-w-0 flex-1 flex-col overflow-x-hidden bg-[#EEF1F5]">
         <Navbar />
         {children}
       </main>
