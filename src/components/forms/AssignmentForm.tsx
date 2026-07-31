@@ -804,6 +804,155 @@ const DateTimePicker = ({
   );
 };
 
+const GroupPicker = ({
+  id,
+  value,
+  options,
+  setValue,
+  error,
+  disabled,
+}: {
+  id: string;
+  value?: string;
+  options: { label: string; value: string; image: string }[];
+  setValue: UseFormSetValue<AssignmentSchema>;
+  error?: FieldError;
+  disabled?: boolean;
+}) => {
+  const [open, setOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+  const selectedGroup = options.find((group) => group.value === value) || null;
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onPointerDown = (event: PointerEvent) => {
+      if (!pickerRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    window.addEventListener("pointerdown", onPointerDown);
+
+    return () => window.removeEventListener("pointerdown", onPointerDown);
+  }, [open]);
+
+  const selectGroup = (groupValue: string) => {
+    setValue("assignmentGroup", groupValue as any, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setOpen(false);
+  };
+
+  return (
+    <div ref={pickerRef} className="relative">
+      <label
+        htmlFor={id}
+        className="mb-2 block text-sm font-semibold text-[#344054]"
+      >
+        Grupo <span className="text-red-600">*</span>
+      </label>
+      <button
+        id={id}
+        type="button"
+        disabled={disabled}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-describedby={`${id}-error`}
+        data-invalid={Boolean(error) || undefined}
+        onClick={() => setOpen((current) => !current)}
+        className={`flex h-12 w-full items-center justify-between gap-3 rounded-xl border bg-white px-4 text-left text-sm outline-none transition hover:border-[#9AA8B7] focus:border-[#07529A] focus:ring-4 focus:ring-[#07529A]/10 disabled:cursor-not-allowed disabled:bg-gray-50 ${
+          error ? "border-red-500 focus:border-red-600 focus:ring-red-100" : "border-[#D7DEE8]"
+        }`}
+      >
+        <span
+          className={`flex min-w-0 items-center gap-3 ${
+            selectedGroup ? "text-[#172033]" : "text-[#98A2B3]"
+          }`}
+        >
+          {selectedGroup && (
+            <span className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full border border-[#E6ECF3] bg-white">
+              <Image
+                src={selectedGroup.image}
+                alt=""
+                fill
+                sizes="28px"
+                className="object-contain"
+              />
+            </span>
+          )}
+          <span className="truncate">
+            {selectedGroup?.label || "Seleccionar grupo"}
+          </span>
+        </span>
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          className={`h-4 w-4 shrink-0 text-[#667085] transition ${
+            open ? "rotate-180" : ""
+          }`}
+          aria-hidden="true"
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
+      {open && (
+        <div
+          role="listbox"
+          aria-label="Seleccionar grupo"
+          className="absolute left-0 top-[calc(100%+8px)] z-[80] max-h-72 w-full overflow-y-auto rounded-xl border border-[#D7DEE8] bg-white p-1 shadow-[0_16px_44px_rgba(15,23,42,0.18)]"
+        >
+          {options.map((group) => {
+            const selected = group.value === value;
+
+            return (
+              <button
+                key={group.value}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                onClick={() => selectGroup(group.value)}
+                className={`flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-[#07529A]/20 ${
+                  selected
+                    ? "bg-[#EFF7FF] text-[#07529A]"
+                    : "text-[#172033] hover:bg-[#F4F7FB]"
+                }`}
+              >
+                <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full border border-[#E6ECF3] bg-white">
+                  <Image
+                    src={group.image}
+                    alt=""
+                    fill
+                    sizes="32px"
+                    className="object-contain"
+                  />
+                </span>
+                <span className="truncate">{group.label}</span>
+                {selected && (
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="ml-auto h-4 w-4"
+                    aria-hidden="true"
+                  >
+                    <path d="m5 12 4 4L19 6" />
+                  </svg>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+      <FieldErrorMessage id={`${id}-error`} error={error} />
+    </div>
+  );
+};
+
 const AssignmentForm = ({
   type,
   data,
@@ -1041,6 +1190,7 @@ const AssignmentForm = ({
     "category",
     getAssignmentCategory(data?.category) as AssignmentSchema["category"]
   );
+  const selectedAssignmentGroup = watch("assignmentGroup") as string | undefined;
 
   return (
     <form className="flex max-h-[90vh] flex-col bg-white" onSubmit={onSubmit}>
@@ -1194,36 +1344,17 @@ const AssignmentForm = ({
                 />
               )}
               {isAdminCreate && (
-                <div>
-                  <label
-                    htmlFor="assignment-group"
-                    className="mb-2 block text-sm font-semibold text-[#344054]"
-                  >
-                    Grupo <span className="text-red-600">*</span>
-                  </label>
-                  <select
+                <>
+                  <input type="hidden" {...register("assignmentGroup")} />
+                  <GroupPicker
                     id="assignment-group"
-                    defaultValue=""
-                    required
-                    aria-invalid={Boolean(errors.assignmentGroup)}
-                    aria-describedby="assignment-group-error"
-                    className={`${fieldBaseClass} ${errors.assignmentGroup ? fieldErrorClass : ""}`}
-                    {...register("assignmentGroup")}
-                  >
-                    <option value="" disabled>
-                      Seleccionar grupo
-                    </option>
-                    {assignableGroups.map((group) => (
-                      <option value={group.value} key={group.value}>
-                        {group.label}
-                      </option>
-                    ))}
-                  </select>
-                  <FieldErrorMessage
-                    id="assignment-group-error"
+                    value={selectedAssignmentGroup}
+                    options={assignableGroups}
+                    setValue={setValue}
                     error={errors.assignmentGroup as FieldError}
+                    disabled={saving}
                   />
-                </div>
+                </>
               )}
               {canEditDisplayedLeader && (
                 <div>
