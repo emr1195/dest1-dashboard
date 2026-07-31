@@ -527,7 +527,7 @@ const MeetingPlanner = ({
   const [openGeneralGroup, setOpenGeneralGroup] = useState<Record<string, boolean>>({});
   const [openGeneralWeeks, setOpenGeneralWeeks] = useState<Record<string, boolean>>({});
   const [notes, setNotes] = useState<PlannerNotes>({});
-  const [meetingDate, setMeetingDate] = useState("");
+  const [meetingDate, setMeetingDate] = useState(() => getTodayDateKey());
   const [openDatePicker, setOpenDatePicker] = useState<string | null>(null);
   const [editingPlannerId, setEditingPlannerId] = useState<string | null>(null);
   const [planners, setPlanners] = useState(initialPlanners);
@@ -648,13 +648,12 @@ const MeetingPlanner = ({
   const hasDraftChanges = useMemo(
     () =>
       Boolean(
-        meetingDate ||
-          editingPlannerId ||
+        editingPlannerId ||
           Object.values(notes).some((items) =>
             Object.values(items).some((item) => item.leaderId || item.detail)
           )
       ),
-    [editingPlannerId, meetingDate, notes]
+    [editingPlannerId, notes]
   );
 
   useEffect(() => {
@@ -664,18 +663,25 @@ const MeetingPlanner = ({
   useEffect(() => {
     const queryWeek = new URLSearchParams(window.location.search).get("week");
     const normalizedWeek = getPlannerWeek(queryWeek);
-    if (normalizedWeek) setMeetingDate(normalizedWeek.weekStart);
+    if (!normalizedWeek) return;
+
+    const today = getTodayDateKey();
+    setMeetingDate(
+      normalizedWeek.weekKey === getWeekKey(today)
+        ? today
+        : normalizedWeek.selectedDate
+    );
   }, []);
 
   useEffect(() => {
-    if (!selectedWeekKey) return;
+    if (!meetingDate) return;
 
     const url = new URL(window.location.href);
-    if (url.searchParams.get("week") === selectedWeekKey) return;
+    if (url.searchParams.get("week") === meetingDate) return;
 
-    url.searchParams.set("week", selectedWeekKey);
+    url.searchParams.set("week", meetingDate);
     window.history.replaceState(window.history.state, "", url);
-  }, [selectedWeekKey]);
+  }, [meetingDate]);
 
   useEffect(() => {
     if (!selectedWeekKey) {
