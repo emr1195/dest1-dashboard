@@ -811,18 +811,6 @@ const MeetingPlanner = ({
     }));
   };
 
-  const moveItem = (itemNumber: number, direction: -1 | 1) => {
-    setItemOrder((current) => {
-      const order = [...(current[plannerKey] || activeOrder)];
-      const index = order.indexOf(itemNumber);
-      const nextIndex = index + direction;
-      if (index < 0 || nextIndex < 0 || nextIndex >= order.length) return current;
-
-      [order[index], order[nextIndex]] = [order[nextIndex], order[index]];
-      return { ...current, [plannerKey]: order };
-    });
-  };
-
   const moveItemTo = (itemNumber: number, targetNumber: number) => {
     if (itemNumber === targetNumber) return;
 
@@ -1409,28 +1397,6 @@ const MeetingPlanner = ({
                       )}
 
                       <div className="flex items-center justify-end gap-2">
-                        <IconButton
-                          label="Subir actividad"
-                          onClick={() => moveItem(item.number, -1)}
-                          disabled={index === 0}
-                        >
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true">
-                            <path d="m12 5-6 6" />
-                            <path d="m12 5 6 6" />
-                            <path d="M12 19V5" />
-                          </svg>
-                        </IconButton>
-                        <IconButton
-                          label="Bajar actividad"
-                          onClick={() => moveItem(item.number, 1)}
-                          disabled={index === activeItems.length - 1}
-                        >
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4" aria-hidden="true">
-                            <path d="M12 5v14" />
-                            <path d="m18 13-6 6" />
-                            <path d="m6 13 6 6" />
-                          </svg>
-                        </IconButton>
                         {!isSpecificGeneralItem && (
                           <IconButton
                             label={isOpen ? "Cerrar detalle" : "Abrir detalle"}

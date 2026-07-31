@@ -2,7 +2,7 @@
 
 import { Dispatch, SetStateAction } from "react";
 
-import { formatPlannerWeek, getPlannerWeek } from "@/lib/plannerWeek";
+import { formatPlannerWeek } from "@/lib/plannerWeek";
 
 import DateTimePicker from "./DateTimePicker";
 
@@ -27,17 +27,6 @@ const WeekSelector = ({
   disabled,
   loading,
 }: WeekSelectorProps) => {
-  const selectCurrentWeek = () => {
-    const currentWeek = getPlannerWeek(
-      `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(
-        2,
-        "0"
-      )}-${String(new Date().getDate()).padStart(2, "0")}`
-    );
-
-    if (currentWeek) onChange(currentWeek.selectedDate);
-  };
-
   return (
     <div className="min-w-0">
       <DateTimePicker
@@ -54,16 +43,6 @@ const WeekSelector = ({
         openPicker={openPicker}
         setOpenPicker={setOpenPicker}
       />
-      <div className="mt-2 flex min-h-6 justify-end">
-        <button
-          type="button"
-          onClick={selectCurrentWeek}
-          disabled={disabled || loading}
-          className="min-h-8 rounded-lg px-2 text-xs font-bold text-[#07529A] transition hover:bg-[#EAF2FA] focus:outline-none focus:ring-2 focus:ring-[#07529A]/20 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Semana actual
-        </button>
-      </div>
     </div>
   );
 };
