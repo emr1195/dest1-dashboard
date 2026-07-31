@@ -11,6 +11,16 @@ import { createTeacher, updateTeacher } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { CldUploadWidget } from "next-cloudinary";
+import DateTimePicker from "../DateTimePicker";
+
+const toDateValue = (value?: Date | string) => {
+  if (!value) return undefined;
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return undefined;
+
+  return date.toISOString().split("T")[0];
+};
 
 const TeacherForm = ({
   type,
@@ -26,12 +36,19 @@ const TeacherForm = ({
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<TeacherSchema>({
     resolver: zodResolver(teacherSchema),
+    defaultValues: {
+      birthday: toDateValue(data?.birthday) as any,
+    },
   });
 
   const [img, setImg] = useState<any>();
+  const [openDatePicker, setOpenDatePicker] = useState<string | null>(null);
+  const birthdayValue = watch("birthday") as unknown as string | undefined;
 
   const [state, formAction] = useFormState(
     type === "create" ? createTeacher : updateTeacher,
@@ -129,14 +146,25 @@ const TeacherForm = ({
           register={register}
           error={errors.bloodType}
         />
-        <InputField
-          label="Fecha de nacimiento"
-          name="birthday"
-          defaultValue={data?.birthday.toISOString().split("T")[0]}
-          register={register}
-          error={errors.birthday}
-          type="date"
-        />
+        <input type="hidden" {...register("birthday")} />
+        <div className="w-full md:w-1/4">
+          <DateTimePicker
+            id="teacher-birthday"
+            label="Fecha de nacimiento"
+            required
+            dateOnly
+            value={birthdayValue}
+            onChange={(value) =>
+              setValue("birthday", value as any, {
+                shouldDirty: true,
+                shouldValidate: true,
+              })
+            }
+            error={errors.birthday?.message?.toString()}
+            openPicker={openDatePicker}
+            setOpenPicker={setOpenDatePicker}
+          />
+        </div>
         {data && (
           <InputField
             label="Id"

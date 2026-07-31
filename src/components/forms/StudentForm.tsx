@@ -21,6 +21,16 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { CldUploadWidget } from "next-cloudinary";
+import DateTimePicker from "../DateTimePicker";
+
+const toDateValue = (value?: Date | string) => {
+  if (!value) return undefined;
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return undefined;
+
+  return date.toISOString().split("T")[0];
+};
 
 const StudentForm = ({
   type,
@@ -36,12 +46,19 @@ const StudentForm = ({
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<StudentSchema>({
     resolver: zodResolver(studentSchema),
+    defaultValues: {
+      birthday: toDateValue(data?.birthday) as any,
+    },
   });
 
   const [img, setImg] = useState<any>();
+  const [openDatePicker, setOpenDatePicker] = useState<string | null>(null);
+  const birthdayValue = watch("birthday") as unknown as string | undefined;
 
   const [state, formAction] = useFormState(
     type === "create" ? createStudent : updateStudent,
@@ -159,14 +176,25 @@ const StudentForm = ({
           register={register}
           error={errors.bloodType}
         />
-        <InputField
-          label="Fecha de nacimiento"
-          name="birthday"
-          defaultValue={data?.birthday.toISOString().split("T")[0]}
-          register={register}
-          error={errors.birthday}
-          type="date"
-        />
+        <input type="hidden" {...register("birthday")} />
+        <div className="w-full md:w-1/4">
+          <DateTimePicker
+            id="student-birthday"
+            label="Fecha de nacimiento"
+            required
+            dateOnly
+            value={birthdayValue}
+            onChange={(value) =>
+              setValue("birthday", value as any, {
+                shouldDirty: true,
+                shouldValidate: true,
+              })
+            }
+            error={errors.birthday?.message?.toString()}
+            openPicker={openDatePicker}
+            setOpenPicker={setOpenDatePicker}
+          />
+        </div>
         <InputField
           label="ID del padre"
           name="parentId"

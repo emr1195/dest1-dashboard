@@ -2,6 +2,7 @@
 
 import { ChangeEvent, FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import DateTimePicker from "./DateTimePicker";
 
 const FinanceEntryForm = () => {
   const router = useRouter();
@@ -14,6 +15,7 @@ const FinanceEntryForm = () => {
   const [receipt, setReceipt] = useState<File | null>(null);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
+  const [openDatePicker, setOpenDatePicker] = useState<string | null>(null);
 
   const selectReceipt = (event: ChangeEvent<HTMLInputElement>) => {
     setReceipt(event.target.files?.[0] || null);
@@ -126,16 +128,18 @@ const FinanceEntryForm = () => {
           className="min-h-28 resize-y rounded-md border border-gray-300 p-3 outline-none focus:border-lamaSky"
         />
       </label>
-      <label className="flex flex-col gap-2 text-sm text-gray-600 lg:col-span-2">
-        Fecha
-        <input
-          type="date"
-          value={date}
-          onChange={(event) => setDate(event.target.value)}
+      <div className="lg:col-span-2">
+        <DateTimePicker
+          id="finance-entry-date"
+          label="Fecha"
           required
-          className="rounded-md border border-gray-300 p-3 outline-none focus:border-lamaSky"
+          dateOnly
+          value={date}
+          onChange={setDate}
+          openPicker={openDatePicker}
+          setOpenPicker={setOpenDatePicker}
         />
-      </label>
+      </div>
       <label className="flex flex-col gap-2 text-sm text-gray-600">
         Factura o comprobante (opcional)
         <input

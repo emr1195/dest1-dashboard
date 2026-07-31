@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { getTodayDateKey } from "@/lib/timeZone";
+import DateTimePicker from "./DateTimePicker";
 
 type AttendanceRecord = {
   id: number;
@@ -57,6 +58,7 @@ const AdminAttendanceManager = ({
   const [message, setMessage] = useState("");
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [openDates, setOpenDates] = useState<Record<string, boolean>>({});
+  const [openDatePicker, setOpenDatePicker] = useState<string | null>(null);
   const router = useRouter();
   const normalizedPeople = people.map((person) => ({
     ...person,
@@ -190,13 +192,14 @@ const AdminAttendanceManager = ({
     <div className="mt-6">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-gray-100 pb-5">
         <div>
-          <p className="text-sm font-medium text-gray-600">Dia que vas a registrar</p>
-          <input
-            aria-label="Fecha de asistencia"
-            type="date"
+          <DateTimePicker
+            id="attendance-date"
+            label="Dia que vas a registrar"
+            dateOnly
             value={date}
-            onChange={(event) => setDate(event.target.value)}
-            className="mt-2 rounded-md border border-gray-300 px-4 py-2 outline-none focus:border-lamaSky"
+            onChange={setDate}
+            openPicker={openDatePicker}
+            setOpenPicker={setOpenDatePicker}
           />
         </div>
         <p className="text-sm text-gray-500">

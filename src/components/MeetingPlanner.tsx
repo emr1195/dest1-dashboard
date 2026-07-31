@@ -1,5 +1,6 @@
 "use client";
 
+import DateTimePicker from "./DateTimePicker";
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -223,6 +224,7 @@ const MeetingPlanner = ({
   const [openGeneralWeeks, setOpenGeneralWeeks] = useState<Record<string, boolean>>({});
   const [notes, setNotes] = useState<PlannerNotes>({});
   const [meetingDate, setMeetingDate] = useState("");
+  const [openDatePicker, setOpenDatePicker] = useState<string | null>(null);
   const [editingPlannerId, setEditingPlannerId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState("");
@@ -424,15 +426,17 @@ const MeetingPlanner = ({
               </h1>
               {(canManage && activeView === "group") ||
               (canManageGeneral && activeView === "general") ? (
-                <label className="mt-2 flex max-w-sm items-center gap-2 text-base text-gray-600">
-                  <span>Semana:</span>
-                  <input
-                    type="date"
+                <div className="mt-2 max-w-sm">
+                  <DateTimePicker
+                    id="meeting-date"
+                    label="Semana"
                     value={meetingDate}
-                    onChange={(event) => setMeetingDate(event.target.value)}
-                    className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:border-lamaSky"
+                    onChange={setMeetingDate}
+                    dateOnly
+                    openPicker={openDatePicker}
+                    setOpenPicker={setOpenDatePicker}
                   />
-                </label>
+                </div>
               ) : (
                 <p className="mt-2 text-base text-gray-600">
                   {activeView === "general"

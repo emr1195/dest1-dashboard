@@ -1,5 +1,6 @@
 "use client";
 
+import DateTimePicker from "./DateTimePicker";
 import { leaderGroupOptions, rankOptionsByRole } from "@/lib/roles";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -55,6 +56,7 @@ const UserNameEditor = ({ id, type, name, surname }: UserNameEditorProps) => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [openDatePicker, setOpenDatePicker] = useState<string | null>(null);
   const [form, setForm] = useState<UserForm>({
     ...emptyForm,
     name,
@@ -231,17 +233,15 @@ const UserNameEditor = ({ id, type, name, surname }: UserNameEditorProps) => {
                     className={inputClass}
                   />
                 </label>
-                <label className="flex flex-col gap-2 text-sm font-medium text-gray-600">
-                  Fecha de nacimiento
-                  <input
-                    value={form.birthday}
-                    onChange={(event) =>
-                      setField("birthday", event.target.value)
-                    }
-                    className={inputClass}
-                    type="date"
-                  />
-                </label>
+                <DateTimePicker
+                  id="profile-birthday"
+                  label="Fecha de nacimiento"
+                  value={form.birthday}
+                  onChange={(value) => setField("birthday", value)}
+                  dateOnly
+                  openPicker={openDatePicker}
+                  setOpenPicker={setOpenDatePicker}
+                />
                 <label className="flex flex-col gap-2 text-sm font-medium text-gray-600 sm:col-span-2">
                   Dirección
                   <input

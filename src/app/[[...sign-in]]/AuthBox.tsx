@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import DateTimePicker from "@/components/DateTimePicker";
 import { leaderGroupOptions, rankOptionsByRole, roleOptions } from "@/lib/roles";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
@@ -33,6 +34,7 @@ const AuthBox = () => {
   const [gender, setGender] = useState("");
   const [rankMenuOpen, setRankMenuOpen] = useState(false);
   const [leaderGroupMenuOpen, setLeaderGroupMenuOpen] = useState(false);
+  const [openDatePicker, setOpenDatePicker] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -443,16 +445,16 @@ const AuthBox = () => {
               </select>
             </label>
             <div className="grid gap-4 md:grid-cols-2">
-              <label className="flex flex-col gap-2 text-sm text-gray-500">
-                Fecha de nacimiento
-                <input
-                  value={birthDate}
-                  onChange={(event) => setBirthDate(event.target.value)}
-                  className={inputClass}
-                  type="date"
-                  required
-                />
-              </label>
+              <DateTimePicker
+                id="signup-birth-date"
+                label="Fecha de nacimiento"
+                value={birthDate}
+                onChange={setBirthDate}
+                required
+                dateOnly
+                openPicker={openDatePicker}
+                setOpenPicker={setOpenDatePicker}
+              />
               <label className="flex flex-col gap-2 text-sm text-gray-500">
                 Numero de telefono
                 <input

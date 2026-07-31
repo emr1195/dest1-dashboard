@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { ChangeEvent, FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import DateTimePicker from "./DateTimePicker";
 
 type FinanceTransactionItem = {
   id: string;
@@ -36,6 +37,7 @@ const FinanceTransactionsList = ({ transactions }: { transactions: FinanceTransa
   const [receipt, setReceipt] = useState<File | null>(null);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
+  const [openDatePicker, setOpenDatePicker] = useState<string | null>(null);
 
   const openEditor = (transaction: FinanceTransactionItem) => {
     setEditing(transaction);
@@ -227,16 +229,16 @@ const FinanceTransactionsList = ({ transactions }: { transactions: FinanceTransa
                   className="min-h-28 resize-y rounded-md border border-gray-300 p-3 outline-none focus:border-lamaSky"
                 />
               </label>
-              <label className="flex flex-col gap-2 text-sm text-gray-600">
-                Fecha
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(event) => setDate(event.target.value)}
-                  required
-                  className="rounded-md border border-gray-300 p-3 outline-none focus:border-lamaSky"
-                />
-              </label>
+              <DateTimePicker
+                id="finance-edit-date"
+                label="Fecha"
+                required
+                dateOnly
+                value={date}
+                onChange={setDate}
+                openPicker={openDatePicker}
+                setOpenPicker={setOpenDatePicker}
+              />
               <label className="flex flex-col gap-2 text-sm text-gray-600 lg:col-span-2">
                 Reemplazar factura o comprobante (opcional)
                 <input

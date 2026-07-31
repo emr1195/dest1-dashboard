@@ -356,30 +356,6 @@
   }
 }
 
-input[type="date"],
-input[type="datetime-local"] {
-  min-height: 44px;
-  border-radius: 6px;
-  border: 1px solid #cfd6df;
-  background-color: #fff;
-  color: #111827;
-  font-weight: 600;
-  padding: 9px 12px;
-}
-
-input[type="date"]:focus,
-input[type="datetime-local"]:focus {
-  border-color: #003b7a;
-  outline: 2px solid rgba(0, 59, 122, 0.14);
-  outline-offset: 1px;
-}
-
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  cursor: pointer;
-  opacity: 0.9;
-}
-
 .rbc-btn-group:first-child {
   display: none !important;
 }

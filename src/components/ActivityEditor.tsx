@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, FormEvent, useMemo, useState } from "react";
+import DateTimePicker from "./DateTimePicker";
 
 type ActivityData = {
   id: number;
@@ -38,6 +39,7 @@ const ActivityEditor = ({
   const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [openDatePicker, setOpenDatePicker] = useState<string | null>(null);
   const preview = useMemo(
     () => (file ? URL.createObjectURL(file) : activity?.image || ""),
     [file, activity?.image]
@@ -132,16 +134,16 @@ const ActivityEditor = ({
               placeholder="Informacion de la actividad"
             />
           </label>
-          <label className="flex flex-col gap-2 text-sm text-gray-600">
-            Fecha
-            <input
-              type="date"
-              value={date}
-              onChange={(event) => setDate(event.target.value)}
-              required
-              className="rounded-md border border-gray-300 p-3 outline-none focus:border-lamaSky"
-            />
-          </label>
+          <DateTimePicker
+            id="activity-date"
+            label="Fecha"
+            required
+            dateOnly
+            value={date}
+            onChange={setDate}
+            openPicker={openDatePicker}
+            setOpenPicker={setOpenDatePicker}
+          />
           <label className="flex flex-col gap-2 text-sm text-gray-600">
             Costo (opcional)
             <input

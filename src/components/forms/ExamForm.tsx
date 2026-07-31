@@ -16,9 +16,18 @@ import {
   updateSubject,
 } from "@/lib/actions";
 import { useFormState } from "react-dom";
-import { Dispatch, SetStateAction, useEffect } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import DateTimePicker from "../DateTimePicker";
+
+const toDateTimeLocal = (value?: Date | string) => {
+  if (!value) return undefined;
+
+  const date = new Date(value);
+  date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+  return date.toISOString().slice(0, 16);
+};
 
 const ExamForm = ({
   type,
@@ -34,9 +43,17 @@ const ExamForm = ({
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<ExamSchema>({
     resolver: zodResolver(examSchema),
+    defaultValues: {
+      title: data?.title || "",
+      startTime: toDateTimeLocal(data?.startTime) as any,
+      endTime: toDateTimeLocal(data?.endTime) as any,
+      lessonId: data?.lessonId,
+    },
   });
 
   // AFTER REACT 19 IT'LL BE USEACTIONSTATE
@@ -55,6 +72,9 @@ const ExamForm = ({
   });
 
   const router = useRouter();
+  const [openDatePicker, setOpenDatePicker] = useState<string | null>(null);
+  const startTimeValue = watch("startTime") as unknown as string | undefined;
+  const endTimeValue = watch("endTime") as unknown as string | undefined;
 
   useEffect(() => {
     if (state.success) {
@@ -80,22 +100,42 @@ const ExamForm = ({
           register={register}
           error={errors?.title}
         />
-        <InputField
-          label="Fecha de inicio"
-          name="startTime"
-          defaultValue={data?.startTime}
-          register={register}
-          error={errors?.startTime}
-          type="datetime-local"
-        />
-        <InputField
-          label="Fecha de fin"
-          name="endTime"
-          defaultValue={data?.endTime}
-          register={register}
-          error={errors?.endTime}
-          type="datetime-local"
-        />
+        <input type="hidden" {...register("startTime")} />
+        <input type="hidden" {...register("endTime")} />
+        <div className="w-full md:w-1/4">
+          <DateTimePicker
+            id="exam-start-time"
+            label="Fecha de inicio"
+            required
+            value={startTimeValue}
+            onChange={(value) =>
+              setValue("startTime", value as any, {
+                shouldDirty: true,
+                shouldValidate: true,
+              })
+            }
+            error={errors.startTime?.message?.toString()}
+            openPicker={openDatePicker}
+            setOpenPicker={setOpenDatePicker}
+          />
+        </div>
+        <div className="w-full md:w-1/4">
+          <DateTimePicker
+            id="exam-end-time"
+            label="Fecha de fin"
+            required
+            value={endTimeValue}
+            onChange={(value) =>
+              setValue("endTime", value as any, {
+                shouldDirty: true,
+                shouldValidate: true,
+              })
+            }
+            error={errors.endTime?.message?.toString()}
+            openPicker={openDatePicker}
+            setOpenPicker={setOpenDatePicker}
+          />
+        </div>
         {data && (
           <InputField
             label="Id"
