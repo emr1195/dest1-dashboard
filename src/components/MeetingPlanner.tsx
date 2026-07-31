@@ -1105,8 +1105,14 @@ const MeetingPlanner = ({
                     : "border-[#D7DEE8] bg-white text-[#344054] hover:bg-[#F4F7FB]"
                 }`}
               >
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-xs">
-                  G
+                <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white p-0.5">
+                  <Image
+                    src="/logo-catedral-de-vida.png"
+                    alt="Logo Catedral de Vida"
+                    width={30}
+                    height={30}
+                    className="h-7 w-7 object-contain"
+                  />
                 </span>
                 <span className="min-w-0 truncate">Reunion general</span>
                 {!weekLoading && generalTabCount > 0 && (
