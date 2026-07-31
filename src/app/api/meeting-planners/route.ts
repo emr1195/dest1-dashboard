@@ -170,7 +170,7 @@ const parsePlannerPayload = (payload: unknown, role: "admin" | "teacher") => {
 
   const id = typeof data.id === "string" ? data.id.trim() : "";
   const requestedGroup = typeof data.group === "string" ? data.group.trim() : "";
-  const group = role === "admin" ? "general" : requestedGroup;
+  const group = requestedGroup || (role === "admin" ? "general" : "");
   const meetingDateValue =
     typeof data.meetingDate === "string" ? data.meetingDate.trim() : "";
   const selectedDateValue =
@@ -179,7 +179,8 @@ const parsePlannerPayload = (payload: unknown, role: "admin" | "teacher") => {
     typeof data.weekKey === "string" ? data.weekKey.trim() : "";
   const status = data.status === "published" ? "published" : "draft";
 
-  if (role === "teacher" && !plannerGroups.includes(group)) {
+  const validGroup = group === "general" || plannerGroups.includes(group);
+  if (!validGroup || (role === "teacher" && group === "general")) {
     throw new PlannerUserError("Selecciona un grupo valido.");
   }
 
@@ -472,7 +473,8 @@ export const PATCH = async (req: Request) => {
       existingPlanner &&
       existingPlanner.group === payload.group &&
       (currentUser.role === "admin"
-        ? existingPlanner.group === "general"
+        ? existingPlanner.group === "general" ||
+          plannerGroups.includes(existingPlanner.group)
         : plannerGroups.includes(existingPlanner.group));
 
     if (!canEdit) {
@@ -551,7 +553,8 @@ export const DELETE = async (req: Request) => {
     const canDelete =
       existingPlanner &&
       (currentUser.role === "admin"
-        ? existingPlanner.group === "general"
+        ? existingPlanner.group === "general" ||
+          plannerGroups.includes(existingPlanner.group)
         : plannerGroups.includes(existingPlanner.group));
 
     if (!canDelete) {

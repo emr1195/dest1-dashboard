@@ -512,7 +512,7 @@ const MeetingPlanner = ({
   initialPlanners: SavedMeetingPlanner[];
 }) => {
   const router = useRouter();
-  const canManage = currentRole === "teacher";
+  const canManage = currentRole === "teacher" || currentRole === "admin";
   const canManageGeneral = currentRole === "admin";
   const [activeView, setActiveView] = useState<"general" | "group">(
     currentRole === "admin" ? "general" : "group"
@@ -758,7 +758,13 @@ const MeetingPlanner = ({
         plannerKey === "general" ? defaultGeneralOrder : defaultGroupOrder
       ),
     }));
-    setOpenItems({});
+    setOpenItems(
+      plannerKey === "general"
+        ? {}
+        : Object.fromEntries(
+            defaultGroupOrder.map((number) => [`${plannerKey}-${number}`, true])
+          )
+    );
   }, [
     activeWeekPlanner?.id,
     activeWeekPlanner?.items,
