@@ -2,7 +2,7 @@
 
 import { Dispatch, SetStateAction } from "react";
 
-import { formatPlannerWeek } from "@/lib/plannerWeek";
+import { formatPlannerMeetingDay } from "@/lib/plannerWeek";
 
 import DateTimePicker from "./DateTimePicker";
 
@@ -31,15 +31,15 @@ const WeekSelector = ({
     <div className="min-w-0">
       <DateTimePicker
         id={id}
-        label="Semana de la reunión"
+        label="Día de la reunión"
         value={value}
         onChange={onChange}
         dateOnly
         required
         disabled={disabled || loading}
         error={error}
-        placeholder={loading ? "Cargando semana..." : "Seleccionar semana"}
-        displayValue={formatPlannerWeek(value)}
+        placeholder={loading ? "Cargando fecha..." : "Seleccionar día"}
+        displayValue={formatPlannerMeetingDay(value)}
         openPicker={openPicker}
         setOpenPicker={setOpenPicker}
       />

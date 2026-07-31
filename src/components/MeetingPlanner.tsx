@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 import {
   formatPlannerDate,
-  formatPlannerWeek,
+  formatPlannerMeetingDay,
   getPlannerWeek,
   getWeekKey,
 } from "@/lib/plannerWeek";
@@ -1045,7 +1045,7 @@ const MeetingPlanner = ({
             )}
           </div>
 
-          <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(260px,410px)_minmax(0,1fr)] lg:items-end">
+          <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(280px,360px)_minmax(0,1fr)] xl:items-end">
             <WeekSelector
               id="meeting-week"
               value={meetingDate}
@@ -1061,14 +1061,18 @@ const MeetingPlanner = ({
               setOpenPicker={setOpenDatePicker}
             />
 
-            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1" role="tablist" aria-label="Grupos del planificador">
+            <div
+              className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5"
+              role="tablist"
+              aria-label="Grupos del planificador"
+            >
               <button
                 type="button"
                 role="tab"
                 aria-selected={activeView === "general"}
                 aria-current={activeView === "general" ? "page" : undefined}
                 onClick={() => setActiveView("general")}
-                className={`inline-flex min-h-12 shrink-0 items-center gap-2 rounded-xl border px-4 text-sm font-black transition focus:outline-none focus:ring-4 focus:ring-[#07529A]/10 ${
+                className={`inline-flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-xl border px-2 text-sm font-black transition focus:outline-none focus:ring-4 focus:ring-[#07529A]/10 ${
                   activeView === "general"
                     ? "border-[#07529A] bg-[#07529A] text-white"
                     : "border-[#D7DEE8] bg-white text-[#344054] hover:bg-[#F4F7FB]"
@@ -1077,10 +1081,12 @@ const MeetingPlanner = ({
                 <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/20 text-xs">
                   G
                 </span>
-                Reunion general
-                <span className="rounded-full bg-white/20 px-2 py-0.5 text-[11px]">
-                  {weekLoading ? "..." : generalTabCount}
-                </span>
+                <span className="min-w-0 truncate">Reunion general</span>
+                {!weekLoading && generalTabCount > 0 && (
+                  <span className="rounded-full bg-white/20 px-2 py-0.5 text-[11px]">
+                    {generalTabCount}
+                  </span>
+                )}
               </button>
 
               {groups.map((group) => {
@@ -1100,7 +1106,7 @@ const MeetingPlanner = ({
                       setActiveView("group");
                       setActiveGroupId(group.id);
                     }}
-                    className={`inline-flex min-h-12 shrink-0 items-center gap-2 rounded-xl border px-4 text-sm font-black transition focus:outline-none focus:ring-4 focus:ring-[#07529A]/10 ${
+                    className={`inline-flex min-h-12 min-w-0 items-center justify-center gap-2 rounded-xl border px-2 text-sm font-black transition focus:outline-none focus:ring-4 focus:ring-[#07529A]/10 ${
                       active ? "text-white" : "bg-white text-[#344054] hover:bg-[#F4F7FB]"
                     }`}
                     style={{
@@ -1115,16 +1121,13 @@ const MeetingPlanner = ({
                       height={28}
                       className="h-7 w-7 object-contain"
                     />
-                    {group.name}
-                    <span
-                      aria-live="polite"
-                      className={`rounded-full px-2 py-0.5 text-[11px] ${active ? "bg-white/20" : "bg-[#F4F7FB]"}`}
-                    >
-                      {weekLoading ? "..." : summary.activities}
-                    </span>
-                    {!weekLoading && !groupSummary?.planner && (
-                      <span className="text-[10px] font-bold opacity-75">
-                        Sin planificar
+                    <span className="min-w-0 truncate">{group.name}</span>
+                    {!weekLoading && summary.activities > 0 && (
+                      <span
+                        aria-live="polite"
+                        className={`rounded-full px-2 py-0.5 text-[11px] ${active ? "bg-white/20" : "bg-[#F4F7FB]"}`}
+                      >
+                        {summary.activities}
                       </span>
                     )}
                   </button>
@@ -1150,8 +1153,8 @@ const MeetingPlanner = ({
                 </h2>
                 <p className="mt-1 text-sm text-[#667085]">
                   {meetingDate
-                    ? formatPlannerWeek(meetingDate)
-                    : "Selecciona una semana para consultar los cuatro grupos."}
+                    ? formatPlannerMeetingDay(meetingDate)
+                    : "Selecciona un día para consultar los cuatro grupos."}
                 </p>
               </div>
               {meetingDate && !weekLoading && (
@@ -1166,7 +1169,7 @@ const MeetingPlanner = ({
 
             {!meetingDate ? (
               <div className="rounded-xl border border-dashed border-[#CBD5E1] bg-white p-6 text-sm font-semibold text-[#667085]">
-                Selecciona la semana de la reunión para cargar la planificación.
+                Selecciona el día de la reunión para cargar la planificación.
               </div>
             ) : (
               <div
@@ -1561,7 +1564,11 @@ const MeetingPlanner = ({
                         >
                           <span>
                             <span className="block text-lg font-black text-[#172033]">
-                              {formatPlannerWeek(dateKey)}
+                              {formatPlannerMeetingDay(
+                                getPlannerDateValue(
+                                  generalPlanner || weekPlanners[0]
+                                ) || dateKey
+                              )}
                             </span>
                             <span className="text-sm font-semibold text-[#667085]">
                               {weekPlanners.length} planificadores guardados
@@ -1760,9 +1767,8 @@ const MeetingPlanner = ({
             {visibleGroupPlanners.length === 0 ? (
               <div className="rounded-xl border border-dashed border-[#CBD5E1] bg-[#F8FAFC] p-6 text-sm font-semibold text-[#667085]">
                 {meetingDate
-                  ? `No hay planificación de ${activeGroup.name} para ${formatPlannerWeek(
-                      meetingDate,
-                      { compact: true }
+                  ? `No hay planificación de ${activeGroup.name} para ${formatPlannerMeetingDay(
+                      meetingDate
                     )}.`
                   : "No hay planificadores guardados para este grupo."}
               </div>
@@ -1777,7 +1783,7 @@ const MeetingPlanner = ({
                       <div className="flex flex-col gap-3 p-4 transition hover:bg-[#F8FAFC] sm:flex-row sm:items-center sm:justify-between">
                         <div className="min-w-0">
                           <h3 className="text-base font-black text-[#172033]">
-                            {formatPlannerWeek(getPlannerDateValue(planner))}
+                            {formatPlannerMeetingDay(getPlannerDateValue(planner))}
                           </h3>
                           <p className="mt-1 text-sm text-[#667085]">
                             {planner.groupName || activeGroup.name} · Creado por{" "}

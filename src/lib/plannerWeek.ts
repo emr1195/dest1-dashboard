@@ -50,10 +50,20 @@ export const getWeekKey = (value?: string | null) =>
 
 const monthFormatter = new Intl.DateTimeFormat("es-PA", { month: "long" });
 const shortMonthFormatter = new Intl.DateTimeFormat("es-PA", { month: "short" });
+const weekdayFormatter = new Intl.DateTimeFormat("es-PA", { weekday: "long" });
 
 const monthName = (date: Date) => monthFormatter.format(date);
 const shortMonthName = (date: Date) =>
   shortMonthFormatter.format(date).replace(".", "");
+
+export const formatPlannerMeetingDay = (value?: string | null) => {
+  const date = parsePlannerDate(value);
+  if (!date) return "";
+
+  return `${weekdayFormatter.format(date)} ${date.getDate()} de ${monthName(
+    date
+  )} del ${date.getFullYear()}`;
+};
 
 export const formatPlannerWeek = (
   value?: string | null,
