@@ -186,9 +186,7 @@ const getDefaultDuration = (itemNumber: number) =>
   defaultDurations[itemNumber] || 0;
 
 const getItemDuration = (item?: SavedPlannerItem) =>
-  item && Number.isFinite(Number(item.durationMinutes))
-    ? Math.max(0, Math.round(Number(item.durationMinutes)))
-    : getDefaultDuration(item?.number || 0);
+  getDefaultDuration(item?.number || 0);
 
 const getInitials = (name: string) =>
   name
@@ -1403,43 +1401,18 @@ const MeetingPlanner = ({
                         </label>
                       )}
 
-                      {isSpecificGeneralItem ? (
-                        <div className="flex items-center justify-between gap-2 lg:block lg:text-right">
-                          <p className="text-xs font-black uppercase tracking-[0.1em] text-[#667085]">
-                            Duracion
-                          </p>
-                          <span className="mt-0 inline-flex min-h-8 items-center rounded-full bg-[#F1F5F9] px-3 text-sm font-black text-[#344054] lg:mt-2">
-                            Por grupo
-                          </span>
-                        </div>
-                      ) : (
-                        <label className="min-w-0">
-                          <span className="mb-2 block text-xs font-black uppercase tracking-[0.1em] text-[#667085]">
-                            Duracion
-                          </span>
-                          <span className="flex min-h-11 items-center rounded-xl border border-[#D7DEE8] bg-white px-2 focus-within:border-[#07529A] focus-within:ring-4 focus-within:ring-[#07529A]/10">
-                            <input
-                              type="number"
-                              min={0}
-                              max={240}
-                              value={itemNotes.durationMinutes}
-                              onChange={(event) =>
-                                updateItem(item.number, {
-                                  durationMinutes: Math.max(
-                                    0,
-                                    Number(event.target.value) || 0
-                                  ),
-                                })
-                              }
-                              className="min-w-0 flex-1 bg-transparent px-1 text-right text-sm font-black text-[#172033] outline-none"
-                              aria-label={`Duracion en minutos de ${item.title}`}
-                            />
-                            <span className="px-1 text-xs font-bold text-[#667085]">
-                              min
+                      <div className="flex items-center justify-between gap-2 lg:block lg:text-right">
+                        {item.time && (
+                          <>
+                            <p className="text-xs font-black uppercase tracking-[0.1em] text-[#667085]">
+                              Tiempo
+                            </p>
+                            <span className="mt-0 inline-flex min-h-8 items-center text-sm font-bold text-[#667085] lg:mt-2">
+                              {item.time}
                             </span>
-                          </span>
-                        </label>
-                      )}
+                          </>
+                        )}
+                      </div>
 
                       <div className="flex items-center justify-end gap-2">
                         {!isSpecificGeneralItem && (
@@ -1731,7 +1704,7 @@ const MeetingPlanner = ({
                                                         />
                                                         {savedItem && (
                                                           <p className="mt-2 text-xs font-bold text-[#667085]">
-                                                            Duracion: {getItemDuration(savedItem)} min
+                                                            Tiempo: {item.time}
                                                           </p>
                                                         )}
                                                       </div>
@@ -1775,9 +1748,7 @@ const MeetingPlanner = ({
                                     Lider: {leaderName}
                                   </span>
                                   <span className="text-sm font-bold text-[#667085] md:text-right">
-                                    {savedItem
-                                      ? `${getItemDuration(savedItem)} min`
-                                      : item.time || ""}
+                                    {item.time || ""}
                                   </span>
                                 </div>
                               );
@@ -1924,7 +1895,7 @@ const MeetingPlanner = ({
                                     </div>
                                   </div>
                                   <span className="text-sm font-bold text-[#667085] md:text-right">
-                                    {getItemDuration(savedItem)} min
+                                    {item.time || ""}
                                   </span>
                                 </div>
                               );

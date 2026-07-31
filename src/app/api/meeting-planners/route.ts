@@ -117,11 +117,7 @@ const normalizeStoredItems = (value: unknown): PlannerItemPayload[] => {
         number: Number(item?.number),
         leaderId: latest?.leaderId || "",
         detail: latest?.detail || "",
-        durationMinutes:
-          Number.isFinite(Number(item?.durationMinutes)) &&
-          Number(item?.durationMinutes) >= 0
-            ? Math.round(Number(item.durationMinutes))
-            : defaultDurations[Number(item?.number)] || 0,
+        durationMinutes: defaultDurations[Number(item?.number)] || 0,
         contributions,
       };
     })
@@ -164,10 +160,7 @@ const mergePlannerItems = (
       number: incoming.number,
       leaderId: latest?.leaderId || existing?.leaderId || "",
       detail: latest?.detail || existing?.detail || "",
-      durationMinutes:
-        Number.isFinite(incoming.durationMinutes) && incoming.durationMinutes >= 0
-          ? incoming.durationMinutes
-          : existing?.durationMinutes || defaultDurations[incoming.number] || 0,
+      durationMinutes: defaultDurations[incoming.number] || 0,
       contributions: mergedContributions,
     };
   });
@@ -244,11 +237,7 @@ const parsePlannerPayload = (payload: unknown, role: "admin" | "teacher") => {
       number,
       leaderId: typeof item?.leaderId === "string" ? item.leaderId.trim() : "",
       detail: typeof item?.detail === "string" ? item.detail.trim() : "",
-      durationMinutes:
-        Number.isFinite(Number(item?.durationMinutes)) &&
-        Number(item?.durationMinutes) >= 0
-          ? Math.round(Number(item.durationMinutes))
-          : defaultDurations[number] || 0,
+      durationMinutes: defaultDurations[number] || 0,
     };
   });
 
