@@ -21,6 +21,17 @@
   --success: #15803d;
   --warning: #b45309;
   --danger: #b91c1c;
+  --sidebar-background: #f8fafc;
+  --sidebar-surface: #ffffff;
+  --sidebar-border: #e2e8f0;
+  --sidebar-text: #475569;
+  --sidebar-text-strong: #0f172a;
+  --sidebar-muted: #64748b;
+  --sidebar-hover: #f1f5f9;
+  --sidebar-active-background: #eaf3fb;
+  --sidebar-active: #07569f;
+  --sidebar-focus: rgba(7, 86, 159, 0.16);
+  --sidebar-danger: #b91c1c;
   --group-navegantes-soft: #fff7e6;
   --group-navegantes-hover: #ffedc2;
   --group-navegantes-active: #f59e0b;
@@ -37,6 +48,61 @@
   --group-exploradores-hover: #dcfce7;
   --group-exploradores-active: #22c55e;
   --group-exploradores-text: #15803d;
+}
+
+.sidebar-scrollbar {
+  scrollbar-color: #cbd5e1 transparent;
+  scrollbar-width: thin;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+.sidebar-tooltip {
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  z-index: 100;
+  width: max-content;
+  max-width: 200px;
+  transform: translateY(-50%) translateX(-4px);
+  border-radius: 8px;
+  background: #0f172a;
+  padding: 6px 9px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  opacity: 0;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.2);
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.group\/item:hover .sidebar-tooltip,
+.group\/item:focus .sidebar-tooltip,
+.group\/item:focus-within .sidebar-tooltip,
+.group\/collapse:hover .sidebar-tooltip,
+.group\/collapse:focus .sidebar-tooltip {
+  transform: translateY(-50%) translateX(0);
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-tooltip,
+  [aria-label="Barra lateral"],
+  #mobile-sidebar {
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .app-topbar {
