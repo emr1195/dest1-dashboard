@@ -16,12 +16,18 @@ const ProfileGroupCard = ({
   groupValue,
   fallbackGroup,
   canEdit,
+  studentCount,
+  upcomingActivityCount,
+  agendaVariant = false,
 }: {
   id: string;
   type: "student" | "teacher";
   groupValue?: string | null;
   fallbackGroup: GroupDisplay;
   canEdit: boolean;
+  studentCount?: number;
+  upcomingActivityCount?: number;
+  agendaVariant?: boolean;
 }) => {
   const router = useRouter();
   const [selectedGroup, setSelectedGroup] = useState(groupValue || "");
@@ -70,25 +76,29 @@ const ProfileGroupCard = ({
   };
 
   return (
-    <div className="relative flex min-h-[200px] w-full flex-col items-center justify-center gap-3 rounded-md bg-white p-4 text-center">
+    <div className={`relative flex w-full flex-col rounded-2xl border border-[#DCE4EE] bg-white shadow-[0_6px_20px_rgba(15,23,42,0.05)] ${agendaVariant ? "min-h-[220px] items-start justify-center gap-4 overflow-visible border-t-4 border-t-[#7E22CE] p-5 text-left" : "min-h-[200px] items-center justify-center gap-3 p-4 text-center"}`}>
       {canEdit && (
         <button
           type="button"
           onClick={() => setEditing((open) => !open)}
-          className="absolute right-3 top-3 rounded-md px-2 py-1 text-xs font-medium text-lamaSky hover:bg-lamaSkyLight"
+          className={`${agendaVariant ? "relative order-last min-h-11 w-full rounded-xl border border-[#C9D5E3] px-4 text-sm font-semibold text-[#7E22CE] hover:bg-[#FAF5FF]" : "absolute right-3 top-3 rounded-md px-2 py-1 text-xs font-medium text-lamaSky hover:bg-lamaSkyLight"}`}
         >
-          Cambiar
+          {agendaVariant ? "Cambiar grupo" : "Cambiar"}
         </button>
       )}
 
-      <Image
-        src={displayedGroup.icon}
-        alt={displayedGroup.name}
-        width={96}
-        height={96}
-        className="h-24 w-24 object-contain"
-      />
-      <h1 className="text-xl font-semibold">{displayedGroup.name}</h1>
+      <div className={`flex ${agendaVariant ? "w-full items-center gap-4" : "flex-col items-center gap-3"}`}>
+        <Image src={displayedGroup.icon} alt={displayedGroup.name} width={96} height={96} className={`${agendaVariant ? "h-20 w-20" : "h-24 w-24"} shrink-0 object-contain`} />
+        <div>
+          <h1 className="text-xl font-bold text-[#0F2747]">{displayedGroup.name}</h1>
+          {agendaVariant && (
+            <div className="mt-2 space-y-1 text-sm text-[#64748B]">
+              <p>{studentCount ?? 0} muchachos</p>
+              <p>{upcomingActivityCount ?? 0} actividades próximas</p>
+            </div>
+          )}
+        </div>
+      </div>
 
       {canEdit && editing && (
         <div className="absolute right-3 top-12 z-30 w-72 rounded-md bg-white p-2 text-left shadow-xl ring-1 ring-gray-200">

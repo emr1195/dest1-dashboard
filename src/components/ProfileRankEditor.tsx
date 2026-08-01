@@ -10,11 +10,13 @@ const ProfileRankEditor = ({
   type,
   rank,
   canEdit,
+  compact = false,
 }: {
   id: string;
   type: "student" | "teacher";
   rank?: string | null;
   canEdit: boolean;
+  compact?: boolean;
 }) => {
   const router = useRouter();
   const [selectedRank, setSelectedRank] = useState(rank || "");
@@ -66,14 +68,14 @@ const ProfileRankEditor = ({
           onClick={() => setEditing(true)}
           title="Cambiar rango"
           aria-label={`Cambiar rango ${option.label}`}
-          className="absolute left-[116px] top-[132px] z-20 h-14 w-16 rounded-md bg-white/10 p-0 shadow-md transition hover:ring-2 hover:ring-white/80"
+          className={`absolute z-20 rounded-md p-0 shadow-md transition ${compact ? "left-12 top-12 h-9 w-10 bg-white hover:ring-2 hover:ring-[#93C5FD]" : "left-[116px] top-[132px] h-14 w-16 bg-white/10 hover:ring-2 hover:ring-white/80"}`}
         >
           <Image
             src={option.image}
             alt={`Insignia ${option.label}`}
             width={64}
             height={56}
-            className="h-14 w-16 rounded-md object-contain"
+            className={`${compact ? "h-9 w-10" : "h-14 w-16"} rounded-md object-contain`}
           />
         </button>
       )}
@@ -84,7 +86,7 @@ const ProfileRankEditor = ({
           alt={`Insignia ${option.label}`}
           width={64}
           height={56}
-          className="absolute left-[116px] top-[132px] z-20 h-14 w-16 rounded-md object-contain shadow-md"
+          className={`absolute z-20 rounded-md object-contain shadow-md ${compact ? "left-12 top-12 h-9 w-10 bg-white" : "left-[116px] top-[132px] h-14 w-16"}`}
         />
       )}
 
@@ -92,14 +94,14 @@ const ProfileRankEditor = ({
         <button
           type="button"
           onClick={() => setEditing(true)}
-          className="absolute left-1/2 top-[176px] -translate-x-1/2 whitespace-nowrap rounded-md bg-white/15 px-3 py-1 text-xs text-white hover:bg-white/25"
+          className={`absolute left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md px-3 py-1 text-xs ${compact ? "top-20 bg-[#EFF6FF] text-[#2563EB] hover:bg-[#DBEAFE]" : "top-[176px] bg-white/15 text-white hover:bg-white/25"}`}
         >
           Asignar rango
         </button>
       )}
 
       {canEdit && editing && (
-        <div className="absolute left-0 top-[204px] z-30 mt-2 w-72 rounded-md bg-white p-2 text-gray-700 shadow-xl ring-1 ring-gray-200">
+        <div className={`absolute left-0 z-30 mt-2 w-72 rounded-md bg-white p-2 text-gray-700 shadow-xl ring-1 ring-gray-200 ${compact ? "top-20" : "top-[204px]"}`}>
           <p className="mb-2 px-2 text-xs font-medium text-gray-500">Seleccionar rango</p>
           <button
             type="button"
@@ -132,7 +134,7 @@ const ProfileRankEditor = ({
         </div>
       )}
 
-      {error && <p className="absolute left-0 top-[204px] mt-2 text-xs text-red-100">{error}</p>}
+      {error && <p className={`absolute left-0 mt-2 text-xs ${compact ? "top-20 text-red-600" : "top-[204px] text-red-100"}`}>{error}</p>}
     </>
   );
 };

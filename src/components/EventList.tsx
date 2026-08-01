@@ -19,7 +19,7 @@ const EventList = async ({ limit = 3 }: { limit?: number }) => {
   }
 
   return data.slice(0, limit).map((event) => {
-    const formattedDate = new Intl.DateTimeFormat("es-PA", { dateStyle: "medium" }).format(
+    const formattedDate = new Intl.DateTimeFormat("es-PA", { dateStyle: "medium", timeStyle: "short" }).format(
       event.startTime
     );
     const formattedCost = event.cost === null ? "Gratis" : `$${event.cost.toFixed(2)}`;
@@ -54,6 +54,7 @@ const EventList = async ({ limit = 3 }: { limit?: number }) => {
           <p className="mt-1 text-xs font-medium text-gray-500">{formattedDate}</p>
           <p className="mt-1 line-clamp-2 text-xs text-gray-500">{event.description}</p>
           <p className="mt-2 text-xs font-medium text-lamaSky">{formattedCost}</p>
+          <p className="mt-1 text-xs font-semibold text-[#2563EB]">Ver detalles</p>
         </div>
       </ActivityPreview>
     );

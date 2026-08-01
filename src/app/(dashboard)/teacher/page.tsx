@@ -1,7 +1,5 @@
-import Announcements from "@/components/Announcements";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
 import EventCalendarContainer from "@/components/EventCalendarContainer";
-import Performance from "@/components/Performance";
 import ProfileGroupCard from "@/components/ProfileGroupCard";
 import ProfileInfoCard from "@/components/ProfileInfoCard";
 import { getCurrentUser } from "@/lib/auth";
@@ -41,8 +39,9 @@ const TeacherPage = async ({
       },
       classes: {
         select: {
+          id: true,
           students: {
-            select: { birthday: true },
+            select: { id: true, birthday: true },
           },
         },
       },
@@ -50,8 +49,9 @@ const TeacherPage = async ({
         select: {
           class: {
             select: {
+              id: true,
               students: {
-                select: { birthday: true },
+                select: { id: true, birthday: true },
               },
             },
           },
@@ -85,11 +85,24 @@ const TeacherPage = async ({
   );
   const savedLeaderGroupOption = getLeaderGroupOption(savedLeaderGroup);
   const fallbackLeaderGroup = leaderGroups[0] || { name: "Sin grupo", icon: "/singleBranch.png" };
+  const displayedGroupName = savedLeaderGroupOption?.label || fallbackLeaderGroup.name;
+  const groupStudents = Array.from(
+    new Map(
+      [...teacher.classes.flatMap((item) => item.students), ...teacher.lessons.flatMap((item) => item.class.students)]
+        .map((student) => [student.id, student])
+    ).values()
+  ).filter((student) => getStudentGroup(student.birthday)?.name === displayedGroupName);
+  const classIds = Array.from(new Set([...teacher.classes.map((item) => item.id), ...teacher.lessons.map((item) => item.class.id)]));
+  const upcomingActivityCount = await prisma.event.count({
+    where: {
+      startTime: { gte: new Date() },
+      OR: [{ classId: null }, ...(classIds.length ? [{ classId: { in: classIds } }] : [])],
+    },
+  });
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 xl:flex-row">
-      <div className="w-full xl:w-2/3">
-        <div className="flex flex-col gap-4 2xl:flex-row">
+    <main className="grid min-h-full grid-cols-1 gap-5 bg-[#F4F7FB] p-4 sm:p-5 xl:grid-cols-[minmax(0,2.1fr)_minmax(330px,1fr)]">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:col-start-1 xl:row-start-1">
           <ProfileInfoCard
             id={teacher.id}
             type="teacher"
@@ -100,10 +113,8 @@ const TeacherPage = async ({
             rank={teacherRank}
             canUpload={true}
             canEditRank={currentUser.role === "admin"}
+            agendaVariant
           />
-
-          <div className="flex flex-1 flex-wrap justify-between gap-4">
-            {/* Tarjetas de asistencia, lecciones y grupos ocultas temporalmente. */}
             <ProfileGroupCard
               id={teacher.id}
               type="teacher"
@@ -114,22 +125,18 @@ const TeacherPage = async ({
                   : fallbackLeaderGroup
               }
               canEdit={currentUser.role === "admin"}
+              studentCount={groupStudents.length}
+              upcomingActivityCount={upcomingActivityCount}
+              agendaVariant
             />
-          </div>
-        </div>
-
-        <div className="mt-4 h-[620px] rounded-md bg-white p-4 sm:h-[720px] lg:h-[800px]">
-          <h1>Calendario del lider</h1>
-          <BigCalendarContainer type="teacherId" id={teacher.id} />
-        </div>
       </div>
-
-      <div className="flex w-full flex-col gap-4 xl:w-1/3">
+      <aside className="flex min-w-0 flex-col gap-5 xl:col-start-2 xl:row-span-2 xl:row-start-1">
         <EventCalendarContainer searchParams={searchParams} />
-        <Performance userId={teacher.id} userType="teacher" />
-        <Announcements />
-      </div>
-    </div>
+      </aside>
+      <section className="min-w-0 rounded-2xl border border-[#DCE4EE] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.05)] sm:p-5 xl:col-start-1 xl:row-start-2">
+        <BigCalendarContainer type="teacherId" id={teacher.id} />
+      </section>
+    </main>
   );
 };
 

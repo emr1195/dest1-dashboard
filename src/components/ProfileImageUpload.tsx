@@ -9,11 +9,13 @@ const ProfileImageUpload = ({
   type,
   src,
   canUpload,
+  compact = false,
 }: {
   id: string;
   type: "student" | "teacher";
   src?: string | null;
   canUpload: boolean;
+  compact?: boolean;
 }) => {
   const [imageSrc, setImageSrc] = useState(src || "/noAvatar.png");
   const [saving, setSaving] = useState(false);
@@ -49,21 +51,21 @@ const ProfileImageUpload = ({
 
   const image = (
     <div
-      className={`relative h-40 w-40 overflow-hidden rounded-full ${
-        canUpload ? "cursor-pointer ring-2 ring-white/80 ring-offset-2 ring-offset-lamaSky" : ""
+      className={`relative overflow-hidden rounded-full ${compact ? "h-20 w-20" : "h-40 w-40"} ${
+        canUpload ? `cursor-pointer ring-2 ${compact ? "ring-[#DCE4EE] ring-offset-2 ring-offset-white" : "ring-white/80 ring-offset-2 ring-offset-lamaSky"}` : ""
       }`}
       title={canUpload ? "Cambiar foto de perfil" : undefined}
     >
       <Image
         src={imageSrc}
         alt="Foto de perfil"
-        width={160}
-        height={160}
-        className="h-40 w-40 rounded-full object-cover"
+        width={compact ? 80 : 160}
+        height={compact ? 80 : 160}
+        className={`${compact ? "h-20 w-20" : "h-40 w-40"} rounded-full object-cover`}
       />
       {canUpload && (
         <div className="group absolute inset-0 flex items-end justify-center bg-black/0 text-xs font-medium text-white transition hover:bg-black/35">
-          <span className="mb-4 rounded-full bg-lamaBrown/90 px-3 py-1 opacity-0 transition group-hover:opacity-100">
+          <span className={`${compact ? "mb-2 px-2" : "mb-4 px-3"} rounded-full bg-[#0F2747]/90 py-1 opacity-0 transition group-hover:opacity-100`}>
             {saving ? "Guardando..." : "Cambiar foto"}
           </span>
         </div>

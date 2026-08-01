@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
@@ -18,6 +19,10 @@ const EventCalendar = ({ eventDates = [] }: { eventDates?: string[] }) => {
 
   const router = useRouter();
   const eventDateSet = new Set(eventDates);
+  const selectedDateKey = value instanceof Date
+    ? [value.getFullYear(), String(value.getMonth() + 1).padStart(2, "0"), String(value.getDate()).padStart(2, "0")].join("-")
+    : "";
+  const selectedEventCount = eventDates.filter((date) => date === selectedDateKey).length;
 
   const calendarMonth = new Intl.DateTimeFormat("es-PA", { month: "long" })
     .format(activeStartDate)
@@ -63,8 +68,7 @@ const EventCalendar = ({ eventDates = [] }: { eventDates?: string[] }) => {
     <div className="event-calendar-shell">
       <div className="event-calendar-card">
         <div className="event-calendar-heading">
-          <div><h2>Calendario</h2><p>Selecciona una fecha para consultar la agenda</p></div>
-          <button type="button" onClick={setToday}>Hoy</button>
+          <div><h2>Calendario mensual</h2><p>Selecciona una fecha para consultar la agenda</p></div>
         </div>
         <div className="event-calendar-side-layout">
           <div className="event-calendar-month-nav">
@@ -73,6 +77,13 @@ const EventCalendar = ({ eventDates = [] }: { eventDates?: string[] }) => {
               <span>{activeStartDate.getFullYear()}</span>
             </div>
             <div className="event-calendar-month-arrows">
+              <button
+                className="event-calendar-today"
+                type="button"
+                onClick={setToday}
+              >
+                Hoy
+              </button>
               <button
                 type="button"
                 aria-label="Mes anterior"
@@ -109,11 +120,10 @@ const EventCalendar = ({ eventDates = [] }: { eventDates?: string[] }) => {
           />
         </div>
         <div className="event-calendar-footer">
-          <span className="event-calendar-selected-label">
-            <span aria-hidden="true" />
-            Fecha seleccionada
-          </span>
-          <span className="event-calendar-hint">Los puntos indican actividades</span>
+          <div>
+            <span className="event-calendar-selected-label"><span aria-hidden="true" />{selectedEventCount} {selectedEventCount === 1 ? "actividad" : "actividades"} para esta fecha</span>
+            <Link href={selectedDateKey ? `?date=${selectedDateKey}` : "?"} className="event-calendar-day-link">Ver agenda del día</Link>
+          </div>
         </div>
       </div>
     </div>

@@ -2,17 +2,20 @@
 
 import { getBadgeCatalog } from "@/lib/badgeCatalog";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 const BadgeBox = ({
   userId,
   userType,
   studentGroup,
+  compact = false,
 }: {
   userId: string;
   userType: "student" | "teacher";
   canUpload: boolean;
   studentGroup?: string;
+  compact?: boolean;
 }) => {
   const [completed, setCompleted] = useState<string[]>([]);
   const [statuses, setStatuses] = useState<Record<string, string>>({});
@@ -51,7 +54,7 @@ const BadgeBox = ({
 
   return (
     <div className="flex w-full flex-wrap gap-2">
-      {badges.map((badge) => (
+      {badges.slice(0, compact ? 3 : badges.length).map((badge) => (
         <span
           key={badge.src}
           title={
@@ -78,6 +81,11 @@ const BadgeBox = ({
           />
         </span>
       ))}
+      {compact && badges.length > 3 && (
+        <Link href="/certificates" className="flex min-h-10 items-center text-xs font-semibold text-[#2563EB] hover:underline">
+          Ver reconocimientos
+        </Link>
+      )}
     </div>
   );
 };
