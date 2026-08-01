@@ -1,12 +1,11 @@
-import Announcements from "@/components/Announcements";
 import BigCalendarContainer from "@/components/BigCalendarContainer";
 import EventCalendarContainer from "@/components/EventCalendarContainer";
-import Performance from "@/components/Performance";
 import ProfileGroupCard from "@/components/ProfileGroupCard";
 import ProfileInfoCard from "@/components/ProfileInfoCard";
 import { getCurrentUser } from "@/lib/auth";
 import { getAge as getStudentAge } from "@/lib/badgeCatalog";
 import { getLeaderGroupOption } from "@/lib/roles";
+import { getGroupStudentCount } from "@/lib/groupSummary";
 import prisma from "@/lib/prisma";
 import { Class, Muchacho } from "@prisma/client";
 import { notFound, redirect } from "next/navigation";
@@ -61,11 +60,15 @@ const SingleStudentPage = async ({
     ? { name: savedStudentGroupOption.label, icon: savedStudentGroupOption.image }
     : getStudentGroup(studentAge);
   const studentRank = student.rank || studentAccount?.rank || null;
+  const [groupStudentCount, upcomingActivityCount] = await Promise.all([
+    getGroupStudentCount(studentGroup.name),
+    prisma.event.count({ where: { startTime: { gte: new Date() } } }),
+  ]);
 
   return (
-    <div className="flex-1 p-4 flex flex-col gap-4 xl:flex-row">
-      <div className="w-full xl:w-2/3">
-        <div className="flex flex-col gap-4 2xl:flex-row">
+    <main className="flex min-h-full flex-col gap-5 bg-[#F4F7FB] p-4 sm:p-5 xl:flex-row xl:items-start">
+      <div className="contents xl:flex xl:min-w-0 xl:flex-[2.1] xl:flex-col xl:gap-5">
+        <div className="order-1 grid grid-cols-1 items-stretch gap-5 md:grid-cols-2 xl:order-none">
           <ProfileInfoCard
             id={student.id}
             type="student"
@@ -77,31 +80,27 @@ const SingleStudentPage = async ({
             canUpload={role === "admin" || (role === "student" && currentUser?.id === student.id)}
             canEditRank={role === "admin"}
             studentGroup={studentGroup.name}
+            agendaVariant
           />
-
-          <div className="flex-1 flex gap-4 justify-between flex-wrap">
             <ProfileGroupCard
               id={student.id}
               type="student"
               groupValue={savedStudentGroup}
               fallbackGroup={getStudentGroup(studentAge)}
               canEdit={role === "admin"}
+              studentCount={groupStudentCount}
+              upcomingActivityCount={upcomingActivityCount}
+              agendaVariant
             />
-          </div>
         </div>
-
-        <div className="mt-4 min-h-[420px] rounded-md bg-white p-4 sm:min-h-[520px]">
-          <h1>Calendario del muchacho</h1>
+        <section className="order-3 min-w-0 rounded-2xl border border-[#DCE4EE] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.05)] sm:p-5 xl:order-none">
           <BigCalendarContainer type="studentId" id={student.id} />
-        </div>
+        </section>
       </div>
-
-      <div className="w-full xl:w-1/3 flex flex-col gap-4">
+      <aside className="order-2 flex min-w-0 flex-col gap-5 xl:order-none xl:flex-1">
         <EventCalendarContainer searchParams={searchParams} />
-        <Performance userId={student.id} userType="student" />
-        <Announcements />
-      </div>
-    </div>
+      </aside>
+    </main>
   );
 };
 

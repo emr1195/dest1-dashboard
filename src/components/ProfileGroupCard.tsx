@@ -81,14 +81,14 @@ const ProfileGroupCard = ({
         <button
           type="button"
           onClick={() => setEditing((open) => !open)}
-          className={`${agendaVariant ? "relative order-last min-h-10 w-full rounded-lg border border-[#C9D5E3] px-4 text-xs font-semibold text-[#7E22CE] hover:bg-[#FAF5FF] sm:ml-24 sm:w-auto" : "absolute right-3 top-3 rounded-md px-2 py-1 text-xs font-medium text-lamaSky hover:bg-lamaSkyLight"}`}
+          className={`${agendaVariant ? "relative order-last min-h-10 w-full self-center rounded-lg border border-[#C9D5E3] px-5 text-xs font-semibold text-[#7E22CE] hover:bg-[#FAF5FF] sm:w-auto" : "absolute right-3 top-3 rounded-md px-2 py-1 text-xs font-medium text-lamaSky hover:bg-lamaSkyLight"}`}
         >
           {agendaVariant ? "Cambiar grupo" : "Cambiar"}
         </button>
       )}
 
-      <div className={`flex ${agendaVariant ? "w-full items-center gap-4" : "flex-col items-center gap-3"}`}>
-        <Image src={displayedGroup.icon} alt={displayedGroup.name} width={96} height={96} className={`${agendaVariant ? "h-20 w-20" : "h-24 w-24"} shrink-0 object-contain`} />
+      <div className={`flex ${agendaVariant ? "w-full items-center justify-center gap-6" : "flex-col items-center gap-3"}`}>
+        <Image src={displayedGroup.icon} alt={displayedGroup.name} width={112} height={112} className={`${agendaVariant ? "h-28 w-28" : "h-24 w-24"} shrink-0 object-contain`} />
         <div>
           <h1 className="text-xl font-bold text-[#0F2747]">{displayedGroup.name}</h1>
           {agendaVariant && (

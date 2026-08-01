@@ -42,9 +42,12 @@ const ProfileInfoCard = ({
   const showEmail = type === "teacher";
   const showPhone = !hideStudentContact;
 
-  if (agendaVariant && type === "teacher") {
+  if (agendaVariant) {
     return (
-      <section className="relative flex h-full min-h-[170px] min-w-0 overflow-hidden rounded-2xl border border-[#DCE4EE] border-t-4 border-t-[#2563EB] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.05)]">
+      <section
+        className="relative flex h-full min-h-[170px] min-w-0 overflow-hidden rounded-2xl border border-[#DCE4EE] border-t-4 border-t-[#2563EB] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.05)]"
+        style={type === "student" && studentBackgroundColor ? { borderTopColor: studentBackgroundColor } : undefined}
+      >
         <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-start">
           <div className="relative shrink-0 pl-1 pt-1">
             <ProfileImageUpload id={id} type={type} src={img} canUpload={canUpload} compact />
@@ -52,13 +55,13 @@ const ProfileInfoCard = ({
           </div>
           <div className="min-w-0 flex-1">
             <h1 className="break-words text-xl font-bold text-[#0F2747]">{name}</h1>
-            <p className="mt-1 text-sm font-semibold text-[#2563EB]">{rank || "Líder"}</p>
+            <p className="mt-1 text-sm font-semibold text-[#2563EB]">{rank || (type === "teacher" ? "Líder" : "Muchacho")}</p>
             <div className="mt-3 grid gap-1.5 text-xs text-[#64748B]">
-              <p className="break-all"><span className="font-semibold text-[#33506F]">Correo:</span> {email || "No indicado"}</p>
-              <p><span className="font-semibold text-[#33506F]">Teléfono:</span> {phone || "No indicado"}</p>
+              {showEmail && <p className="break-all"><span className="font-semibold text-[#33506F]">Correo:</span> {email || "No indicado"}</p>}
+              {showPhone && <p><span className="font-semibold text-[#33506F]">Teléfono:</span> {phone || "No indicado"}</p>}
             </div>
             <div className="mt-3">
-              <BadgeBox userId={id} userType={type} canUpload={canUpload} compact />
+              <BadgeBox userId={id} userType={type} canUpload={canUpload} studentGroup={studentGroup} compact />
             </div>
           </div>
         </div>
