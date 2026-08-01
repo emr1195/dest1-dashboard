@@ -168,7 +168,7 @@ export const assignmentSchema = z.object({
   assignmentGroup: z.preprocess(
     (value) => (value === "" ? undefined : value),
     z
-      .enum(["navegantes", "pioneros", "seguidores", "exploradores"])
+      .enum(["all", "navegantes", "pioneros", "seguidores", "exploradores"])
       .optional()
   ),
   audience: z.preprocess(

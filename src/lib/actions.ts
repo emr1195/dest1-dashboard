@@ -102,7 +102,7 @@ const getAssignmentLessonId = async (lessonId?: number, assignmentGroup?: string
   const currentUser = await getCurrentUser();
   const isLeader = currentUser?.role === "teacher";
 
-  if (currentUser?.role === "admin" && assignmentGroup) {
+  if (currentUser?.role === "admin" && assignmentGroup && assignmentGroup !== "all") {
     const groupLeader = await getLeaderForAssignmentGroup(assignmentGroup);
 
     if (!groupLeader) {
@@ -132,6 +132,11 @@ const getAssignmentLessonId = async (lessonId?: number, assignmentGroup?: string
 
 const getAssignmentCreator = async (selectedCreatorId?: string) => {
   const currentUser = await getCurrentUser();
+
+  if (currentUser?.role === "admin" && selectedCreatorId === "guest") {
+    return { id: null, name: "Invitado" };
+  }
+
   const creatorId =
     currentUser?.role === "admin" && selectedCreatorId
       ? selectedCreatorId
@@ -617,7 +622,7 @@ export const createAssignment = async (
         dueDate: data.dueDate,
         category: data.category,
         audience:
-          data.category === "Otros" && data.audience === "all" ? "all" : "group",
+          data.assignmentGroup === "all" || data.audience === "all" ? "all" : "group",
         points: data.points,
         createdById: creator.id,
         createdByName: creator.name,
@@ -659,8 +664,7 @@ export const updateAssignment = async (
         startDate: data.startDate,
         dueDate: data.dueDate,
         category: data.category,
-        audience:
-          data.category === "Otros" && data.audience === "all" ? "all" : "group",
+        audience: data.audience === "all" ? "all" : "group",
         points: data.points,
         ...(creator
           ? {

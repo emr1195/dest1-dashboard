@@ -982,9 +982,7 @@ const AssignmentForm = ({
       category: getAssignmentCategory(data?.category) as AssignmentSchema["category"],
       points: data?.points || 25,
       audience:
-        data?.audience === "all" && getAssignmentCategory(data?.category) === "Otros"
-          ? "all"
-          : "group",
+        data?.audience === "all" ? "all" : "group",
     },
   });
 
@@ -1182,9 +1180,10 @@ const AssignmentForm = ({
   const canEditDisplayedLeader = relatedData?.currentRole === "admin";
   const isTeacher = relatedData?.currentRole === "teacher";
   const assignmentCreators = relatedData?.assignmentCreators || [];
-  const assignableGroups = leaderGroupOptions.filter(
-    (group) => group.value !== "sin-grupo"
-  );
+  const assignableGroups = [
+    { label: "Todos los grupos", value: "all", image: "/logo-catedral-de-vida.png" },
+    ...leaderGroupOptions.filter((group) => group.value !== "sin-grupo"),
+  ];
   const defaultLessonId = data?.lessonId || lessons[0]?.id;
   const selectedCategory = watch(
     "category",
@@ -1366,7 +1365,7 @@ const AssignmentForm = ({
                   </label>
                   <select
                     id="assignment-creator"
-                    defaultValue={data?.createdById || relatedData?.currentUserId || ""}
+                    defaultValue={data?.createdByName === "Invitado" ? "guest" : data?.createdById || relatedData?.currentUserId || ""}
                     aria-invalid={Boolean(errors.createdById)}
                     aria-describedby="assignment-creator-error"
                     className={`${fieldBaseClass} ${errors.createdById ? fieldErrorClass : ""}`}
@@ -1375,6 +1374,7 @@ const AssignmentForm = ({
                     <option value="" disabled>
                       Seleccionar
                     </option>
+                    <option value="guest">Invitado</option>
                     {assignmentCreators.map(
                       (creator: {
                         id: string;
@@ -1424,7 +1424,7 @@ const AssignmentForm = ({
                   error={errors.category as FieldError}
                 />
               </div>
-              {isTeacher && selectedCategory === "Otros" ? (
+              {isTeacher ? (
                 <div>
                   <label
                     htmlFor="assignment-audience"
@@ -1446,9 +1446,7 @@ const AssignmentForm = ({
                 <input
                   type="hidden"
                   value={
-                    data?.audience === "all" && selectedCategory === "Otros"
-                      ? "all"
-                      : "group"
+                    data?.audience === "all" ? "all" : "group"
                   }
                   {...register("audience")}
                 />
