@@ -4,13 +4,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import InputField from "../InputField";
 import Image from "next/image";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { ChangeEvent, Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { teacherSchema, TeacherSchema } from "@/lib/formValidationSchemas";
 import { useFormState } from "react-dom";
 import { createTeacher, updateTeacher } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { CldUploadWidget } from "next-cloudinary";
 import DateTimePicker from "../DateTimePicker";
 
 const toDateValue = (value?: Date | string) => {
@@ -46,7 +45,8 @@ const TeacherForm = ({
     },
   });
 
-  const [img, setImg] = useState<any>();
+  const [img, setImg] = useState<string>(data?.img || "");
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [openDatePicker, setOpenDatePicker] = useState<string | null>(null);
   const birthdayValue = watch("birthday") as unknown as string | undefined;
 
@@ -59,9 +59,25 @@ const TeacherForm = ({
   );
 
   const onSubmit = handleSubmit((data) => {
-    console.log(data);
-    formAction({ ...data, img: img?.secure_url });
+    formAction({ ...data, img: img || undefined });
   });
+
+  const selectPhoto = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      event.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") setImg(reader.result);
+    };
+    reader.readAsDataURL(file);
+    event.target.value = "";
+  };
 
   const router = useRouter();
 
@@ -73,7 +89,7 @@ const TeacherForm = ({
     }
   }, [state, router, type, setOpen]);
 
-  const { subjects } = relatedData;
+  const subjects = relatedData?.subjects || [];
 
   return (
     <form className="flex flex-col gap-8" onSubmit={onSubmit}>
@@ -211,25 +227,36 @@ const TeacherForm = ({
             </p>
           )}
         </div>
-        <CldUploadWidget
-          uploadPreset="school"
-          onSuccess={(result, { widget }) => {
-            setImg(result.info);
-            widget.close();
-          }}
-        >
-          {({ open }) => {
-            return (
-              <div
-                className="text-xs text-gray-500 flex items-center gap-2 cursor-pointer"
-                onClick={() => open()}
-              >
-                <Image src="/upload.png" alt="" width={28} height={28} />
-                <span>Subir foto</span>
-              </div>
-            );
-          }}
-        </CldUploadWidget>
+        <div className="flex w-full items-center gap-3 md:w-1/2">
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            onChange={selectPhoto}
+            className="hidden"
+          />
+          {img ? (
+            <Image
+              src={img}
+              alt="Vista previa de la fotografía del líder"
+              width={48}
+              height={48}
+              unoptimized
+              className="h-12 w-12 rounded-full object-cover"
+            />
+          ) : (
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-[var(--primary-soft)] text-[var(--primary)]">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg>
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => photoInputRef.current?.click()}
+            className="min-h-11 rounded-xl border border-[var(--border-default)] px-4 text-sm font-bold text-[var(--primary)] transition hover:bg-[var(--primary-soft)] focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)]"
+          >
+            {img ? "Cambiar fotografía" : "Subir fotografía"}
+          </button>
+        </div>
       </div>
       {state.error && (
         <span className="text-lamaPurple">Algo salio mal!</span>
