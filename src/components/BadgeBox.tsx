@@ -2,7 +2,6 @@
 
 import { getBadgeCatalog } from "@/lib/badgeCatalog";
 import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 const BadgeBox = ({
@@ -53,8 +52,8 @@ const BadgeBox = ({
   if (!badges.length) return null;
 
   return (
-    <div className="flex w-full flex-wrap gap-2">
-      {badges.slice(0, compact ? 3 : badges.length).map((badge) => (
+    <div className={`flex w-full flex-wrap ${compact ? "gap-1.5" : "gap-2"}`}>
+      {badges.map((badge) => (
         <span
           key={badge.src}
           title={
@@ -73,7 +72,7 @@ const BadgeBox = ({
             alt={badge.alt}
             width={80}
             height={80}
-            className={`h-11 w-10 rounded-md object-contain transition ${
+            className={`${compact ? "h-9 w-9" : "h-11 w-10"} rounded-md object-contain transition ${
               completedSet.has(badge.id)
                 ? "filter-none"
                 : "grayscale contrast-125 opacity-70"
@@ -81,11 +80,6 @@ const BadgeBox = ({
           />
         </span>
       ))}
-      {compact && badges.length > 3 && (
-        <Link href="/certificates" className="flex min-h-10 items-center text-xs font-semibold text-[#2563EB] hover:underline">
-          Ver reconocimientos
-        </Link>
-      )}
     </div>
   );
 };
