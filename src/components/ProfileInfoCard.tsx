@@ -44,9 +44,8 @@ const ProfileInfoCard = ({
 
   if (agendaVariant && type === "teacher") {
     return (
-      <section className="relative flex min-h-[220px] min-w-0 flex-1 overflow-hidden rounded-2xl border border-[#DCE4EE] bg-white p-5 shadow-[0_6px_20px_rgba(15,23,42,0.05)]">
-        <span className="absolute inset-y-0 left-0 w-1 bg-[#2563EB]" aria-hidden="true" />
-        <div className="flex w-full flex-col gap-5 sm:flex-row sm:items-start">
+      <section className="relative flex min-h-[170px] min-w-0 self-start overflow-hidden rounded-2xl border border-[#DCE4EE] border-t-4 border-t-[#2563EB] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.05)]">
+        <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-start">
           <div className="relative shrink-0 pl-1 pt-1">
             <ProfileImageUpload id={id} type={type} src={img} canUpload={canUpload} compact />
             <ProfileRankEditor id={id} type={type} rank={rank} canEdit={Boolean(canEditRank)} compact />
@@ -54,11 +53,11 @@ const ProfileInfoCard = ({
           <div className="min-w-0 flex-1">
             <h1 className="break-words text-xl font-bold text-[#0F2747]">{name}</h1>
             <p className="mt-1 text-sm font-semibold text-[#2563EB]">{rank || "Líder"}</p>
-            <div className="mt-4 grid gap-2 text-sm text-[#64748B]">
+            <div className="mt-3 grid gap-1.5 text-xs text-[#64748B]">
               <p className="break-all"><span className="font-semibold text-[#33506F]">Correo:</span> {email || "No indicado"}</p>
               <p><span className="font-semibold text-[#33506F]">Teléfono:</span> {phone || "No indicado"}</p>
             </div>
-            <div className="mt-4">
+            <div className="mt-3">
               <BadgeBox userId={id} userType={type} canUpload={canUpload} compact />
             </div>
           </div>

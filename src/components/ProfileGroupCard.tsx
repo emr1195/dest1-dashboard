@@ -76,12 +76,12 @@ const ProfileGroupCard = ({
   };
 
   return (
-    <div className={`relative flex w-full flex-col rounded-2xl border border-[#DCE4EE] bg-white shadow-[0_6px_20px_rgba(15,23,42,0.05)] ${agendaVariant ? "min-h-[220px] items-start justify-center gap-4 overflow-visible border-t-4 border-t-[#7E22CE] p-5 text-left" : "min-h-[200px] items-center justify-center gap-3 p-4 text-center"}`}>
+    <div className={`relative flex w-full flex-col rounded-2xl border border-[#DCE4EE] bg-white shadow-[0_6px_20px_rgba(15,23,42,0.05)] ${agendaVariant ? "min-h-[170px] self-start items-start justify-center gap-3 overflow-visible border-t-4 border-t-[#7E22CE] p-4 text-left" : "min-h-[200px] items-center justify-center gap-3 p-4 text-center"}`}>
       {canEdit && (
         <button
           type="button"
           onClick={() => setEditing((open) => !open)}
-          className={`${agendaVariant ? "relative order-last min-h-11 w-full rounded-xl border border-[#C9D5E3] px-4 text-sm font-semibold text-[#7E22CE] hover:bg-[#FAF5FF]" : "absolute right-3 top-3 rounded-md px-2 py-1 text-xs font-medium text-lamaSky hover:bg-lamaSkyLight"}`}
+          className={`${agendaVariant ? "relative order-last min-h-10 w-full rounded-lg border border-[#C9D5E3] px-4 text-xs font-semibold text-[#7E22CE] hover:bg-[#FAF5FF] sm:ml-24 sm:w-auto" : "absolute right-3 top-3 rounded-md px-2 py-1 text-xs font-medium text-lamaSky hover:bg-lamaSkyLight"}`}
         >
           {agendaVariant ? "Cambiar grupo" : "Cambiar"}
         </button>

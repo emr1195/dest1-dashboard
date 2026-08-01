@@ -105,8 +105,8 @@ const SingleTeacherPage = async ({
   });
 
   return (
-    <main className="grid min-h-full grid-cols-1 gap-5 bg-[#F4F7FB] p-4 sm:p-5 xl:grid-cols-[minmax(0,2.1fr)_minmax(330px,1fr)]">
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:col-start-1 xl:row-start-1">
+    <main className="grid min-h-full grid-cols-1 items-start gap-5 bg-[#F4F7FB] p-4 sm:p-5 xl:grid-cols-[minmax(0,2.1fr)_minmax(330px,1fr)]">
+      <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-2 xl:col-start-1 xl:row-start-1">
           <ProfileInfoCard
             id={teacher.id}
             type="teacher"
