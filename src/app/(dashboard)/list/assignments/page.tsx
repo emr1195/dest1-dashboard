@@ -367,7 +367,6 @@ const AssignmentListPage = async ({
             >
               <Image src={config.icon} alt={`Emblema de ${config.label}`} width={84} height={84} className="h-16 w-20 object-contain sm:h-20 sm:w-24" />
               <span className="mt-3 text-sm font-extrabold sm:text-base">{config.label}</span>
-              {active && <span className="mt-1 text-xs font-bold">Grupo seleccionado</span>}
             </Link>
           );
         })}
