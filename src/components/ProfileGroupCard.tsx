@@ -19,6 +19,7 @@ const ProfileGroupCard = ({
   studentCount,
   upcomingActivityCount,
   agendaVariant = false,
+  studentProgress,
 }: {
   id: string;
   type: "student" | "teacher";
@@ -28,6 +29,7 @@ const ProfileGroupCard = ({
   studentCount?: number;
   upcomingActivityCount?: number;
   agendaVariant?: boolean;
+  studentProgress?: { path: string; quarter: string };
 }) => {
   const router = useRouter();
   const [selectedGroup, setSelectedGroup] = useState(groupValue || "");
@@ -91,12 +93,17 @@ const ProfileGroupCard = ({
         <Image src={displayedGroup.icon} alt={displayedGroup.name} width={112} height={112} className={`${agendaVariant ? "h-28 w-28" : "h-24 w-24"} shrink-0 object-contain`} />
         <div>
           <h1 className="text-xl font-bold text-[#0F2747]">{displayedGroup.name}</h1>
-          {agendaVariant && (
+          {agendaVariant && type === "student" && studentProgress ? (
+            <div className="mt-2 space-y-1 text-sm text-[#64748B]">
+              <p className="font-semibold text-[#7E22CE]">{studentProgress.path}</p>
+              <p>{studentProgress.quarter}</p>
+            </div>
+          ) : agendaVariant ? (
             <div className="mt-2 space-y-1 text-sm text-[#64748B]">
               <p>{studentCount ?? 0} muchachos</p>
               <p>{upcomingActivityCount ?? 0} actividades próximas</p>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 

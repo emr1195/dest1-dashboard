@@ -5,7 +5,7 @@ import ProfileInfoCard from "@/components/ProfileInfoCard";
 import { getCurrentUser } from "@/lib/auth";
 import { getAge as getStudentAge } from "@/lib/badgeCatalog";
 import { getLeaderGroupOption } from "@/lib/roles";
-import { getGroupStudentCount } from "@/lib/groupSummary";
+import { getStudentPathProgress } from "@/lib/groupSummary";
 import prisma from "@/lib/prisma";
 import { Class, Muchacho } from "@prisma/client";
 import { notFound, redirect } from "next/navigation";
@@ -60,10 +60,7 @@ const SingleStudentPage = async ({
     ? { name: savedStudentGroupOption.label, icon: savedStudentGroupOption.image }
     : getStudentGroup(studentAge);
   const studentRank = student.rank || studentAccount?.rank || null;
-  const [groupStudentCount, upcomingActivityCount] = await Promise.all([
-    getGroupStudentCount(studentGroup.name),
-    prisma.event.count({ where: { startTime: { gte: new Date() } } }),
-  ]);
+  const studentProgress = getStudentPathProgress(studentAge);
 
   return (
     <main className="flex min-h-full flex-col gap-5 bg-[#F4F7FB] p-4 sm:p-5 xl:flex-row xl:items-start">
@@ -88,8 +85,7 @@ const SingleStudentPage = async ({
               groupValue={savedStudentGroup}
               fallbackGroup={getStudentGroup(studentAge)}
               canEdit={role === "admin"}
-              studentCount={groupStudentCount}
-              upcomingActivityCount={upcomingActivityCount}
+              studentProgress={studentProgress}
               agendaVariant
             />
         </div>
