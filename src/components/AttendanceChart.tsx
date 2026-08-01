@@ -6,7 +6,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from "recharts";
 
@@ -39,16 +38,15 @@ const AttendanceChart = ({
   };
 
   return (
-    <ResponsiveContainer width="100%" height="90%">
+    <div className="mt-4 h-[270px] w-full">
+    <ResponsiveContainer width="100%" height="100%">
       <BarChart
-        width={500}
-        height={300}
         data={data}
-        barSize={18}
-        barGap={0}
-        barCategoryGap="32%"
+        barSize={14}
+        barGap={5}
+        margin={{ top: 8, right: 4, left: 0, bottom: 0 }}
       >
-        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#6B7280" />
+        <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#E5EBF2" />
         <XAxis
           dataKey="name"
           axisLine={false}
@@ -57,9 +55,10 @@ const AttendanceChart = ({
           tickLine={false}
           height={44}
         />
-        <YAxis axisLine={false} tick={false} tickLine={false} width={0} />
+        <YAxis axisLine={false} tick={{ fill: "#8290A3", fontSize: 12 }} tickLine={false} width={28} allowDecimals={false} />
         <Tooltip
-          contentStyle={{ borderRadius: "10px", borderColor: "lightgray" }}
+          cursor={{ fill: "#F4F7FA" }}
+          contentStyle={{ borderRadius: "12px", borderColor: "#DCE4EE", boxShadow: "0 10px 30px rgba(15, 39, 71, .1)" }}
           labelFormatter={(label, payload) => {
             const item = payload?.[0]?.payload as
               | { dateLabel?: string }
@@ -67,27 +66,21 @@ const AttendanceChart = ({
             return item?.dateLabel ? `${label} ${item.dateLabel}` : label;
           }}
         />
-        <Legend
-          align="left"
-          verticalAlign="top"
-          wrapperStyle={{ paddingTop: "20px", paddingBottom: "40px" }}
-        />
         <Bar
           dataKey="present"
           name="Asistencia"
-          fill="#003B7A"
-          legendType="circle"
-          radius={[10, 10, 0, 0]}
+          fill="#1565C0"
+          radius={[5, 5, 0, 0]}
         />
         <Bar
           dataKey="absent"
           name="Ausencia"
-          fill="#BC0E0D"
-          legendType="circle"
-          radius={[10, 10, 0, 0]}
+          fill="#E05A54"
+          radius={[5, 5, 0, 0]}
         />
       </BarChart>
     </ResponsiveContainer>
+    </div>
   );
 };
 

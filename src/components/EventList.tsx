@@ -3,7 +3,7 @@ import prisma from "@/lib/prisma";
 import { dateKeyToUtcDate, getTodayDateKey } from "@/lib/timeZone";
 import Image from "next/image";
 
-const EventList = async () => {
+const EventList = async ({ limit = 3 }: { limit?: number }) => {
   const today = dateKeyToUtcDate(getTodayDateKey());
 
   const events = await prisma.event.findMany({
@@ -18,7 +18,7 @@ const EventList = async () => {
     return <p className="text-sm text-gray-500">No hay actividades cargadas.</p>;
   }
 
-  return data.map((event) => {
+  return data.slice(0, limit).map((event) => {
     const formattedDate = new Intl.DateTimeFormat("es-PA", { dateStyle: "medium" }).format(
       event.startTime
     );
@@ -34,7 +34,7 @@ const EventList = async () => {
           formattedDate,
           formattedCost,
         }}
-        className="flex w-full gap-3 rounded-md border border-gray-100 p-3 text-left transition hover:border-lamaSky"
+        className="flex w-full gap-3 py-4 text-left transition first:pt-0 last:pb-0"
       >
         {event.image ? (
           <Image
@@ -42,10 +42,10 @@ const EventList = async () => {
             alt={`Afiche de ${event.title}`}
             width={74}
             height={94}
-            className="h-[94px] w-[74px] shrink-0 rounded object-cover"
+            className="h-[76px] w-[60px] shrink-0 rounded-lg object-cover"
           />
         ) : (
-          <div className="flex h-[94px] w-[74px] shrink-0 items-center justify-center rounded bg-gray-100 text-xs text-gray-500">
+          <div className="flex h-[76px] w-[60px] shrink-0 items-center justify-center rounded-lg bg-[#F1F5F9] px-1 text-center text-xs text-[#8290A3]">
             Sin afiche
           </div>
         )}

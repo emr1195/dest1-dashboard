@@ -1,4 +1,3 @@
-import Image from "next/image";
 import CountChart from "./CountChart";
 import prisma from "@/lib/prisma";
 
@@ -26,32 +25,25 @@ const CountChartContainer = async () => {
   const total = boys + girls;
 
   return (
-    <div className="bg-white rounded-xl w-full h-full p-4">
-      {/* TITLE */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-lg font-semibold">Tropa</h1>
-        <Image src="/moreDark.png" alt="" width={20} height={20} />
+    <section className="h-full rounded-2xl border border-[#DCE4EE] bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+      <div>
+        <h2 className="text-lg font-bold text-[#0F2747]">Tropa</h2>
+        <p className="mt-1 text-sm text-[#64748B]">Distribución por sexo</p>
       </div>
-      {/* CHART */}
       <CountChart boys={boys} girls={girls} />
-      {/* BOTTOM */}
-      <div className="flex justify-center gap-16">
-        <div className="flex flex-col gap-1">
-          <div className="w-5 h-5 bg-[#003B7A] rounded-full" />
-          <h1 className="font-bold">{boys}</h1>
-          <h2 className="text-xs text-gray-500">
-            Varones ({total ? Math.round((boys / total) * 100) : 0}%)
-          </h2>
+      <div className="grid grid-cols-2 gap-3 border-t border-[#E8EDF3] pt-4">
+        <div>
+          <span className="mb-2 block h-2 w-8 rounded-full bg-[#1565C0]" />
+          <p className="text-xl font-bold text-[#0F2747]">{boys}</p>
+          <p className="text-xs text-[#64748B]">Varones · {total ? Math.round((boys / total) * 100) : 0}%</p>
         </div>
-        <div className="flex flex-col gap-1">
-          <div className="w-5 h-5 bg-[#BC0E0D] rounded-full" />
-          <h1 className="font-bold">{girls}</h1>
-          <h2 className="text-xs text-gray-500">
-            Mujeres ({total ? Math.round((girls / total) * 100) : 0}%)
-          </h2>
+        <div>
+          <span className="mb-2 block h-2 w-8 rounded-full bg-[#E05A54]" />
+          <p className="text-xl font-bold text-[#0F2747]">{girls}</p>
+          <p className="text-xs text-[#64748B]">Mujeres · {total ? Math.round((girls / total) * 100) : 0}%</p>
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 

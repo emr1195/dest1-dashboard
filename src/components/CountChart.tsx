@@ -1,52 +1,31 @@
 "use client";
-import Image from "next/image";
 import {
-  RadialBarChart,
-  RadialBar,
+  PieChart,
+  Pie,
+  Cell,
   ResponsiveContainer,
 } from "recharts";
 
 
 const CountChart = ({ boys, girls }: { boys: number; girls: number }) => {
-  const data = [
-    {
-      name: "Total",
-      count: boys+girls,
-      fill: "white",
-    },
-    {
-      name: "Mujeres",
-      count: girls,
-      fill: "#BC0E0D",
-    },
-    {
-      name: "Varones",
-      count: boys,
-      fill: "#003B7A",
-    },
-  ];
+  const total = boys + girls;
+  const data = total
+    ? [{ name: "Varones", value: boys }, { name: "Mujeres", value: girls }]
+    : [{ name: "Sin registros", value: 1 }];
+  const colors = total ? ["#1565C0", "#E05A54"] : ["#E7EDF4"];
+
   return (
-    <div className="relative w-full h-[75%]">
+    <div className="relative h-56 w-full" role="img" aria-label={`Tropa: ${boys} varones y ${girls} mujeres`}>
       <ResponsiveContainer>
-        <RadialBarChart
-          cx="50%"
-          cy="50%"
-          innerRadius="40%"
-          outerRadius="100%"
-          barSize={32}
-          data={data}
-        >
-          <RadialBar background dataKey="count" />
-        </RadialBarChart>
+        <PieChart>
+          <Pie data={data} dataKey="value" innerRadius={70} outerRadius={92} paddingAngle={total ? 3 : 0} stroke="none">
+            {data.map((entry, index) => <Cell key={entry.name} fill={colors[index]} />)}
+          </Pie>
+        </PieChart>
       </ResponsiveContainer>
-      <div className="absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2">
-        <Image
-          src="/maleFemale.png"
-          alt="Varones y mujeres"
-          fill
-          sizes="96px"
-          className="object-contain"
-        />
+      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+        <strong className="text-3xl text-[#0F2747]">{total}</strong>
+        <span className="text-xs text-[#64748B]">integrantes</span>
       </div>
     </div>
   );

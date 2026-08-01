@@ -9,7 +9,7 @@ type ValuePiece = Date | null;
 
 type Value = ValuePiece | [ValuePiece, ValuePiece];
 
-const EventCalendar = () => {
+const EventCalendar = ({ eventDates = [] }: { eventDates?: string[] }) => {
   const [value, onChange] = useState<Value>(new Date());
   const [activeStartDate, setActiveStartDate] = useState(() => {
     const today = new Date();
@@ -17,6 +17,7 @@ const EventCalendar = () => {
   });
 
   const router = useRouter();
+  const eventDateSet = new Set(eventDates);
 
   const calendarMonth = new Intl.DateTimeFormat("es-PA", { month: "long" })
     .format(activeStartDate)
@@ -61,6 +62,10 @@ const EventCalendar = () => {
   return (
     <div className="event-calendar-shell">
       <div className="event-calendar-card">
+        <div className="event-calendar-heading">
+          <div><h2>Calendario</h2><p>Selecciona una fecha para consultar la agenda</p></div>
+          <button type="button" onClick={setToday}>Hoy</button>
+        </div>
         <div className="event-calendar-side-layout">
           <div className="event-calendar-month-nav">
             <div className="event-calendar-month-label">
@@ -96,6 +101,11 @@ const EventCalendar = () => {
                 .replace(".", "")
                 .toUpperCase()
             }
+            tileContent={({ date, view }) => {
+              if (view !== "month") return null;
+              const dateKey = [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
+              return eventDateSet.has(dateKey) ? <span className="event-calendar-event-dot" aria-label="Hay una actividad" /> : null;
+            }}
           />
         </div>
         <div className="event-calendar-footer">
@@ -103,9 +113,7 @@ const EventCalendar = () => {
             <span aria-hidden="true" />
             Fecha seleccionada
           </span>
-          <button type="button" onClick={setToday}>
-            Ir a hoy
-          </button>
+          <span className="event-calendar-hint">Los puntos indican actividades</span>
         </div>
       </div>
     </div>

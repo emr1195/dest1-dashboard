@@ -695,6 +695,163 @@
   }
 }
 
+/* Dashboard calendar: compact, neutral and consistent with the admin workspace. */
+.event-calendar-card {
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+.event-calendar-heading {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.event-calendar-heading h2 {
+  color: #0f2747;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.event-calendar-heading p {
+  color: #64748b;
+  font-size: 0.8rem;
+  margin-top: 3px;
+}
+
+.event-calendar-heading button {
+  border: 1px solid #c9d5e3;
+  border-radius: 8px;
+  color: #1565c0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  min-height: 36px;
+  padding: 0 12px;
+}
+
+.event-calendar-card .event-calendar-side-layout {
+  display: grid !important;
+  grid-template-columns: 1fr;
+  row-gap: 14px;
+}
+
+.event-calendar-month-nav {
+  align-items: center;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.event-calendar-month-label {
+  display: block;
+  color: #193451;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.event-calendar-month-label span:first-child {
+  margin-right: 5px;
+}
+
+.event-calendar-month-arrows button {
+  background: #fff;
+  border-color: #dce4ee;
+  border-radius: 8px;
+  color: #33506f;
+  font-size: 1rem;
+  height: 36px;
+  width: 36px;
+}
+
+.event-calendar-card .react-calendar__month-view__weekdays {
+  margin-bottom: 6px;
+}
+
+.event-calendar-card .react-calendar__month-view__weekdays__weekday {
+  color: #8290a3;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.event-calendar-card .react-calendar__tile {
+  border-radius: 9px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  margin: 1px 0;
+  min-height: 36px;
+}
+
+.event-calendar-card .react-calendar__tile--now:not(.react-calendar__tile--active) {
+  background: transparent !important;
+  box-shadow: inset 0 0 0 1px #9fb1c5;
+}
+
+.event-calendar-card .react-calendar__tile--active {
+  background: #1565c0 !important;
+  box-shadow: none;
+}
+
+.event-calendar-card .react-calendar__tile--active::after {
+  display: none;
+}
+
+.event-calendar-event-dot {
+  background: #e05a54;
+  border-radius: 50%;
+  bottom: 3px;
+  height: 4px;
+  left: 50%;
+  position: absolute;
+  transform: translateX(-50%);
+  width: 4px;
+}
+
+.event-calendar-card .react-calendar__tile--active .event-calendar-event-dot {
+  background: #fff;
+}
+
+.event-calendar-footer {
+  border-color: #e8edf3;
+  margin-top: 14px;
+  padding-top: 12px;
+}
+
+.event-calendar-selected-label {
+  color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.event-calendar-selected-label span {
+  background: #1565c0;
+  height: 8px;
+  width: 8px;
+}
+
+.event-calendar-hint {
+  color: #8290a3;
+  font-size: 0.68rem;
+}
+
+@media (max-width: 520px) {
+  .event-calendar-card {
+    padding: 0;
+  }
+
+  .event-calendar-month-nav {
+    align-items: center;
+    flex-direction: row;
+  }
+
+  .event-calendar-month-label {
+    text-align: left;
+  }
+}
+
 .rbc-btn-group:first-child {
   display: none !important;
 }

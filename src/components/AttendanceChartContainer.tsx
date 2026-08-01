@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import AttendanceChart from "./AttendanceChart";
 import { syncFirebaseAttendance } from "@/lib/firebaseAttendanceSync";
@@ -91,41 +90,39 @@ const AttendanceChartContainer = async ({
     present: attendanceMap[day.dateKey].present,
     absent: attendanceMap[day.dateKey].absent,
   }));
+  const presentTotal = data.reduce((total, day) => total + day.present, 0);
+  const absentTotal = data.reduce((total, day) => total + day.absent, 0);
+  const attendanceTotal = presentTotal + absentTotal;
+  const attendanceRate = attendanceTotal
+    ? Math.round((presentTotal / attendanceTotal) * 100)
+    : 0;
+  const weekEndKey = addDaysToDateKey(weekStartKey, 4);
+  const weekLabel = `${new Intl.DateTimeFormat("es-PA", { day: "numeric", month: "short", timeZone: "UTC" }).format(dateKeyToUtcDate(weekStartKey))} - ${new Intl.DateTimeFormat("es-PA", { day: "numeric", month: "short", timeZone: "UTC" }).format(dateKeyToUtcDate(weekEndKey))}`;
 
   return (
-    <div className="bg-white rounded-lg p-4 h-full">
-      <div className="flex justify-between items-center">
-        <h1 className="text-lg font-semibold">Asistencia</h1>
-        <Image src="/moreDark.png" alt="" width={20} height={20} />
+    <section className="h-full rounded-2xl border border-[#DCE4EE] bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-[#0F2747]">Asistencia semanal</h2>
+          <p className="mt-1 text-sm text-[#64748B]">Comparación entre asistencias y ausencias</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Link href={`/admin?attendanceWeek=${weekOffset - 1}`} className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#DCE4EE] text-[#33506F] transition hover:border-[#1565C0] hover:text-[#1565C0]" aria-label="Semana anterior">&lt;</Link>
+          <span className="min-w-28 text-center text-xs font-semibold text-[#52657A]">{weekLabel}</span>
+          {weekOffset < 0 ? (
+            <Link href={`/admin?attendanceWeek=${weekOffset + 1}`} className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#DCE4EE] text-[#33506F] transition hover:border-[#1565C0] hover:text-[#1565C0]" aria-label="Semana siguiente">&gt;</Link>
+          ) : (
+            <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E8EDF3] text-[#BCC6D2]" aria-label="Semana siguiente no disponible">&gt;</span>
+          )}
+        </div>
+      </div>
+      <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2 border-y border-[#E8EDF3] py-3 text-sm">
+        <span className="font-semibold text-[#1565C0]">{presentTotal} asistencias</span>
+        <span className="font-semibold text-[#C2413B]">{absentTotal} ausencias</span>
+        <span className="font-semibold text-[#52657A]">{attendanceRate}% participación</span>
       </div>
       <AttendanceChart data={data}/>
-      <div className="mt-[-6] flex items-center justify-center gap-5 text-sm font-semibold text-gray-500">
-        <Link
-          href={`/admin?attendanceWeek=${weekOffset - 1}`}
-          className="rounded-full border border-gray-200 px-3 py-1 hover:border-lamaSky hover:text-lamaSky"
-          aria-label="Semana anterior"
-        >
-          &lt;
-        </Link>
-        <span>Semana</span>
-        {weekOffset < 0 ? (
-          <Link
-            href={`/admin?attendanceWeek=${weekOffset + 1}`}
-            className="rounded-full border border-gray-200 px-3 py-1 hover:border-lamaSky hover:text-lamaSky"
-            aria-label="Semana siguiente"
-          >
-            &gt;
-          </Link>
-        ) : (
-          <span
-            className="rounded-full border border-gray-200 px-3 py-1 text-gray-300"
-            aria-label="Semana siguiente no disponible"
-          >
-            &gt;
-          </span>
-        )}
-      </div>
-    </div>
+    </section>
   );
 };
 
