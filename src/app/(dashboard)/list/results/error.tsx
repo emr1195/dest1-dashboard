@@ -1,0 +1,3 @@
+"use client";
+const ResultsError = ({ reset }: { reset: () => void }) => <main className="min-h-full flex-1 bg-[#F4F7FB] p-4 sm:p-6"><div className="rounded-2xl border border-[#E2E8F0] bg-white p-10 text-center"><span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-[#FEF2F2] font-extrabold text-[#DC2626]">!</span><h1 className="mt-4 text-xl font-extrabold">No fue posible cargar los resultados.</h1><p className="mt-2 text-sm text-[#64748B]">Comprueba la conexión e inténtalo nuevamente.</p><button type="button" onClick={reset} className="mt-5 min-h-11 rounded-xl bg-[#07569F] px-5 text-sm font-bold text-white hover:bg-[#064A89] focus:outline-none focus:ring-4 focus:ring-[#07569F]/20">Reintentar</button></div></main>;
+export default ResultsError;

@@ -759,7 +759,35 @@ export const deleteResult = async (
   const id = data.get("id") as string;
 
   try {
-    await prisma.result.delete({ where: { id: parseInt(id) } });
+    const currentUser = await getCurrentUser();
+    const resultId = parseInt(id);
+
+    if (
+      !currentUser ||
+      !Number.isInteger(resultId) ||
+      (currentUser.role !== "admin" && currentUser.role !== "teacher")
+    ) {
+      return { success: false, error: true };
+    }
+
+    const result = await prisma.result.findFirst({
+      where: {
+        id: resultId,
+        ...(currentUser.role === "teacher"
+          ? {
+              OR: [
+                { assignment: { lesson: { teacherId: currentUser.id } } },
+                { exam: { lesson: { teacherId: currentUser.id } } },
+              ],
+            }
+          : {}),
+      },
+      select: { id: true },
+    });
+
+    if (!result) return { success: false, error: true };
+
+    await prisma.result.delete({ where: { id: result.id } });
 
     revalidatePath("/list/results");
     return { success: true, error: false };

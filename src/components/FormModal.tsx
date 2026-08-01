@@ -259,7 +259,7 @@ const FormModal = ({
       <form action={formAction} className="flex flex-col gap-5 p-5 sm:p-7">
         <input type="hidden" name="id" value={id} readOnly />
         <div className="pr-10">
-          <h2 className="text-xl font-extrabold text-[var(--text-primary)]">{table === "teacher" ? "Eliminar líder" : table === "student" ? "Eliminar muchacho" : table === "assignment" ? "Eliminar tarea" : "Eliminar registro"}</h2>
+          <h2 className="text-xl font-extrabold text-[var(--text-primary)]">{table === "teacher" ? "Eliminar líder" : table === "student" ? "Eliminar muchacho" : table === "assignment" ? "Eliminar tarea" : table === "result" ? "Eliminar resultado" : "Eliminar registro"}</h2>
           <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
             {table === "teacher" && displayName
               ? `¿Estás seguro de que deseas eliminar a ${displayName}? Esta acción no se puede deshacer.`
@@ -267,13 +267,15 @@ const FormModal = ({
                 ? `¿Estás seguro de que deseas eliminar a ${displayName}? Esta acción no se puede deshacer.`
               : table === "assignment" && displayName
                 ? `¿Estás seguro de que deseas eliminar la tarea “${displayName}”? Esta acción no se puede deshacer.`
+              : table === "result" && displayName
+                ? `¿Estás seguro de que deseas eliminar el resultado de ${displayName}? Esta acción no se puede deshacer.`
               : "¿Estás seguro de que deseas eliminar este registro? Esta acción no se puede deshacer."}
           </p>
         </div>
         {state.error && <p role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">No se pudo eliminar el registro. Inténtalo nuevamente.</p>}
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button type="button" onClick={requestClose} className="min-h-11 rounded-xl border border-[var(--border-default)] px-5 text-sm font-bold text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)]">Cancelar</button>
-          <DeleteSubmitButton label={table === "teacher" ? "Eliminar líder" : table === "student" ? "Eliminar muchacho" : table === "assignment" ? "Eliminar tarea" : "Eliminar"} />
+          <DeleteSubmitButton label={table === "teacher" ? "Eliminar líder" : table === "student" ? "Eliminar muchacho" : table === "assignment" ? "Eliminar tarea" : table === "result" ? "Eliminar resultado" : "Eliminar"} />
         </div>
       </form>
     ) : type === "create" || type === "update" ? (
