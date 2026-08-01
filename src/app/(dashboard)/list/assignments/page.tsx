@@ -390,7 +390,7 @@ const AssignmentListPage = async ({
           const onTime = assignment.submissions.filter((submission) => submission.updatedAt <= assignment.dueDate).length;
           const late = assignment.submissions.length - onTime;
           const evaluatedIds = new Set(assignment.results.map((result) => result.studentId));
-          const evaluated = assignment.submissions.filter((submission) => submission.reviewedAt || evaluatedIds.has(submission.studentId)).length;
+          const evaluated = assignment.submissions.filter((submission) => submission.status === "reviewed" || (submission.status !== "returned" && evaluatedIds.has(submission.studentId))).length;
           const expected = role === "student" ? 1 : role === "parent" ? parentStudentIds.length : assignment.lesson.class._count.students;
           const pending = Math.max(0, expected - assignment.submissions.length);
           const submissionItems: TaskSubmissionItem[] = assignment.submissions.map((submission) => ({
@@ -401,7 +401,7 @@ const AssignmentListPage = async ({
             submittedAt: submission.updatedAt.toISOString(),
             submittedLabel: formatDeadline(submission.updatedAt),
             timing: submission.updatedAt <= assignment.dueDate ? "on-time" : "late",
-            reviewed: Boolean(submission.reviewedAt || evaluatedIds.has(submission.studentId)),
+            reviewed: Boolean(submission.status === "reviewed" || (submission.status !== "returned" && evaluatedIds.has(submission.studentId))),
           }));
 
           return (

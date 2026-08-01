@@ -9,12 +9,17 @@ export const POST = async (request: Request) => {
     return NextResponse.json({ message: "No autorizado." }, { status: 401 });
   }
 
-  const { submissionId, score, reviewNote } = await request.json();
+  const { submissionId, score, reviewNote, action } = await request.json();
   const numericScore = Number(score);
   const cleanedReviewNote =
     typeof reviewNote === "string" ? reviewNote.trim().slice(0, 3000) : null;
 
-  if (typeof submissionId !== "string" || !Number.isInteger(numericScore)) {
+  const isReturnAction = action === "return";
+
+  if (
+    typeof submissionId !== "string" ||
+    (!isReturnAction && !Number.isInteger(numericScore))
+  ) {
     return NextResponse.json({ message: "Datos invalidos." }, { status: 400 });
   }
 
@@ -27,6 +32,38 @@ export const POST = async (request: Request) => {
 
   if (!submission) {
     return NextResponse.json({ message: "Respuesta no encontrada." }, { status: 404 });
+  }
+
+  if (isReturnAction) {
+    if (!cleanedReviewNote) {
+      return NextResponse.json(
+        { message: "Escribe una observación antes de devolver la tarea." },
+        { status: 400 }
+      );
+    }
+
+    await prisma.$transaction([
+      prisma.result.deleteMany({
+        where: {
+          assignmentId: submission.assignmentId,
+          studentId: submission.studentId,
+          examId: null,
+        },
+      }),
+      prisma.assignmentSubmission.update({
+        where: { id: submission.id },
+        data: {
+          status: "returned",
+          reviewNote: cleanedReviewNote,
+          reviewedAt: new Date(),
+          reviewedById: currentUser.id,
+          reviewedByName: currentUser.name || currentUser.email || null,
+          reviewedByRole: currentUser.role,
+        },
+      }),
+    ]);
+
+    return NextResponse.json({ ok: true, status: "returned" });
   }
 
   if (numericScore < 0 || numericScore > submission.assignment.points) {
@@ -66,6 +103,7 @@ export const POST = async (request: Request) => {
       reviewedById: currentUser.id,
       reviewedByName: currentUser.name || currentUser.email || null,
       reviewedByRole: currentUser.role,
+      status: "reviewed",
     },
   });
 

@@ -54,12 +54,22 @@ export const POST = async (request: Request) => {
       fileName: safeName,
       filePath,
       fileType: file.type || null,
+      status: "submitted",
     },
     update: {
       fileName: safeName,
       filePath,
       fileType: file.type || null,
+      status: "submitted",
+      reviewedAt: null,
+      reviewedById: null,
+      reviewedByName: null,
+      reviewedByRole: null,
     },
+  });
+
+  await prisma.result.deleteMany({
+    where: { assignmentId, studentId: currentUser.id, examId: null },
   });
 
   return NextResponse.json(submission);

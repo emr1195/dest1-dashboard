@@ -151,6 +151,7 @@ model AssignmentSubmission {
   fileName     String
   filePath     String
   fileType     String?
+  status       String     @default("submitted")
   reviewNote   String?    @db.Text
   reviewedById String?
   reviewedByName String?
@@ -162,6 +163,7 @@ model AssignmentSubmission {
   student      Muchacho   @relation(fields: [studentId], references: [id])
 
   @@unique([assignmentId, studentId])
+  @@index([status])
 }
 
 model Result {
