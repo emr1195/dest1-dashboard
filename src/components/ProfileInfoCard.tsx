@@ -44,7 +44,7 @@ const ProfileInfoCard = ({
 
   if (agendaVariant && type === "teacher") {
     return (
-      <section className="relative flex min-h-[170px] min-w-0 self-start overflow-hidden rounded-2xl border border-[#DCE4EE] border-t-4 border-t-[#2563EB] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.05)]">
+      <section className="relative flex h-full min-h-[170px] min-w-0 overflow-hidden rounded-2xl border border-[#DCE4EE] border-t-4 border-t-[#2563EB] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.05)]">
         <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-start">
           <div className="relative shrink-0 pl-1 pt-1">
             <ProfileImageUpload id={id} type={type} src={img} canUpload={canUpload} compact />

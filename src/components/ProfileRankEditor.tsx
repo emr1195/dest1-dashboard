@@ -68,7 +68,7 @@ const ProfileRankEditor = ({
           onClick={() => setEditing(true)}
           title="Cambiar rango"
           aria-label={`Cambiar rango ${option.label}`}
-          className={`absolute z-20 rounded-md p-0 shadow-md transition ${compact ? "left-12 top-12 h-9 w-10 bg-white hover:ring-2 hover:ring-[#93C5FD]" : "left-[116px] top-[132px] h-14 w-16 bg-white/10 hover:ring-2 hover:ring-white/80"}`}
+          className={`absolute z-20 rounded-md p-0 shadow-md transition ${compact ? "left-14 top-[60px] h-9 w-10 bg-white hover:ring-2 hover:ring-[#93C5FD]" : "left-[116px] top-[132px] h-14 w-16 bg-white/10 hover:ring-2 hover:ring-white/80"}`}
         >
           <Image
             src={option.image}
@@ -86,7 +86,7 @@ const ProfileRankEditor = ({
           alt={`Insignia ${option.label}`}
           width={64}
           height={56}
-          className={`absolute z-20 rounded-md object-contain shadow-md ${compact ? "left-12 top-12 h-9 w-10 bg-white" : "left-[116px] top-[132px] h-14 w-16"}`}
+          className={`absolute z-20 rounded-md object-contain shadow-md ${compact ? "left-14 top-[60px] h-9 w-10 bg-white" : "left-[116px] top-[132px] h-14 w-16"}`}
         />
       )}
 

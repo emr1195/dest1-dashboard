@@ -105,8 +105,9 @@ const SingleTeacherPage = async ({
   });
 
   return (
-    <main className="grid min-h-full grid-cols-1 items-start gap-5 bg-[#F4F7FB] p-4 sm:p-5 xl:grid-cols-[minmax(0,2.1fr)_minmax(330px,1fr)]">
-      <div className="grid grid-cols-1 items-start gap-5 md:grid-cols-2 xl:col-start-1 xl:row-start-1">
+    <main className="flex min-h-full flex-col gap-5 bg-[#F4F7FB] p-4 sm:p-5 xl:flex-row xl:items-start">
+      <div className="contents xl:flex xl:min-w-0 xl:flex-[2.1] xl:flex-col xl:gap-5">
+      <div className="order-1 grid grid-cols-1 items-stretch gap-5 md:grid-cols-2 xl:order-none">
           <ProfileInfoCard
             id={teacher.id}
             type="teacher"
@@ -130,12 +131,13 @@ const SingleTeacherPage = async ({
               agendaVariant
             />
       </div>
-      <aside className="flex min-w-0 flex-col gap-5 xl:col-start-2 xl:row-span-2 xl:row-start-1">
-        <EventCalendarContainer searchParams={searchParams} />
-      </aside>
-      <section className="min-w-0 rounded-2xl border border-[#DCE4EE] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.05)] sm:p-5 xl:col-start-1 xl:row-start-2">
+      <section className="order-3 min-w-0 rounded-2xl border border-[#DCE4EE] bg-white p-4 shadow-[0_6px_20px_rgba(15,23,42,0.05)] sm:p-5 xl:order-none">
         <BigCalendarContainer type="teacherId" id={teacher.id} />
       </section>
+      </div>
+      <aside className="order-2 flex min-w-0 flex-col gap-5 xl:order-none xl:flex-1">
+        <EventCalendarContainer searchParams={searchParams} />
+      </aside>
     </main>
   );
 };
