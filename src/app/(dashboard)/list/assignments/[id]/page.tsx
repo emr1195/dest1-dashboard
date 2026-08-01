@@ -1,4 +1,3 @@
-import { getCurrentUser } from "@/lib/auth";
 import { translateDisplayText } from "@/lib/displayText";
 import {
   canPreviewFile,
@@ -7,7 +6,6 @@ import {
   isImageFile,
   isOfficeFile,
 } from "@/lib/filePreview";
-import { getAccessibleStudentProfileIdsForParent } from "@/lib/guardianLinks";
 import prisma from "@/lib/prisma";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -20,39 +18,13 @@ const AssignmentDetailPage = async ({
   params: { id: string };
   searchParams: { file?: string };
 }) => {
-  const currentUser = await getCurrentUser();
-  const role = currentUser?.role;
-  const currentUserId = currentUser?.id;
   const assignmentId = Number(params.id);
-  const parentStudentIds =
-    role === "parent" && currentUserId
-      ? await getAccessibleStudentProfileIdsForParent(currentUserId)
-      : [];
 
   if (!assignmentId) notFound();
 
   const assignment = await prisma.assignment.findFirst({
     where: {
       id: assignmentId,
-      ...(role === "student"
-          ? {
-              OR: [
-                { audience: "all" },
-                { lesson: { class: { students: { some: { id: currentUserId! } } } } },
-              ],
-            }
-          : role === "parent"
-            ? {
-                OR: [
-                  { audience: "all" },
-                  {
-                    lesson: {
-                      class: { students: { some: { id: { in: parentStudentIds } } } },
-                    },
-                  },
-                ],
-              }
-            : {}),
     },
     include: {
       files: {

@@ -11,7 +11,6 @@ import { translateDisplayText } from "@/lib/displayText";
 import { getAccessibleStudentProfileIdsForParent } from "@/lib/guardianLinks";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
-import { getTodayDateKey } from "@/lib/timeZone";
 import {
   Assignment,
   AssignmentFile,
@@ -107,81 +106,15 @@ const groupValues = [
 
 type GroupValue = (typeof groupValues)[number];
 
+const assignmentGroupCards: Record<GroupValue, { label: string; icon: string; active: string }> = {
+  navegantes: { label: "Navegantes", icon: "/navegantes.png", active: "border-amber-400 bg-amber-50 text-amber-900" },
+  pioneros: { label: "Pioneros", icon: "/pioneros.png", active: "border-blue-500 bg-blue-50 text-blue-800" },
+  seguidores: { label: "Seguidores", icon: "/seguidores.png", active: "border-purple-500 bg-purple-50 text-purple-800" },
+  exploradores: { label: "Exploradores", icon: "/exploradores.png", active: "border-green-500 bg-green-50 text-green-800" },
+};
+
 const isGroupValue = (value?: string | null): value is GroupValue =>
   groupValues.includes(value as GroupValue);
-
-const getStudentAge = (birthday: Date) => {
-  const [year, month, day] = getTodayDateKey().split("-").map(Number);
-  const today = new Date(Date.UTC(year, month - 1, day, 12));
-  let age = today.getUTCFullYear() - birthday.getUTCFullYear();
-  const birthdayThisYear = new Date(
-    Date.UTC(today.getUTCFullYear(), birthday.getUTCMonth(), birthday.getUTCDate(), 12)
-  );
-
-  if (today < birthdayThisYear) age -= 1;
-
-  return age;
-};
-
-const getGroupValueByBirthday = (birthday?: Date | null): GroupValue | null => {
-  if (!birthday) return null;
-
-  const age = getStudentAge(birthday);
-
-  if (age >= 5 && age <= 7) return "navegantes";
-  if (age >= 8 && age <= 10) return "pioneros";
-  if (age >= 11 && age <= 14) return "seguidores";
-  if (age >= 15 && age <= 17) return "exploradores";
-
-  return null;
-};
-
-const getStudentGroupValues = async (
-  profiles: Pick<Muchacho, "id" | "email" | "birthday">[]
-) => {
-  if (!profiles.length) return [];
-
-  const authAccounts = await prisma.authUser.findMany({
-    where: {
-      role: "student",
-      OR: [
-        { id: { in: profiles.map((profile) => profile.id) } },
-        {
-          email: {
-            in: profiles.flatMap((profile) =>
-              profile.email ? [profile.email.toLowerCase()] : []
-            ),
-          },
-        },
-      ],
-    },
-    select: { id: true, email: true, leaderGroup: true, birthday: true },
-  });
-
-  const accountById = new Map(authAccounts.map((account) => [account.id, account]));
-  const accountByEmail = new Map(
-    authAccounts.flatMap((account) =>
-      account.email ? [[account.email.toLowerCase(), account] as const] : []
-    )
-  );
-
-  return Array.from(
-    new Set(
-      profiles
-        .map((profile) => {
-          const account =
-            accountById.get(profile.id) ||
-            (profile.email ? accountByEmail.get(profile.email.toLowerCase()) : null);
-          const savedGroup = account?.leaderGroup;
-
-          if (isGroupValue(savedGroup)) return savedGroup;
-
-          return getGroupValueByBirthday(account?.birthday || profile.birthday);
-        })
-        .filter((group): group is GroupValue => Boolean(group))
-    )
-  );
-};
 
 const getLeaderIdsForGroups = async (groups: GroupValue[]) => {
   if (!groups.length) return [];
@@ -283,41 +216,14 @@ const AssignmentListPage = async ({
   const currentUser = await getCurrentUser();
   const role = currentUser?.role;
   const currentUserId = currentUser?.id;
+  const selectedGroup = isGroupValue(searchParams.group) ? searchParams.group : null;
   const parentStudentIds =
     role === "parent" && currentUserId
       ? await getAccessibleStudentProfileIdsForParent(currentUserId)
       : [];
-  const currentStudentProfile =
-    role === "student" && currentUserId
-      ? await prisma.muchacho.findFirst({
-          where: {
-            OR: [
-              { id: currentUserId },
-              ...(currentUser?.email ? [{ email: currentUser.email }] : []),
-            ],
-          },
-          select: { id: true, email: true, birthday: true },
-        })
-      : null;
-  const parentStudentProfiles =
-    role === "parent" && parentStudentIds.length
-      ? await prisma.muchacho.findMany({
-          where: { id: { in: parentStudentIds } },
-          select: { id: true, email: true, birthday: true },
-        })
-      : [];
-  const visibleStudentGroups =
-    role === "student"
-      ? await getStudentGroupValues(
-          currentStudentProfile ? [currentStudentProfile] : []
-        )
-      : role === "parent"
-        ? await getStudentGroupValues(parentStudentProfiles)
-        : [];
-  const visibleLeaderIds =
-    role === "student" || role === "parent"
-      ? await getLeaderIdsForGroups(visibleStudentGroups)
-      : [];
+  const selectedLeaderIds = selectedGroup
+    ? await getLeaderIdsForGroups([selectedGroup])
+    : [];
 
   const { page, pageSize: pageSizeParam, ...queryParams } = searchParams;
   const p = page ? parseInt(page) : 1;
@@ -369,51 +275,26 @@ const AssignmentListPage = async ({
     }
   }
 
-  switch (role) {
-    case "admin":
-      break;
-    case "teacher":
-      break;
-    case "student": {
-      const studentSearch = query.OR;
-      const studentVisibility: Prisma.AssignmentWhereInput[] = [
-        { audience: "all" },
-        {
-          lesson: {
-            teacherId: {
-              in: visibleLeaderIds.length ? visibleLeaderIds : ["__no_teacher__"],
+  if (selectedGroup) {
+    const searchFilter = query.OR;
+    delete query.OR;
+    query.AND = [
+      ...(searchFilter ? [{ OR: searchFilter }] : []),
+      {
+        OR: [
+          { audience: "all" },
+          {
+            lesson: {
+              teacherId: {
+                in: selectedLeaderIds.length ? selectedLeaderIds : ["__no_teacher__"],
+              },
             },
           },
-        },
-      ];
-      delete query.OR;
-      query.AND = [
-        ...(studentSearch ? [{ OR: studentSearch }] : []),
-        { OR: studentVisibility },
-      ];
-      break;
-    }
-    case "parent": {
-      const parentSearch = query.OR;
-      const parentVisibility: Prisma.AssignmentWhereInput[] = [
-        { audience: "all" },
-        {
-          lesson: {
-            teacherId: {
-              in: visibleLeaderIds.length ? visibleLeaderIds : ["__no_teacher__"],
-            },
-          },
-        },
-      ];
-      delete query.OR;
-      query.AND = [
-        ...(parentSearch ? [{ OR: parentSearch }] : []),
-        { OR: parentVisibility },
-      ];
-      break;
-    }
-    default:
-      break;
+        ],
+      },
+    ];
+  } else {
+    query.id = -1;
   }
 
   const [data, count] = await prisma.$transaction([
@@ -451,6 +332,15 @@ const AssignmentListPage = async ({
     prisma.assignment.count({ where: query }),
   ]);
 
+  const getGroupHref = (group: GroupValue) => {
+    const params = new URLSearchParams();
+    Object.entries(searchParams).forEach(([key, value]) => {
+      if (value && key !== "page" && key !== "group") params.set(key, value);
+    });
+    params.set("group", group);
+    return `/list/assignments?${params.toString()}`;
+  };
+
   return (
     <div className="min-h-full flex-1 bg-[#f4f7fb] p-3 sm:p-4 lg:p-6">
       <header className="mb-5 rounded-2xl border border-[var(--border-soft)] bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.05)] sm:p-6">
@@ -458,11 +348,30 @@ const AssignmentListPage = async ({
           <div>
             <h1 className="text-2xl font-extrabold text-[var(--text-primary)] sm:text-[28px]">Tareas</h1>
             <p className="mt-1 text-sm text-[var(--text-secondary)] sm:text-[15px]">Administra las actividades, documentos y entregas de los muchachos.</p>
-            <p className="mt-2 text-sm font-bold text-[var(--primary)]">{count} {count === 1 ? "tarea disponible" : "tareas disponibles"}</p>
+            <p className="mt-2 text-sm font-bold text-[var(--primary)]">{selectedGroup ? `${count} ${count === 1 ? "tarea disponible" : "tareas disponibles"}` : "Selecciona un grupo para consultar sus tareas"}</p>
           </div>
           <TasksToolbar createAction={(role === "admin" || role === "teacher") ? <FormContainer table="assignment" type="create" triggerLabel={<><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg><span className="hidden sm:inline">Nueva tarea</span></>} triggerClassName="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[var(--primary)] px-4 text-sm font-bold text-white hover:bg-[var(--primary-hover)] focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)]" /> : undefined} />
         </div>
       </header>
+
+      <nav aria-label="Seleccionar grupo de tareas" className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {groupValues.map((group) => {
+          const config = assignmentGroupCards[group];
+          const active = selectedGroup === group;
+          return (
+            <Link
+              key={group}
+              href={getGroupHref(group)}
+              aria-current={active ? "page" : undefined}
+              className={`group flex min-h-[132px] flex-col items-center justify-center rounded-2xl border bg-white p-4 text-center shadow-[0_4px_16px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:border-[var(--primary)] hover:shadow-[0_8px_22px_rgba(15,23,42,0.08)] focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)] sm:min-h-[160px] ${active ? config.active : "border-[var(--border-soft)] text-[var(--text-primary)]"}`}
+            >
+              <Image src={config.icon} alt={`Emblema de ${config.label}`} width={84} height={84} className="h-16 w-20 object-contain sm:h-20 sm:w-24" />
+              <span className="mt-3 text-sm font-extrabold sm:text-base">{config.label}</span>
+              {active && <span className="mt-1 text-xs font-bold">Grupo seleccionado</span>}
+            </Link>
+          );
+        })}
+      </nav>
 
       <div className="flex flex-col gap-5">
         {data.map((assignment) => {
@@ -541,11 +450,11 @@ const AssignmentListPage = async ({
         })}
       </div>
 
-      {!data.length && <div className="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--border-default)] bg-white px-5 text-center"><span className="grid h-14 w-14 place-items-center rounded-full bg-[var(--primary-soft)] text-[var(--primary)]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-7 w-7" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z" /><path d="M8 7h8M8 11h8M8 15h5" /></svg></span><h2 className="mt-4 text-lg font-extrabold text-[var(--text-primary)]">No encontramos tareas.</h2><p className="mt-2 text-sm text-[var(--text-secondary)]">Prueba con otra búsqueda o limpia los filtros aplicados.</p><Link href="/list/assignments" className="mt-5 inline-flex min-h-11 items-center rounded-xl bg-[var(--primary)] px-5 text-sm font-bold text-white">Limpiar búsqueda y filtros</Link></div>}
+      {!data.length && <div className="flex min-h-[260px] flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--border-default)] bg-white px-5 text-center"><span className="grid h-14 w-14 place-items-center rounded-full bg-[var(--primary-soft)] text-[var(--primary)]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-7 w-7" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z" /><path d="M8 7h8M8 11h8M8 15h5" /></svg></span><h2 className="mt-4 text-lg font-extrabold text-[var(--text-primary)]">{selectedGroup ? `No hay tareas disponibles para ${assignmentGroupCards[selectedGroup].label}.` : "Selecciona uno de los grupos."}</h2><p className="mt-2 text-sm text-[var(--text-secondary)]">{selectedGroup ? "Prueba con otra búsqueda o limpia los filtros aplicados." : "Al seleccionar un emblema aparecerán aquí las tareas correspondientes a ese grupo."}</p>{selectedGroup && <Link href={`/list/assignments?group=${selectedGroup}`} className="mt-5 inline-flex min-h-11 items-center rounded-xl bg-[var(--primary)] px-5 text-sm font-bold text-white">Limpiar búsqueda y filtros</Link>}</div>}
 
-      <div className="mt-5 rounded-2xl border border-[var(--border-soft)] bg-white">
+      {selectedGroup && <div className="mt-5 rounded-2xl border border-[var(--border-soft)] bg-white">
         <TasksPagination page={p} count={count} pageSize={pageSize} />
-      </div>
+      </div>}
     </div>
   );
 };
