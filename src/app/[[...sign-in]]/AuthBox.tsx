@@ -274,19 +274,18 @@ const AuthBox = () => {
   return (
     <section className="grid w-full max-w-[980px] overflow-hidden rounded-[20px] border border-[#E2E8F0] bg-white shadow-[0_20px_50px_rgba(15,23,42,0.10)] lg:grid-cols-[0.92fr_1.08fr]">
       <aside className="relative hidden min-h-[590px] overflow-hidden bg-[#07569F] p-10 text-white lg:flex lg:flex-col lg:items-center lg:justify-center lg:text-center">
-        <div className="absolute inset-x-10 top-10 h-px bg-white/15" aria-hidden="true" />
-        <div className="relative flex h-32 w-32 items-center justify-center rounded-[20px] border border-white/25 bg-white/95 p-3 shadow-lg">
-          <Image src="/logo-catedral-de-vida.png" alt="Emblema de Exploradores del Rey, Destacamento número 1" width={112} height={112} priority className="h-28 w-28 object-contain" />
+        <div className="relative flex h-44 w-44 items-center justify-center">
+          <Image src="/logo-catedral-de-vida.png" alt="Emblema de Exploradores del Rey, Destacamento número 1" width={176} height={176} priority className="h-44 w-44 object-contain drop-shadow-[0_12px_18px_rgba(0,0,0,0.24)]" />
         </div>
         <h2 className="mt-7 text-3xl font-extrabold">Exploradores del Rey</h2>
         <p className="mt-2 text-base font-semibold text-white/85">Destacamento #1</p>
-        <p className="mt-7 max-w-xs text-sm leading-6 text-white/75">Formando muchachos para el servicio, el liderazgo y la vida.</p>
+        <p className="mt-7 max-w-xs text-sm leading-6 text-white/75">Formando la nueva generacion de lideres ciervos</p>
       </aside>
 
       <div className="flex min-w-0 flex-col justify-center px-5 py-7 sm:px-8 sm:py-9 lg:px-12 lg:py-11">
         <div className="mb-6 flex flex-col items-center text-center lg:hidden">
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-[#E2E8F0] bg-white p-2 shadow-sm">
-            <Image src="/logo-catedral-de-vida.png" alt="Emblema de Exploradores del Rey, Destacamento número 1" width={72} height={72} priority className="h-[72px] w-[72px] object-contain" />
+          <div className="flex h-24 w-24 items-center justify-center">
+            <Image src="/logo-catedral-de-vida.png" alt="Emblema de Exploradores del Rey, Destacamento número 1" width={96} height={96} priority className="h-24 w-24 object-contain drop-shadow-[0_8px_12px_rgba(15,23,42,0.16)]" />
           </div>
           <p className="mt-3 text-lg font-extrabold text-[#0F172A]">Exploradores del Rey</p>
           <p className="text-sm font-semibold text-[#64748B]">Destacamento #1</p>
