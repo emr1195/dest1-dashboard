@@ -89,7 +89,37 @@ const FormContainer = async ({
                 orderBy: [{ role: "asc" }, { name: "asc" }],
               })
             : [];
-        relatedData = { lessons, assignmentCreators };
+        let initialAssignmentGroup: string | undefined;
+
+        if (table === "assignment" && role === "admin" && type === "update") {
+          if (data?.audience === "all") {
+            initialAssignmentGroup = "all";
+          } else if (data?.lessonId) {
+            const lessonOwner = await prisma.lesson.findUnique({
+              where: { id: data.lessonId },
+              select: {
+                teacher: { select: { id: true, email: true } },
+              },
+            });
+            const teacherAccount = lessonOwner
+              ? await prisma.authUser.findFirst({
+                  where: {
+                    role: "teacher",
+                    OR: [
+                      { id: lessonOwner.teacher.id },
+                      ...(lessonOwner.teacher.email
+                        ? [{ email: lessonOwner.teacher.email }]
+                        : []),
+                    ],
+                  },
+                  select: { leaderGroup: true },
+                })
+              : null;
+            initialAssignmentGroup = teacherAccount?.leaderGroup || undefined;
+          }
+        }
+
+        relatedData = { lessons, assignmentCreators, initialAssignmentGroup };
         break;
       }
       default:

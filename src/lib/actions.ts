@@ -652,7 +652,14 @@ export const updateAssignment = async (
       currentUser?.role === "admin" && data.createdById
         ? await getAssignmentCreator(data.createdById)
         : null;
-    const lessonId = await getAssignmentLessonId(data.lessonId);
+    const changingToSpecificGroup =
+      currentUser?.role === "admin" &&
+      Boolean(data.assignmentGroup) &&
+      data.assignmentGroup !== "all";
+    const lessonId = await getAssignmentLessonId(
+      changingToSpecificGroup ? undefined : data.lessonId,
+      data.assignmentGroup
+    );
 
     const assignment = await prisma.assignment.update({
       where: {
@@ -664,7 +671,10 @@ export const updateAssignment = async (
         startDate: data.startDate,
         dueDate: data.dueDate,
         category: data.category,
-        audience: data.audience === "all" ? "all" : "group",
+        audience:
+          data.assignmentGroup === "all" || data.audience === "all"
+            ? "all"
+            : "group",
         points: data.points,
         ...(creator
           ? {

@@ -842,6 +842,10 @@ const GroupPicker = ({
       shouldDirty: true,
       shouldValidate: true,
     });
+    setValue("audience", groupValue === "all" ? "all" : "group", {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
     setOpen(false);
   };
 
@@ -983,6 +987,10 @@ const AssignmentForm = ({
       points: data?.points || 25,
       audience:
         data?.audience === "all" ? "all" : "group",
+      assignmentGroup:
+        data?.audience === "all"
+          ? "all"
+          : relatedData?.initialAssignmentGroup,
     },
   });
 
@@ -1176,7 +1184,7 @@ const AssignmentForm = ({
   });
 
   const lessons = relatedData?.lessons || [];
-  const isAdminCreate = type === "create" && relatedData?.currentRole === "admin";
+  const isAdminAssignmentEditor = relatedData?.currentRole === "admin";
   const canEditDisplayedLeader = relatedData?.currentRole === "admin";
   const isTeacher = relatedData?.currentRole === "teacher";
   const assignmentCreators = relatedData?.assignmentCreators || [];
@@ -1335,14 +1343,14 @@ const AssignmentForm = ({
                   {...register("id")}
                 />
               )}
-              {defaultLessonId && !isAdminCreate && (
+              {defaultLessonId && (type === "update" || !isAdminAssignmentEditor) && (
                 <input
                   type="hidden"
                   value={defaultLessonId}
                   {...register("lessonId")}
                 />
               )}
-              {isAdminCreate && (
+              {isAdminAssignmentEditor && (
                 <>
                   <input type="hidden" {...register("assignmentGroup")} />
                   <GroupPicker
@@ -1443,13 +1451,7 @@ const AssignmentForm = ({
                   </select>
                 </div>
               ) : (
-                <input
-                  type="hidden"
-                  value={
-                    data?.audience === "all" ? "all" : "group"
-                  }
-                  {...register("audience")}
-                />
+                <input type="hidden" {...register("audience")} />
               )}
               <div>
                 <label
