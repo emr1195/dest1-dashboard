@@ -55,7 +55,11 @@ const ProfileInfoCard = ({
           </div>
           <div className="min-w-0 flex-1">
             <h1 className="break-words text-xl font-bold text-[#0F2747]">{name}</h1>
-            <p className="mt-1 text-sm font-semibold text-[#2563EB]">{rank || (type === "teacher" ? "Líder" : "Muchacho")}</p>
+            {(rank || type === "teacher") && (
+              <p className="mt-1 text-sm font-semibold text-[#2563EB]">
+                {rank || "Líder"}
+              </p>
+            )}
             <div className="mt-3 grid gap-1.5 text-xs text-[#64748B]">
               {showEmail && <p className="break-all"><span className="font-semibold text-[#33506F]">Correo:</span> {email || "No indicado"}</p>}
               {showPhone && <p><span className="font-semibold text-[#33506F]">Teléfono:</span> {phone || "No indicado"}</p>}
