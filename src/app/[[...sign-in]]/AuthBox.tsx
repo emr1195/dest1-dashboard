@@ -8,10 +8,10 @@ import { useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 
 const roles = [
-  { value: "admin", label: "Admin", hint: "Codigo a + 5 numeros" },
-  { value: "teacher", label: "Lider", hint: "Codigo l + 5 numeros" },
-  { value: "student", label: "Muchacho", hint: "Codigo j + 5 numeros" },
-  { value: "parent", label: "Padre", hint: "Codigo p + 5 numeros" },
+  { value: "admin", label: "Admin", hint: "Código a + 5 números" },
+  { value: "teacher", label: "Líder", hint: "Código l + 5 números" },
+  { value: "student", label: "Muchacho", hint: "Código j + 5 números" },
+  { value: "parent", label: "Padre", hint: "Código p + 5 números" },
 ];
 
 const dashboardPaths = Object.fromEntries(
@@ -39,6 +39,7 @@ const AuthBox = () => {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [requestingCode, setRequestingCode] = useState(false);
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
@@ -74,45 +75,59 @@ const AuthBox = () => {
   const handleSignIn = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     resetMessages();
-    setLoading(true);
 
-    const targetResponse = await fetch("/api/auth/login-target", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const targetData = await targetResponse.json().catch(() => null);
-
-    if (!targetResponse.ok) {
-      setLoading(false);
-      setError(targetData?.message || "Correo o contrasena incorrectos.");
+    if (!email.trim()) {
+      setError("Ingresa tu correo electrónico o nombre de usuario.");
       return;
     }
 
-    await signIn("credentials", {
-      email,
-      password,
-      callbackUrl: getSafeCallbackPath() || targetData?.dashboardPath || "/auth/redirect",
-    });
+    if (password.length < 6) {
+      setError("La contraseña debe tener al menos 6 caracteres.");
+      return;
+    }
 
-    setLoading(false);
+    setLoading(true);
+
+    try {
+      const targetResponse = await fetch("/api/auth/login-target", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const targetData = await targetResponse.json().catch(() => null);
+
+      if (!targetResponse.ok) {
+        setError(targetData?.message || "El correo o la contraseña no son correctos.");
+        return;
+      }
+
+      await signIn("credentials", {
+        email,
+        password,
+        callbackUrl: getSafeCallbackPath() || targetData?.dashboardPath || "/auth/redirect",
+      });
+    } catch {
+      setError("No fue posible conectar con el servidor. Inténtalo nuevamente.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRequestCode = async () => {
     resetMessages();
 
     if (!email) {
-      setError("Escribe tu correo antes de pedir el codigo.");
+      setError("Escribe tu correo antes de pedir el código.");
       return;
     }
 
     if ((role === "teacher" || role === "student") && !rank) {
-      setError("Selecciona un rango antes de pedir el codigo.");
+      setError("Selecciona un rango antes de pedir el código.");
       return;
     }
 
     if (needsLeaderGroup && !leaderGroup) {
-      setError("Selecciona el grupo que atendera el lider.");
+      setError("Selecciona el grupo que atenderá el líder.");
       return;
     }
 
@@ -122,12 +137,12 @@ const AuthBox = () => {
     }
 
     if (!address.trim()) {
-      setError("Escribe tu direccion de residencia antes de pedir el codigo.");
+      setError("Escribe tu dirección de residencia antes de pedir el código.");
       return;
     }
 
     if (!gender) {
-      setError("Selecciona un genero antes de pedir el codigo.");
+      setError("Selecciona un género antes de pedir el código.");
       return;
     }
 
@@ -155,11 +170,11 @@ const AuthBox = () => {
     setRequestingCode(false);
 
     if (!response.ok) {
-      setError(data?.message || "No se pudo solicitar el codigo.");
+      setError(data?.message || "No se pudo solicitar el código.");
       return;
     }
 
-    setNotice(data?.message || "Solicitud enviada. Espera el codigo por correo.");
+    setNotice(data?.message || "Solicitud enviada. Espera el código por correo.");
   };
 
   const handleSignUp = async (event: FormEvent<HTMLFormElement>) => {
@@ -172,7 +187,7 @@ const AuthBox = () => {
     }
 
     if (needsLeaderGroup && !leaderGroup) {
-      setError("Selecciona el grupo que atendera el lider.");
+      setError("Selecciona el grupo que atenderá el líder.");
       return;
     }
 
@@ -182,12 +197,12 @@ const AuthBox = () => {
     }
 
     if (!address.trim()) {
-      setError("Escribe tu direccion de residencia para crear la cuenta.");
+      setError("Escribe tu dirección de residencia para crear la cuenta.");
       return;
     }
 
     if (!gender) {
-      setError("Selecciona un genero para crear la cuenta.");
+      setError("Selecciona un género para crear la cuenta.");
       return;
     }
 
@@ -234,7 +249,7 @@ const AuthBox = () => {
 
     if (mode === "signup") {
       if (!code) {
-        setError("Ingresa el codigo de acceso antes de registrarte con Google.");
+        setError("Ingresa el código de acceso antes de registrarte con Google.");
         return;
       }
 
@@ -254,34 +269,38 @@ const AuthBox = () => {
     signIn("google", { callbackUrl: getSafeCallbackPath() || "/auth/redirect" });
   };
 
-  const inputClass = "p-3 rounded-md ring-1 ring-gray-300 outline-none focus:ring-lamaSky text-base";
+  const inputClass = "min-h-[50px] rounded-xl border border-[#CBD5E1] bg-[#F8FAFC] px-4 text-sm text-[#0F172A] outline-none transition hover:border-[#94A3B8] focus:border-[#07569F] focus:ring-4 focus:ring-[rgba(7,86,159,0.18)] disabled:cursor-not-allowed disabled:opacity-60";
 
   return (
-    <div
-      className={`flex w-full max-w-[780px] flex-col rounded-md bg-white p-5 shadow-2xl sm:p-8 md:w-[80vw] md:px-16 ${
-        mode === "signin" ? "min-h-[80vh] justify-center gap-4 md:py-8" : "gap-5 md:py-10"
-      }`}
-    >
-      <Image
-        src="/logo-catedral-de-vida.png"
-        alt="Logo Catedral de Vida"
-        width={132}
-        height={132}
-        priority
-        className={`mb-1 self-center object-contain ${
-          mode === "signin"
-            ? "h-28 w-28 sm:h-36 sm:w-36 md:h-56 md:w-56"
-            : "h-24 w-24 sm:h-32 sm:w-32 md:h-40 md:w-40"
-        }`}
-      />
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-center">{mode === "signin" ? "Iniciar sesion" : "Crear cuenta"}</h1>
-        <p className="text-base text-gray-500 mt-2">
-          {mode === "signin" ? "Ingresa con tu correo." : "Elige tu tipo de cuenta y valida tu codigo."}
-        </p>
-      </div>
+    <section className="grid w-full max-w-[980px] overflow-hidden rounded-[20px] border border-[#E2E8F0] bg-white shadow-[0_20px_50px_rgba(15,23,42,0.10)] lg:grid-cols-[0.92fr_1.08fr]">
+      <aside className="relative hidden min-h-[590px] overflow-hidden bg-[#07569F] p-10 text-white lg:flex lg:flex-col lg:items-center lg:justify-center lg:text-center">
+        <div className="absolute inset-x-10 top-10 h-px bg-white/15" aria-hidden="true" />
+        <div className="relative flex h-32 w-32 items-center justify-center rounded-[20px] border border-white/25 bg-white/95 p-3 shadow-lg">
+          <Image src="/logo-catedral-de-vida.png" alt="Emblema de Exploradores del Rey, Destacamento número 1" width={112} height={112} priority className="h-28 w-28 object-contain" />
+        </div>
+        <h2 className="mt-7 text-3xl font-extrabold">Exploradores del Rey</h2>
+        <p className="mt-2 text-base font-semibold text-white/85">Destacamento #1</p>
+        <p className="mt-7 max-w-xs text-sm leading-6 text-white/75">Formando muchachos para el servicio, el liderazgo y la vida.</p>
+      </aside>
 
-      <form onSubmit={mode === "signin" ? handleSignIn : handleSignUp} className="flex flex-col gap-4">
+      <div className="flex min-w-0 flex-col justify-center px-5 py-7 sm:px-8 sm:py-9 lg:px-12 lg:py-11">
+        <div className="mb-6 flex flex-col items-center text-center lg:hidden">
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-[#E2E8F0] bg-white p-2 shadow-sm">
+            <Image src="/logo-catedral-de-vida.png" alt="Emblema de Exploradores del Rey, Destacamento número 1" width={72} height={72} priority className="h-[72px] w-[72px] object-contain" />
+          </div>
+          <p className="mt-3 text-lg font-extrabold text-[#0F172A]">Exploradores del Rey</p>
+          <p className="text-sm font-semibold text-[#64748B]">Destacamento #1</p>
+        </div>
+
+        <div className="mx-auto w-full max-w-[440px]">
+          <div>
+            <h1 className="text-3xl font-extrabold text-[#0F172A]">{mode === "signin" ? "Iniciar sesión" : "Crear cuenta"}</h1>
+            <p className="mt-2 text-sm leading-6 text-[#64748B]">
+              {mode === "signin" ? "Ingresa con tu correo electrónico o nombre de usuario." : "Elige tu tipo de cuenta y valida tu código."}
+            </p>
+          </div>
+
+      <form onSubmit={mode === "signin" ? handleSignIn : handleSignUp} className="mt-7 flex flex-col gap-4" aria-busy={loading}>
         {mode === "signup" && (
           <>
             <label className="flex flex-col gap-2 text-sm text-gray-500">
@@ -432,7 +451,7 @@ const AuthBox = () => {
               </fieldset>
             )}
             <label className="flex flex-col gap-2 text-sm text-gray-500">
-              Genero
+              Género
               <select
                 value={gender}
                 onChange={(event) => setGender(event.target.value)}
@@ -456,7 +475,7 @@ const AuthBox = () => {
                 setOpenPicker={setOpenDatePicker}
               />
               <label className="flex flex-col gap-2 text-sm text-gray-500">
-                Numero de telefono
+                Número de teléfono
                 <input
                   value={phone}
                   onChange={(event) => setPhone(event.target.value)}
@@ -468,7 +487,7 @@ const AuthBox = () => {
               </label>
             </div>
             <label className="flex flex-col gap-2 text-sm text-gray-500">
-              Direccion de residencia
+              Dirección de residencia
               <input
                 value={address}
                 onChange={(event) => setAddress(event.target.value)}
@@ -505,33 +524,58 @@ const AuthBox = () => {
             )}
           </>
         )}
-        <label className="flex flex-col gap-2 text-sm text-gray-500">
-          {mode === "signin" ? "Correo o usuario" : "Correo"}
-          <input
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            className={inputClass}
-            placeholder={mode === "signin" ? "Correo o usuario" : "correo@ejemplo.com"}
-            type={mode === "signin" ? "text" : "email"}
-            required
-          />
-        </label>
-        <label className="flex flex-col gap-2 text-sm text-gray-500">
-          Contrasena
-          <input
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className={inputClass}
-            placeholder="Minimo 6 caracteres"
-            type="password"
-            minLength={6}
-            required
-          />
-        </label>
+        <div>
+          <label htmlFor="auth-identifier" className="mb-2 block text-sm font-semibold text-[#334155]">
+            {mode === "signin" ? "Correo o usuario" : "Correo"}
+          </label>
+          <div className="relative">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#94A3B8]" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="m4 6 8 6 8-6"/></svg>
+            <input
+              id="auth-identifier"
+              value={email}
+              onChange={(event) => { setEmail(event.target.value); if (error) resetMessages(); }}
+              className={`${inputClass} w-full pl-12 ${error && mode === "signin" ? "border-[#DC2626] focus:border-[#DC2626] focus:ring-red-100" : ""}`}
+              placeholder={mode === "signin" ? "Correo electrónico o nombre de usuario" : "correo@ejemplo.com"}
+              type={mode === "signin" ? "text" : "email"}
+              autoComplete="username"
+              aria-invalid={Boolean(error) || undefined}
+              aria-describedby={error ? "auth-alert" : undefined}
+              disabled={loading}
+              required
+            />
+          </div>
+        </div>
+        <div>
+          <label htmlFor="auth-password" className="mb-2 block text-sm font-semibold text-[#334155]">Contraseña</label>
+          <div className="relative">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#94A3B8]" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+            <input
+              id="auth-password"
+              value={password}
+              onChange={(event) => { setPassword(event.target.value); if (error) resetMessages(); }}
+              className={`${inputClass} w-full pl-12 pr-12 ${error && mode === "signin" ? "border-[#DC2626] focus:border-[#DC2626] focus:ring-red-100" : ""}`}
+              placeholder="Mínimo 6 caracteres"
+              type={showPassword ? "text" : "password"}
+              autoComplete={mode === "signin" ? "current-password" : "new-password"}
+              minLength={6}
+              aria-invalid={Boolean(error) || undefined}
+              aria-describedby={error ? "auth-alert" : undefined}
+              disabled={loading}
+              required
+            />
+            <button type="button" onClick={() => setShowPassword((visible) => !visible)} className="absolute right-1 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-[#64748B] hover:bg-[#EAF3FB] hover:text-[#07569F] focus:outline-none focus:ring-4 focus:ring-[rgba(7,86,159,0.18)]" aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"} aria-pressed={showPassword}>
+              {showPassword ? (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5" aria-hidden="true"><path d="m3 3 18 18"/><path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/><path d="M9.9 4.2A10.8 10.8 0 0 1 12 4c5.5 0 9 5 9 5a15 15 0 0 1-2.2 2.7M6.6 6.6C4.4 8 3 10 3 10s3.5 5 9 5a10.7 10.7 0 0 0 3-.4"/></svg>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5" aria-hidden="true"><path d="M3 12s3.5-5 9-5 9 5 9 5-3.5 5-9 5-9-5-9-5Z"/><circle cx="12" cy="12" r="2.5"/></svg>
+              )}
+            </button>
+          </div>
+        </div>
         {mode === "signup" && (
           <div className="flex flex-col gap-2">
             <label className="flex flex-col gap-2 text-sm text-gray-500">
-              Codigo de acceso
+              Código de acceso
               <input
                 value={code}
                 onChange={(event) => setCode(event.target.value.toLowerCase())}
@@ -548,20 +592,30 @@ const AuthBox = () => {
               disabled={requestingCode}
               className="ring-1 ring-lamaSkyLight text-lamaSky rounded-md text-base p-3 disabled:opacity-60"
             >
-              {requestingCode ? "Solicitando..." : "Solicitar codigo"}
+              {requestingCode ? "Solicitando…" : "Solicitar código"}
             </button>
           </div>
         )}
 
-        {error && <p className="text-xs text-lamaPurple">{error}</p>}
-        {notice && <p className="text-xs text-lamaBrown">{notice}</p>}
+        {error && (
+          <div id="auth-alert" role="alert" aria-live="assertive" className="flex items-start gap-3 rounded-xl border border-red-200 bg-[#FEF2F2] px-4 py-3 text-sm text-red-700">
+            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-red-400 text-xs font-bold" aria-hidden="true">!</span>
+            <span>{error}</span>
+          </div>
+        )}
+        {notice && (
+          <div role="status" aria-live="polite" className="flex items-start gap-3 rounded-xl border border-green-200 bg-[#DCFCE7] px-4 py-3 text-sm text-green-800">
+            <span aria-hidden="true">✓</span><span>{notice}</span>
+          </div>
+        )}
 
         <button
           type="submit"
           disabled={loading}
-          className="bg-lamaSky text-white rounded-md text-base p-3 disabled:opacity-60"
+          className="flex min-h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-[#07569F] px-5 text-sm font-bold text-white shadow-sm transition hover:bg-[#064A89] active:bg-[#053D72] focus:outline-none focus:ring-4 focus:ring-[rgba(7,86,159,0.18)] disabled:cursor-wait disabled:opacity-65"
         >
-          {loading ? "Procesando..." : mode === "signin" ? "Iniciar sesion" : "Crear cuenta"}
+          {loading && <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden="true" />}
+          {loading ? (mode === "signin" ? "Iniciando sesión…" : "Creando cuenta…") : mode === "signin" ? "Iniciar sesión" : "Crear cuenta"}
         </button>
       </form>
 
@@ -584,21 +638,23 @@ const AuthBox = () => {
       )} */}
 
       {mode === "signin" ? (
-        <p className="text-base text-gray-500 text-center">
-          No tienes cuenta?{" "}
-          <button type="button" onClick={() => { resetMessages(); setMode("signup"); }} className="text-lamaSky font-medium">
+        <p className="mt-6 text-center text-sm text-[#64748B]">
+          ¿No tienes una cuenta?{" "}
+          <button type="button" onClick={() => { resetMessages(); setMode("signup"); }} className="font-semibold text-[#07569F] hover:underline focus:outline-none focus:ring-4 focus:ring-[rgba(7,86,159,0.18)]">
             Crea una
           </button>
         </p>
       ) : (
-        <p className="text-base text-gray-500 text-center">
-          Ya tienes cuenta?{" "}
-          <button type="button" onClick={() => { resetMessages(); setMode("signin"); }} className="text-lamaSky font-medium">
-            Inicia sesion
+        <p className="mt-6 text-center text-sm text-[#64748B]">
+          ¿Ya tienes una cuenta?{" "}
+          <button type="button" onClick={() => { resetMessages(); setMode("signin"); }} className="font-semibold text-[#07569F] hover:underline focus:outline-none focus:ring-4 focus:ring-[rgba(7,86,159,0.18)]">
+            Inicia sesión
           </button>
         </p>
       )}
-    </div>
+        </div>
+      </div>
+    </section>
   );
 };
 

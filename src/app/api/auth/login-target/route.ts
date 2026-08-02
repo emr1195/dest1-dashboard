@@ -18,19 +18,19 @@ export async function POST(req: Request) {
   const plainPassword = String(password || "");
 
   if (!identifier || !plainPassword) {
-    return NextResponse.json({ message: "Correo o usuario y contrasena son requeridos." }, { status: 400 });
+    return NextResponse.json({ message: "El correo o usuario y la contraseña son obligatorios." }, { status: 400 });
   }
 
   const authUser = await findAuthUserByIdentifier(identifier);
 
   if (!authUser?.passwordHash || !verifyPassword(plainPassword, authUser.passwordHash)) {
-    return NextResponse.json({ message: "Correo, usuario o contrasena incorrectos." }, { status: 401 });
+    return NextResponse.json({ message: "El correo o la contraseña no son correctos." }, { status: 401 });
   }
 
   const role = adminEmails.includes(authUser.email.toLowerCase()) ? "admin" : authUser.role;
 
   if (!isAppRole(role)) {
-    return NextResponse.json({ message: "La cuenta no tiene un rol valido." }, { status: 403 });
+    return NextResponse.json({ message: "La cuenta no tiene un rol válido." }, { status: 403 });
   }
 
   return NextResponse.json({

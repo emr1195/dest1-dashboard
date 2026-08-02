@@ -2,9 +2,9 @@ import AuthBox from "./AuthBox";
 
 const LoginPage = async () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#EDF9FD] px-4 py-0">
+    <main className="flex min-h-screen items-center justify-center bg-[#F1F5F9] px-4 py-5 sm:py-8">
       <AuthBox />
-    </div>
+    </main>
   );
 };
 
