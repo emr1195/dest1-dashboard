@@ -1,7 +1,65 @@
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import FormModal from "./FormModal";
-import { ReactNode } from "react";
+import { cache, ReactNode } from "react";
+
+const getSubjectFormData = cache(async () => ({
+  teachers: await prisma.lider.findMany({
+    select: { id: true, name: true, surname: true },
+  }),
+}));
+
+const getClassFormData = cache(async () => {
+  const [grades, teachers] = await Promise.all([
+    prisma.grade.findMany({ select: { id: true, level: true } }),
+    prisma.lider.findMany({ select: { id: true, name: true, surname: true } }),
+  ]);
+
+  return { teachers, grades };
+});
+
+const getTeacherFormData = cache(async () => ({
+  subjects: await prisma.subject.findMany({
+    select: { id: true, name: true },
+  }),
+}));
+
+const getStudentFormData = cache(async () => {
+  const [grades, classes] = await Promise.all([
+    prisma.grade.findMany({ select: { id: true, level: true } }),
+    prisma.class.findMany({
+      include: { _count: { select: { students: true } } },
+    }),
+  ]);
+
+  return { classes, grades };
+});
+
+const getAssignmentFormData = cache(
+  async (role?: string, currentUserId?: string) => {
+    const [lessons, assignmentCreators] = await Promise.all([
+      prisma.lesson.findMany({
+        where: role === "teacher" ? { teacherId: currentUserId! } : {},
+        select: { id: true, name: true },
+      }),
+      role === "admin"
+        ? prisma.authUser.findMany({
+            where: { role: { in: ["admin", "teacher"] } },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+              leaderGroup: true,
+            },
+            orderBy: [{ role: "asc" }, { name: "asc" }],
+          })
+        : Promise.resolve([]),
+    ]);
+
+    return { lessons, assignmentCreators };
+  }
+);
 
 export type FormContainerProps = {
   table:
@@ -40,81 +98,46 @@ const FormContainer = async ({
   if (type !== "delete") {
     switch (table) {
       case "subject": {
-        const teachers = await prisma.lider.findMany({
-          select: { id: true, name: true, surname: true },
-        });
-        relatedData = { teachers };
+        relatedData = await getSubjectFormData();
         break;
       }
       case "class": {
-        const grades = await prisma.grade.findMany({
-          select: { id: true, level: true },
-        });
-        const teachers = await prisma.lider.findMany({
-          select: { id: true, name: true, surname: true },
-        });
-        relatedData = { teachers, grades };
+        relatedData = await getClassFormData();
         break;
       }
       case "teacher": {
-        const subjects = await prisma.subject.findMany({
-          select: { id: true, name: true },
-        });
-        relatedData = { subjects };
+        relatedData = await getTeacherFormData();
         break;
       }
       case "student": {
-        const grades = await prisma.grade.findMany({
-          select: { id: true, level: true },
-        });
-        const classes = await prisma.class.findMany({
-          include: { _count: { select: { students: true } } },
-        });
-        relatedData = { classes, grades };
+        relatedData = await getStudentFormData();
         break;
       }
       case "exam":
       case "assignment": {
-        const lessons = await prisma.lesson.findMany({
-          where: {
-            ...(role === "teacher" ? { teacherId: currentUserId! } : {}),
-          },
-          select: { id: true, name: true },
-        });
-        const assignmentCreators =
-          role === "admin"
-            ? await prisma.authUser.findMany({
-                where: { role: { in: ["admin", "teacher"] } },
-                select: { id: true, name: true, email: true, role: true },
-                orderBy: [{ role: "asc" }, { name: "asc" }],
-              })
-            : [];
+        const { lessons, assignmentCreators } = await getAssignmentFormData(
+          role,
+          currentUserId
+        );
         let initialAssignmentGroup: string | undefined;
 
         if (table === "assignment" && role === "admin" && type === "update") {
           if (data?.audience === "all") {
             initialAssignmentGroup = "all";
-          } else if (data?.lessonId) {
-            const lessonOwner = await prisma.lesson.findUnique({
-              where: { id: data.lessonId },
-              select: {
-                teacher: { select: { id: true, email: true } },
-              },
-            });
-            const teacherAccount = lessonOwner
-              ? await prisma.authUser.findFirst({
-                  where: {
-                    role: "teacher",
-                    OR: [
-                      { id: lessonOwner.teacher.id },
-                      ...(lessonOwner.teacher.email
-                        ? [{ email: lessonOwner.teacher.email }]
-                        : []),
-                    ],
-                  },
-                  select: { leaderGroup: true },
-                })
-              : null;
+          } else if (data?.lesson?.teacher) {
+            const lessonOwner = data.lesson.teacher as {
+              id?: string;
+              email?: string | null;
+            };
+            const ownerEmail = lessonOwner.email?.toLowerCase();
+            const teacherAccount = assignmentCreators.find(
+              (account) =>
+                account.role === "teacher" &&
+                (account.id === lessonOwner.id ||
+                  Boolean(
+                    ownerEmail && account.email?.toLowerCase() === ownerEmail
+                  ))
+            );
             initialAssignmentGroup = teacherAccount?.leaderGroup || undefined;
           }
         }

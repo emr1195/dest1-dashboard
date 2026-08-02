@@ -1,6 +1,5 @@
 import Link from "next/link";
 import AttendanceChart from "./AttendanceChart";
-import { syncFirebaseAttendance } from "@/lib/firebaseAttendanceSync";
 import prisma from "@/lib/prisma";
 import {
   addDaysToDateKey,
@@ -14,12 +13,6 @@ const AttendanceChartContainer = async ({
 }: {
   weekOffset?: number;
 } = {}) => {
-  try {
-    await syncFirebaseAttendance();
-  } catch (error) {
-    console.error("No se pudo sincronizar la asistencia para la grafica.", error);
-  }
-
   const referenceDateKey = addDaysToDateKey(getTodayDateKey(), weekOffset * 7);
   const weekStartKey = getMondayDateKey(referenceDateKey);
   const weekStart = dateKeyToUtcDate(weekStartKey);

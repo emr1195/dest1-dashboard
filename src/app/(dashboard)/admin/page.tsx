@@ -4,6 +4,7 @@ import CountChartContainer from "@/components/CountChartContainer";
 import DashboardRefreshButton from "@/components/DashboardRefreshButton";
 import EventCalendarContainer from "@/components/EventCalendarContainer";
 import FinanceChart from "@/components/FinanceChart";
+import FirebaseAttendanceSync from "@/components/FirebaseAttendanceSync";
 import UserCard from "@/components/UserCard";
 import { currentFinanceYearRange, getFinanceChartData } from "@/lib/finances";
 import prisma from "@/lib/prisma";
@@ -26,6 +27,7 @@ const AdminPage = async ({ searchParams }: { searchParams: { [keys: string]: str
 
   return (
     <main className="min-h-full bg-[#F3F6FA] px-4 py-5 sm:px-6 lg:px-8">
+      <FirebaseAttendanceSync />
       <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-[#1565C0]">Administración</p>

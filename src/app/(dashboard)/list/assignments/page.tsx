@@ -304,7 +304,7 @@ const AssignmentListPage = async ({
         lesson: {
           select: {
             subject: { select: { name: true } },
-            teacher: { select: { id: true, name: true, surname: true } },
+            teacher: { select: { id: true, name: true, surname: true, email: true } },
             class: { select: { name: true, _count: { select: { students: true } } } },
           },
         },

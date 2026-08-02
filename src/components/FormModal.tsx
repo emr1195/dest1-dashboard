@@ -15,6 +15,7 @@ import {
   deleteTeacher,
 } from "@/lib/actions";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import {
   Dispatch,
@@ -27,12 +28,20 @@ import {
 import { useFormState, useFormStatus } from "react-dom";
 import { toast } from "react-toastify";
 import { FormContainerProps } from "./FormContainer";
-import AssignmentForm from "./forms/AssignmentForm";
-import ClassForm from "./forms/ClassForm";
-import ExamForm from "./forms/ExamForm";
-import StudentForm from "./forms/StudentForm";
-import SubjectForm from "./forms/SubjectForm";
-import TeacherForm from "./forms/TeacherForm";
+
+const FormLoading = () => (
+  <div className="flex min-h-48 items-center justify-center p-8" role="status">
+    <span className="h-7 w-7 animate-spin rounded-full border-2 border-[#CBD5E1] border-t-[var(--primary)]" aria-hidden="true" />
+    <span className="sr-only">Cargando formulario</span>
+  </div>
+);
+
+const AssignmentForm = dynamic(() => import("./forms/AssignmentForm"), { loading: FormLoading });
+const ClassForm = dynamic(() => import("./forms/ClassForm"), { loading: FormLoading });
+const ExamForm = dynamic(() => import("./forms/ExamForm"), { loading: FormLoading });
+const StudentForm = dynamic(() => import("./forms/StudentForm"), { loading: FormLoading });
+const SubjectForm = dynamic(() => import("./forms/SubjectForm"), { loading: FormLoading });
+const TeacherForm = dynamic(() => import("./forms/TeacherForm"), { loading: FormLoading });
 
 const deleteActionMap = {
   subject: deleteSubject,

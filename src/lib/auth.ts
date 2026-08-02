@@ -7,6 +7,7 @@ import { findAuthUserByIdentifier } from "./credentialAccount";
 import prisma from "./prisma";
 import { verifyPassword } from "./password";
 import { AppRole, isAppRole } from "./roles";
+import { cache } from "react";
 
 export type UserRole = AppRole;
 
@@ -180,7 +181,7 @@ export const authOptions: NextAuthOptions = {
   },
 };
 
-export const getCurrentUser = async () => {
+export const getCurrentUser = cache(async () => {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.email || !session.user.role || !session.user.id) {
@@ -194,6 +195,6 @@ export const getCurrentUser = async () => {
     image: session.user.image,
     role: session.user.role,
   };
-};
+});
 
 
