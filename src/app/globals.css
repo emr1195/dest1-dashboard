@@ -203,30 +203,25 @@
 }
 
 .planner-tabs {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   min-width: 0;
-  overflow-x: auto;
-  padding: 2px 2px 4px;
-  scrollbar-width: none;
-}
-
-.planner-tabs::-webkit-scrollbar {
-  display: none;
+  padding: 0;
 }
 
 .planner-tab {
   align-items: center;
   border-radius: 11px;
   display: inline-flex;
-  flex: 0 0 174px;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: 800;
   gap: 8px;
   justify-content: center;
   min-height: 50px;
   min-width: 0;
-  padding: 0 10px;
+  padding: 0 8px;
+  width: 100%;
   transition: background-color 160ms ease, border-color 160ms ease,
     box-shadow 160ms ease, color 160ms ease, transform 160ms ease;
 }
@@ -235,6 +230,7 @@
   background: var(--primary-soft);
   border: 1px solid #9bc2e4;
   color: var(--primary);
+  grid-column: 1 / -1;
 }
 
 .planner-general-tab:hover {
@@ -321,6 +317,8 @@
 
   .planner-tab {
     flex: initial;
+    font-size: 0.875rem;
+    padding-inline: 10px;
     width: 100%;
   }
 }
@@ -356,6 +354,14 @@
 @layer base {
   html {
     font-size: 17px;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  body {
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: clip;
   }
 
   img[width="14"],

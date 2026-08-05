@@ -79,12 +79,12 @@ const LeadersToolbar = ({
 
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <label className="sr-only" htmlFor="leaders-group">Filtrar por grupo</label>
-          <select id="leaders-group" value={group} onChange={(event) => updateParams({ group: event.target.value })} className="h-11 min-w-[170px] rounded-xl border border-[var(--border-default)] bg-white px-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--primary)] focus:ring-4 focus:ring-[var(--focus-ring)]">
+          <select id="leaders-group" value={group} onChange={(event) => updateParams({ group: event.target.value })} className="h-11 min-w-0 w-full rounded-xl border border-[var(--border-default)] bg-white px-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--primary)] focus:ring-4 focus:ring-[var(--focus-ring)] sm:w-auto sm:min-w-[170px]">
             <option value="">Todos los grupos</option>
             {groups.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
           <label className="sr-only" htmlFor="leaders-rank">Filtrar por rango</label>
-          <select id="leaders-rank" value={rank} onChange={(event) => updateParams({ rank: event.target.value })} className="h-11 min-w-[190px] rounded-xl border border-[var(--border-default)] bg-white px-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--primary)] focus:ring-4 focus:ring-[var(--focus-ring)]">
+          <select id="leaders-rank" value={rank} onChange={(event) => updateParams({ rank: event.target.value })} className="h-11 min-w-0 w-full rounded-xl border border-[var(--border-default)] bg-white px-3 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--primary)] focus:ring-4 focus:ring-[var(--focus-ring)] sm:w-auto sm:min-w-[190px]">
             <option value="">Todos los rangos</option>
             {ranks.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>

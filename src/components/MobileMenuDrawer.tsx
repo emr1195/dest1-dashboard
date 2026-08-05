@@ -48,7 +48,7 @@ const MobileMenuDrawer = ({ children }: { children: ReactNode }) => {
         ref={triggerRef}
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed left-3 top-3 z-[70] grid h-11 w-11 place-items-center rounded-xl bg-white text-[var(--sidebar-text)] shadow-md ring-1 ring-[var(--sidebar-border)] transition hover:bg-[var(--sidebar-hover)] focus:outline-none focus:ring-4 focus:ring-[var(--sidebar-focus)] md:hidden"
+        className="fixed left-3 top-3 z-[70] grid h-11 w-11 place-items-center rounded-xl bg-white text-[var(--sidebar-text)] shadow-md ring-1 ring-[var(--sidebar-border)] transition hover:bg-[var(--sidebar-hover)] focus:outline-none focus:ring-4 focus:ring-[var(--sidebar-focus)] xl:hidden"
         aria-label="Abrir menú principal"
         aria-expanded={open}
         aria-controls="mobile-sidebar"
@@ -58,7 +58,7 @@ const MobileMenuDrawer = ({ children }: { children: ReactNode }) => {
         </svg>
       </button>
 
-      <div className={`fixed inset-0 z-[80] md:hidden ${open ? "pointer-events-auto" : "pointer-events-none"}`} aria-hidden={!open}>
+      <div className={`fixed inset-0 z-[80] xl:hidden ${open ? "pointer-events-auto" : "pointer-events-none"}`} aria-hidden={!open}>
         <button
           type="button"
           tabIndex={open ? 0 : -1}
@@ -70,7 +70,7 @@ const MobileMenuDrawer = ({ children }: { children: ReactNode }) => {
           <aside
             id="mobile-sidebar"
             aria-label="Menú principal móvil"
-            className={`sidebar-scrollbar relative flex h-full w-[88vw] max-w-[320px] flex-col overflow-y-auto border-r border-[var(--sidebar-border)] bg-[var(--sidebar-background)] shadow-2xl transition-transform duration-[240ms] ${open ? "translate-x-0" : "-translate-x-full"}`}
+            className={`relative flex h-full w-[88vw] max-w-[320px] flex-col overflow-hidden border-r border-[var(--sidebar-border)] bg-[var(--sidebar-background)] shadow-2xl transition-transform duration-[240ms] ${open ? "translate-x-0" : "-translate-x-full"}`}
             onClick={(event) => {
               const target = event.target as HTMLElement;
               if (target.closest("a") || target.closest("button[type='submit']")) closeDrawer(false);

@@ -357,7 +357,7 @@ const AssignmentListPage = async ({
   };
 
   return (
-    <div className="min-h-full flex-1 bg-[#f4f7fb] p-3 sm:p-4 lg:p-6">
+    <div className="min-h-full min-w-0 flex-1 overflow-x-clip bg-[#f4f7fb] p-3 sm:p-4 lg:p-6">
       <header className="mb-5 rounded-2xl border border-[var(--border-soft)] bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.05)] sm:p-6">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div>
@@ -427,7 +427,7 @@ const AssignmentListPage = async ({
           }));
 
           return (
-            <article id={`task-${assignment.id}`} key={assignment.id} className="scroll-mt-24 overflow-visible rounded-2xl border border-[var(--border-soft)] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+            <article id={`task-${assignment.id}`} key={assignment.id} className="min-w-0 scroll-mt-24 overflow-visible rounded-2xl border border-[var(--border-soft)] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
               <div className="flex flex-col gap-5 p-4 sm:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                   {awardImage ? <Image src={awardImage.filePath} alt={`Portada de ${title}`} width={84} height={84} unoptimized className="h-20 w-20 shrink-0 rounded-xl object-cover sm:h-[84px] sm:w-[84px]" /> : <span className="grid h-20 w-20 shrink-0 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-9 w-9" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z" /><path d="M8 7h8M8 11h8M8 15h5" /></svg></span>}
