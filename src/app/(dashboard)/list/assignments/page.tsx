@@ -173,8 +173,8 @@ const getDataUrlSize = (path: string) => {
 };
 
 const AssignmentDocumentsList = ({ assignment, files, canManage, returnHref }: { assignment: AssignmentList; files: AssignmentFile[]; canManage: boolean; returnHref: string }) => (
-  <section aria-labelledby={`materials-${assignment.id}`}>
-    <h3 id={`materials-${assignment.id}`} className="text-lg font-extrabold text-[var(--text-primary)]">Material de la tarea</h3>
+  <section aria-labelledby={`materials-${assignment.id}`} className="min-w-0 max-w-full">
+    <h3 id={`materials-${assignment.id}`} className="break-words text-lg font-extrabold text-[var(--text-primary)]">Material de la tarea</h3>
     {files.length ? (
       <div className="mt-4 space-y-2">{files.map((file) => (
         <div
@@ -204,10 +204,10 @@ const AssignmentDocumentsList = ({ assignment, files, canManage, returnHref }: {
         </div>
       ))}</div>
     ) : (
-      <div className="mt-4 flex flex-col items-center rounded-xl border border-dashed border-[var(--border-default)] bg-[var(--surface-secondary)] p-6 text-center">
+      <div className="mt-4 flex min-w-0 max-w-full flex-col items-center overflow-hidden rounded-xl border border-dashed border-[var(--border-default)] bg-[var(--surface-secondary)] p-4 text-center sm:p-6">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-7 w-7 text-[var(--text-secondary)]" aria-hidden="true"><path d="m21.4 11.6-8.5 8.5a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5" /></svg>
-        <p className="mt-3 font-bold text-[var(--text-primary)]">No hay documentos adjuntos</p><p className="mt-1 text-sm text-[var(--text-secondary)]">Esta tarea no tiene archivos de apoyo.</p>
-        {canManage && <div className="mt-4"><FormContainer table="assignment" type="update" data={assignment} triggerLabel="Agregar documento" triggerClassName="inline-flex min-h-11 items-center rounded-xl bg-[var(--primary)] px-4 text-sm font-bold text-white hover:bg-[var(--primary-hover)] focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)]" /></div>}
+        <p className="mt-3 max-w-full break-words font-bold text-[var(--text-primary)]">No hay documentos adjuntos</p><p className="mt-1 max-w-full break-words text-sm text-[var(--text-secondary)]">Esta tarea no tiene archivos de apoyo.</p>
+        {canManage && <div className="mt-4 max-w-full [&_button]:max-w-full [&_button]:whitespace-normal"><FormContainer table="assignment" type="update" data={assignment} triggerLabel="Agregar documento" triggerClassName="inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--primary)] px-4 text-center text-sm font-bold text-white hover:bg-[var(--primary-hover)] focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)]" /></div>}
       </div>
     )}
   </section>
@@ -427,7 +427,7 @@ const AssignmentListPage = async ({
           }));
 
           return (
-            <article id={`task-${assignment.id}`} key={assignment.id} className="min-w-0 scroll-mt-24 overflow-visible rounded-2xl border border-[var(--border-soft)] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+            <article id={`task-${assignment.id}`} key={assignment.id} className="min-w-0 max-w-full scroll-mt-24 overflow-hidden rounded-2xl border border-[var(--border-soft)] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
               <div className="flex flex-col gap-5 p-4 sm:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                   {awardImage ? <Image src={awardImage.filePath} alt={`Portada de ${title}`} width={84} height={84} unoptimized className="h-20 w-20 shrink-0 rounded-xl object-cover sm:h-[84px] sm:w-[84px]" /> : <span className="grid h-20 w-20 shrink-0 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-9 w-9" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z" /><path d="M8 7h8M8 11h8M8 15h5" /></svg></span>}
@@ -461,7 +461,7 @@ const AssignmentListPage = async ({
                   />
                 </div>
               ) : (
-                <div className="grid gap-6 p-4 sm:p-6 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.6fr)]">
+                <div className="grid min-w-0 max-w-full gap-6 p-4 sm:p-6 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.6fr)]">
                   <AssignmentDocumentsList assignment={assignment} files={materialFiles} canManage={canManageAssignment} returnHref={taskReturnHref} />
                   <TaskSubmissionsList items={submissionItems} />
                 </div>

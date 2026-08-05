@@ -364,6 +364,13 @@
     overflow-x: clip;
   }
 
+  input,
+  select,
+  textarea {
+    max-width: 100%;
+    min-width: 0;
+  }
+
   img[width="14"],
   img[height="14"] {
     width: 16px;
