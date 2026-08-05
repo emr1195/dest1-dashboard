@@ -6,6 +6,7 @@ import TaskSubmissionsList, { TaskSubmissionItem } from "@/components/assignment
 import TasksToolbar from "@/components/assignments/TasksToolbar";
 import FormContainer from "@/components/FormContainer";
 import TasksPagination from "@/components/assignments/TasksPagination";
+import { withAssignmentReturnHref } from "@/lib/assignmentNavigation";
 import { getCurrentUser } from "@/lib/auth";
 import { translateDisplayText } from "@/lib/displayText";
 import { getAccessibleStudentProfileIdsForParent } from "@/lib/guardianLinks";
@@ -44,7 +45,8 @@ const toSubmissionFiles = (
   submissions: AssignmentList["submissions"],
   dueDate: Date,
   assignmentId: number,
-  reviewLinks: boolean
+  reviewLinks: boolean,
+  returnHref: string
 ): UploadedAssignmentFile[] =>
   submissions.map((submission) => {
     const deliveredOnTime = submission.updatedAt <= dueDate;
@@ -53,9 +55,12 @@ const toSubmissionFiles = (
       id: submission.id,
       fileName: submission.fileName,
       filePath: submission.filePath,
-      href: reviewLinks
-        ? `/list/assignments/${assignmentId}/submissions/${submission.id}`
-        : `/list/assignments/${assignmentId}/submissions/${submission.id}/view`,
+      href: withAssignmentReturnHref(
+        reviewLinks
+          ? `/list/assignments/${assignmentId}/submissions/${submission.id}`
+          : `/list/assignments/${assignmentId}/submissions/${submission.id}/view`,
+        returnHref
+      ),
       deleteUrl: reviewLinks ? undefined : `/api/assignment-submissions?id=${submission.id}`,
       ownerName: `${submission.student.name} ${submission.student.surname}`,
       detail: `Subida: ${formatDeadline(submission.updatedAt)}`,
@@ -167,7 +172,7 @@ const getDataUrlSize = (path: string) => {
   return bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-const AssignmentDocumentsList = ({ assignment, files, canManage }: { assignment: AssignmentList; files: AssignmentFile[]; canManage: boolean }) => (
+const AssignmentDocumentsList = ({ assignment, files, canManage, returnHref }: { assignment: AssignmentList; files: AssignmentFile[]; canManage: boolean; returnHref: string }) => (
   <section aria-labelledby={`materials-${assignment.id}`}>
     <h3 id={`materials-${assignment.id}`} className="text-lg font-extrabold text-[var(--text-primary)]">Material de la tarea</h3>
     {files.length ? (
@@ -189,7 +194,7 @@ const AssignmentDocumentsList = ({ assignment, files, canManage }: { assignment:
           </span>
           <div className="ml-auto flex shrink-0 items-center gap-1 sm:ml-0">
             <Link
-              href={`/list/assignments/${assignment.id}?file=${file.id}`}
+              href={withAssignmentReturnHref(`/list/assignments/${assignment.id}?file=${file.id}`, returnHref)}
               className="inline-flex min-h-10 items-center rounded-lg px-3 text-xs font-bold text-[var(--primary)] hover:bg-[var(--primary-soft)] focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)]"
             >
               Ver
@@ -341,6 +346,16 @@ const AssignmentListPage = async ({
     return `/list/assignments?${params.toString()}`;
   };
 
+  const getTaskReturnHref = (assignmentId: number) => {
+    const params = new URLSearchParams();
+    Object.entries(searchParams).forEach(([key, value]) => {
+      if (value) params.set(key, value);
+    });
+    const query = params.toString();
+
+    return `/list/assignments${query ? `?${query}` : ""}#task-${assignmentId}`;
+  };
+
   return (
     <div className="min-h-full flex-1 bg-[#f4f7fb] p-3 sm:p-4 lg:p-6">
       <header className="mb-5 rounded-2xl border border-[var(--border-soft)] bg-white p-4 shadow-[0_8px_24px_rgba(15,23,42,0.05)] sm:p-6">
@@ -374,13 +389,15 @@ const AssignmentListPage = async ({
 
       <div className="flex flex-col gap-5">
         {data.map((assignment) => {
+          const taskReturnHref = getTaskReturnHref(assignment.id);
           const awardImage = assignment.files.find(isAwardImageFile);
           const materialFiles = assignment.files.filter((file) => !isAwardImageFile(file));
           const responseFiles = toSubmissionFiles(
             assignment.submissions,
             assignment.dueDate,
             assignment.id,
-            role === "teacher" || role === "admin"
+            role === "teacher" || role === "admin",
+            taskReturnHref
           );
           const title = translateDisplayText(assignment.title);
           const deadlineStatus = getDeadlineStatus(assignment.dueDate);
@@ -397,7 +414,12 @@ const AssignmentListPage = async ({
             id: submission.id,
             studentName: `${submission.student.name} ${submission.student.surname}`,
             fileName: submission.fileName,
-            href: role === "teacher" || role === "admin" ? `/list/assignments/${assignment.id}/submissions/${submission.id}` : `/list/assignments/${assignment.id}/submissions/${submission.id}/view`,
+            href: withAssignmentReturnHref(
+              role === "teacher" || role === "admin"
+                ? `/list/assignments/${assignment.id}/submissions/${submission.id}`
+                : `/list/assignments/${assignment.id}/submissions/${submission.id}/view`,
+              taskReturnHref
+            ),
             submittedAt: submission.updatedAt.toISOString(),
             submittedLabel: formatDeadline(submission.updatedAt),
             timing: submission.updatedAt <= assignment.dueDate ? "on-time" : "late",
@@ -405,7 +427,7 @@ const AssignmentListPage = async ({
           }));
 
           return (
-            <article key={assignment.id} className="overflow-visible rounded-2xl border border-[var(--border-soft)] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
+            <article id={`task-${assignment.id}`} key={assignment.id} className="scroll-mt-24 overflow-visible rounded-2xl border border-[var(--border-soft)] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
               <div className="flex flex-col gap-5 p-4 sm:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                   {awardImage ? <Image src={awardImage.filePath} alt={`Portada de ${title}`} width={84} height={84} unoptimized className="h-20 w-20 shrink-0 rounded-xl object-cover sm:h-[84px] sm:w-[84px]" /> : <span className="grid h-20 w-20 shrink-0 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-9 w-9" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z" /><path d="M8 7h8M8 11h8M8 15h5" /></svg></span>}
@@ -425,7 +447,7 @@ const AssignmentListPage = async ({
 
               {role === "student" ? (
                 <div className="flex flex-col gap-6 p-4 sm:p-6">
-                  <AssignmentDocumentsList assignment={assignment} files={materialFiles} canManage={false} />
+                  <AssignmentDocumentsList assignment={assignment} files={materialFiles} canManage={false} returnHref={taskReturnHref} />
                   <AssignmentUploadBox
                     assignmentId={assignment.id}
                     uploadUrl="/api/assignment-submissions"
@@ -440,7 +462,7 @@ const AssignmentListPage = async ({
                 </div>
               ) : (
                 <div className="grid gap-6 p-4 sm:p-6 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.6fr)]">
-                  <AssignmentDocumentsList assignment={assignment} files={materialFiles} canManage={canManageAssignment} />
+                  <AssignmentDocumentsList assignment={assignment} files={materialFiles} canManage={canManageAssignment} returnHref={taskReturnHref} />
                   <TaskSubmissionsList items={submissionItems} />
                 </div>
               )}

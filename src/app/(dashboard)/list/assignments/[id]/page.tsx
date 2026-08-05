@@ -1,4 +1,5 @@
 import { translateDisplayText } from "@/lib/displayText";
+import { getAssignmentReturnHref } from "@/lib/assignmentNavigation";
 import {
   canPreviewFile,
   getOfficePreviewUrl,
@@ -16,7 +17,7 @@ const AssignmentDetailPage = async ({
   searchParams,
 }: {
   params: { id: string };
-  searchParams: { file?: string };
+  searchParams: { file?: string; returnTo?: string };
 }) => {
   const assignmentId = Number(params.id);
 
@@ -41,6 +42,12 @@ const AssignmentDetailPage = async ({
   });
 
   if (!assignment) notFound();
+
+  const returnHref = getAssignmentReturnHref(
+    searchParams.returnTo,
+    assignmentId,
+    "/list/assignments"
+  );
 
   const documentFiles = assignment.files.filter(
     (file) => file.fileType !== "award-image"
@@ -75,7 +82,7 @@ const AssignmentDetailPage = async ({
             </p>
           </div>
           <Link
-            href="/list/assignments"
+            href={returnHref}
             className="w-max rounded-md border border-gray-200 px-4 py-2 text-sm text-gray-500 hover:border-lamaSky hover:text-lamaSky"
           >
             Volver

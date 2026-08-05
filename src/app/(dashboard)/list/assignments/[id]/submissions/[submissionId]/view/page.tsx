@@ -1,4 +1,5 @@
 import { getCurrentUser } from "@/lib/auth";
+import { getAssignmentReturnHref } from "@/lib/assignmentNavigation";
 import {
   canPreviewFile,
   getOfficePreviewUrl,
@@ -14,14 +15,17 @@ import { notFound, redirect } from "next/navigation";
 
 const SubmissionPreviewPage = async ({
   params,
+  searchParams,
 }: {
   params: { id: string; submissionId: string };
+  searchParams: { returnTo?: string };
 }) => {
   const currentUser = await getCurrentUser();
   if (!currentUser) redirect("/");
 
   const assignmentId = Number(params.id);
   if (!assignmentId) notFound();
+  const returnHref = getAssignmentReturnHref(searchParams.returnTo, assignmentId);
 
   const parentStudentIds =
     currentUser.role === "parent"
@@ -101,7 +105,7 @@ const SubmissionPreviewPage = async ({
           </p>
         </div>
         <Link
-          href="/list/assignments"
+          href={returnHref}
           className="w-max rounded-md border border-gray-200 px-4 py-2 text-sm text-gray-500 hover:border-lamaSky hover:text-lamaSky"
         >
           Volver
