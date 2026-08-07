@@ -13,7 +13,7 @@ const TasksPagination = ({ page, count, pageSize }: { page: number; count: numbe
     const next = new URLSearchParams(params.toString());
     next.set("page", String(nextPage));
     next.set("pageSize", String(nextSize));
-    router.push(`${pathname}?${next.toString()}`, { scroll: false });
+    router.replace(`${pathname}?${next.toString()}`, { scroll: false });
   };
 
   return (

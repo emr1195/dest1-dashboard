@@ -13,7 +13,7 @@ const TableSearch = () => {
 
     const params = new URLSearchParams(window.location.search);
     params.set("search", value);
-    router.push(`${window.location.pathname}?${params}`);
+    router.replace(`${window.location.pathname}?${params}`, { scroll: false });
   };
 
   return (

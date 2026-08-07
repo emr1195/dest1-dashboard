@@ -100,10 +100,10 @@ const AttendanceChartContainer = async ({
           <p className="mt-1 text-sm text-[#64748B]">Comparación entre asistencias y ausencias</p>
         </div>
         <div className="flex items-center gap-2">
-          <Link href={`/admin?attendanceWeek=${weekOffset - 1}`} className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#DCE4EE] text-[#33506F] transition hover:border-[#1565C0] hover:text-[#1565C0]" aria-label="Semana anterior">&lt;</Link>
+          <Link replace href={`/admin?attendanceWeek=${weekOffset - 1}`} className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#DCE4EE] text-[#33506F] transition hover:border-[#1565C0] hover:text-[#1565C0]" aria-label="Semana anterior">&lt;</Link>
           <span className="min-w-28 text-center text-xs font-semibold text-[#52657A]">{weekLabel}</span>
           {weekOffset < 0 ? (
-            <Link href={`/admin?attendanceWeek=${weekOffset + 1}`} className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#DCE4EE] text-[#33506F] transition hover:border-[#1565C0] hover:text-[#1565C0]" aria-label="Semana siguiente">&gt;</Link>
+            <Link replace href={`/admin?attendanceWeek=${weekOffset + 1}`} className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#DCE4EE] text-[#33506F] transition hover:border-[#1565C0] hover:text-[#1565C0]" aria-label="Semana siguiente">&gt;</Link>
           ) : (
             <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#E8EDF3] text-[#BCC6D2]" aria-label="Semana siguiente no disponible">&gt;</span>
           )}

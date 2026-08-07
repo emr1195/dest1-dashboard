@@ -117,6 +117,7 @@ const AttendanceListPage = async ({
           {canViewTeachers && (
             <div className="mt-3 flex gap-2 text-sm">
               <Link
+                replace
                 href="/list/attendance?type=students"
                 className={`rounded-md px-4 py-2 ${
                   activeView === "students" ? "bg-lamaSky text-white" : "bg-gray-100 text-gray-500"
@@ -125,6 +126,7 @@ const AttendanceListPage = async ({
                 Muchachos
               </Link>
               <Link
+                replace
                 href="/list/attendance?type=teachers"
                 className={`rounded-md px-4 py-2 ${
                   activeView === "teachers" ? "bg-lamaSky text-white" : "bg-gray-100 text-gray-500"
@@ -466,10 +468,10 @@ const AttendanceListPage = async ({
           <div>
             <h1 className="hidden md:block text-lg font-semibold">Asistencia</h1>
             <div className="mt-3 flex gap-2 text-sm">
-              <Link href="/list/attendance?type=students" className="rounded-md px-4 py-2 bg-gray-100 text-gray-500">
+              <Link replace href="/list/attendance?type=students" className="rounded-md px-4 py-2 bg-gray-100 text-gray-500">
                 Muchachos
               </Link>
-              <Link href="/list/attendance?type=teachers" className="rounded-md px-4 py-2 bg-lamaSky text-white">
+              <Link replace href="/list/attendance?type=teachers" className="rounded-md px-4 py-2 bg-lamaSky text-white">
                 Lideres
               </Link>
             </div>
@@ -560,10 +562,10 @@ const AttendanceListPage = async ({
           <h1 className="hidden md:block text-lg font-semibold">Asistencia</h1>
           {canViewTeachers && (
             <div className="mt-3 flex gap-2 text-sm">
-              <Link href="/list/attendance?type=students" className="rounded-md px-4 py-2 bg-lamaSky text-white">
+              <Link replace href="/list/attendance?type=students" className="rounded-md px-4 py-2 bg-lamaSky text-white">
                 Muchachos
               </Link>
-              <Link href="/list/attendance?type=teachers" className="rounded-md px-4 py-2 bg-gray-100 text-gray-500">
+              <Link replace href="/list/attendance?type=teachers" className="rounded-md px-4 py-2 bg-gray-100 text-gray-500">
                 Lideres
               </Link>
             </div>

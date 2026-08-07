@@ -79,6 +79,9 @@ const NavigationItem = ({
     <Link
       href={item.href}
       aria-current={active ? "page" : undefined}
+      onClick={(event) => {
+        if (active) event.preventDefault();
+      }}
       className={`${commonClassName} ${
         active
           ? "bg-[var(--sidebar-active-background)] font-bold text-[var(--sidebar-active)] shadow-[inset_3px_0_0_var(--sidebar-active)]"

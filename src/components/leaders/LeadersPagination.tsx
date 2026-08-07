@@ -24,7 +24,7 @@ const LeadersPagination = ({ page, count, pageSize }: { page: number; count: num
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", String(nextPage));
     params.set("pageSize", String(nextPageSize));
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   return (

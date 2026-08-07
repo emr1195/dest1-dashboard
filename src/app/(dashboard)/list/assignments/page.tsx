@@ -377,6 +377,7 @@ const AssignmentListPage = async ({
             <Link
               key={group}
               href={getGroupHref(group)}
+              replace
               aria-current={active ? "page" : undefined}
               className={`group flex min-h-[132px] flex-col items-center justify-center rounded-2xl border bg-white p-4 text-center shadow-[0_4px_16px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:border-[var(--primary)] hover:shadow-[0_8px_22px_rgba(15,23,42,0.08)] focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)] sm:min-h-[160px] ${active ? config.active : "border-[var(--border-soft)] text-[var(--text-primary)]"}`}
             >
@@ -471,7 +472,7 @@ const AssignmentListPage = async ({
         })}
       </div>
 
-      {!data.length && <div className="flex min-h-[260px] flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--border-default)] bg-white px-5 text-center"><span className="grid h-14 w-14 place-items-center rounded-full bg-[var(--primary-soft)] text-[var(--primary)]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-7 w-7" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z" /><path d="M8 7h8M8 11h8M8 15h5" /></svg></span><h2 className="mt-4 text-lg font-extrabold text-[var(--text-primary)]">{selectedGroup ? `No hay tareas disponibles para ${assignmentGroupCards[selectedGroup].label}.` : "Selecciona uno de los grupos."}</h2><p className="mt-2 text-sm text-[var(--text-secondary)]">{selectedGroup ? "Prueba con otra búsqueda o limpia los filtros aplicados." : "Al seleccionar un emblema aparecerán aquí las tareas correspondientes a ese grupo."}</p>{selectedGroup && <Link href={`/list/assignments?group=${selectedGroup}`} className="mt-5 inline-flex min-h-11 items-center rounded-xl bg-[var(--primary)] px-5 text-sm font-bold text-white">Limpiar búsqueda y filtros</Link>}</div>}
+      {!data.length && <div className="flex min-h-[260px] flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--border-default)] bg-white px-5 text-center"><span className="grid h-14 w-14 place-items-center rounded-full bg-[var(--primary-soft)] text-[var(--primary)]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-7 w-7" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z" /><path d="M8 7h8M8 11h8M8 15h5" /></svg></span><h2 className="mt-4 text-lg font-extrabold text-[var(--text-primary)]">{selectedGroup ? `No hay tareas disponibles para ${assignmentGroupCards[selectedGroup].label}.` : "Selecciona uno de los grupos."}</h2><p className="mt-2 text-sm text-[var(--text-secondary)]">{selectedGroup ? "Prueba con otra búsqueda o limpia los filtros aplicados." : "Al seleccionar un emblema aparecerán aquí las tareas correspondientes a ese grupo."}</p>{selectedGroup && <Link replace href={`/list/assignments?group=${selectedGroup}`} className="mt-5 inline-flex min-h-11 items-center rounded-xl bg-[var(--primary)] px-5 text-sm font-bold text-white">Limpiar búsqueda y filtros</Link>}</div>}
 
       {selectedGroup && <div className="mt-5 rounded-2xl border border-[var(--border-soft)] bg-white">
         <TasksPagination page={p} count={count} pageSize={pageSize} />

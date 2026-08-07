@@ -1,8 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 
@@ -17,7 +16,6 @@ const EventCalendar = ({ eventDates = [] }: { eventDates?: string[] }) => {
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
 
-  const router = useRouter();
   const eventDateSet = new Set(eventDates);
   const selectedDateKey = value instanceof Date
     ? [value.getFullYear(), String(value.getMonth() + 1).padStart(2, "0"), String(value.getDate()).padStart(2, "0")].join("-")
@@ -51,18 +49,6 @@ const EventCalendar = ({ eventDates = [] }: { eventDates?: string[] }) => {
       );
     }
   };
-
-  useEffect(() => {
-    if (value instanceof Date) {
-      const dateKey = [
-        value.getFullYear(),
-        String(value.getMonth() + 1).padStart(2, "0"),
-        String(value.getDate()).padStart(2, "0"),
-      ].join("-");
-
-      router.push(`?date=${dateKey}`);
-    }
-  }, [value, router]);
 
   return (
     <div className="event-calendar-shell">
@@ -122,7 +108,7 @@ const EventCalendar = ({ eventDates = [] }: { eventDates?: string[] }) => {
         <div className="event-calendar-footer">
           <div>
             <span className="event-calendar-selected-label"><span aria-hidden="true" />{selectedEventCount} {selectedEventCount === 1 ? "actividad" : "actividades"} para esta fecha</span>
-            <Link href={selectedDateKey ? `?date=${selectedDateKey}` : "?"} className="event-calendar-day-link">Ver agenda del día</Link>
+            <Link href={selectedDateKey ? `/list/events?date=${selectedDateKey}` : "/list/events"} className="event-calendar-day-link">Ver agenda del día</Link>
           </div>
         </div>
       </div>
