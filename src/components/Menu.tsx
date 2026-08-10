@@ -18,7 +18,7 @@ const navigationItems: NavigationDefinition[] = [
   { section: "General", icon: "/teacher.png", label: "Líderes", href: "/list/teachers", visible: ["admin", "teacher"] },
   { section: "General", icon: "/student.png", label: "Tropa", href: "/list/students", visible: ["admin", "teacher"] },
   { section: "General", icon: "/parent.png", label: "Padres", href: "/list/parents", visible: ["admin", "teacher"] },
-  { section: "Programas", icon: "/subject.png", label: "Ascenso de la Senda", href: "/list/subjects", visible: ["admin"] },
+  { section: "Programas", icon: "/subject.png", label: "Ascenso de la Senda", href: "/list/subjects", visible: ["admin", "teacher", "student"] },
   { section: "Programas", icon: "/assignment.png", label: "Tareas", href: "/list/assignments", visible: ["admin", "teacher", "student", "parent"] },
   { section: "Programas", icon: "/result.png", label: "Resultados", href: "/list/results", visible: ["admin", "teacher", "student", "parent"] },
   { section: "Programas", icon: "/attendance.png", label: "Asistencia", href: "/list/attendance", visible: ["admin", "teacher", "parent"] },
@@ -58,6 +58,10 @@ const Menu = async ({ forceLabels = false }: { forceLabels?: boolean }) => {
     .map((item) => ({
       ...item,
       href: item.href === "/" ? homeByRole[role] : item.href,
+      label:
+        item.href === "/list/subjects" && role === "student"
+          ? "Mi ascenso de la Senda"
+          : item.label,
       disabled: item.gated === "evaluation" && role !== "admin" && !evaluationActive,
       disabledReason:
         item.gated === "evaluation"

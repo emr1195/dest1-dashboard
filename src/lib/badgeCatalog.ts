@@ -26,14 +26,35 @@ const toStudentBadge = (id: string): BadgeCourse => ({
 });
 
 export const studentBadgesByGroup: Record<string, BadgeCourse[]> = {
-  Navegantes: [],
+  Navegantes: [
+    {
+      id: "navegantes-bronce",
+      src: "/senda muchacho/navegantes-bronce.png",
+      alt: "Senda Bronce",
+    },
+    {
+      id: "navegantes-plata",
+      src: "/senda muchacho/navegantes-plata.png",
+      alt: "Senda Plata",
+    },
+    {
+      id: "navegantes-oro",
+      src: "/senda muchacho/navegantes-oro.png",
+      alt: "Senda Oro",
+    },
+  ],
   Pioneros: ["101", "102", "103", "104", "105", "106"].map(toStudentBadge),
   Seguidores: ["201", "202", "203", "204", "205", "206", "ilj", "cbd"].map(
     toStudentBadge
   ),
-  Exploradores: ["301", "302", "303", "304", "305", "306", "ilj", "cbd"].map(
-    toStudentBadge
-  ),
+  Exploradores: [
+    { id: "e1", src: "/senda muchacho/e1.png", alt: "Senda E1" },
+    { id: "e2", src: "/senda muchacho/e2.png", alt: "Senda E2" },
+    { id: "e3", src: "/senda muchacho/e3.png", alt: "Senda E3" },
+    ...["301", "302", "303", "304", "305", "306", "ilj", "cbd"].map(
+      toStudentBadge
+    ),
+  ],
 };
 
 export const getAge = (birthday: Date) => {
