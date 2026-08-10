@@ -19,6 +19,7 @@ import {
   assignmentSchema,
   AssignmentSchema,
 } from "@/lib/formValidationSchemas";
+import { getBiblicalAwardOptions } from "@/lib/biblicalAwardOptions";
 import { leaderGroupOptions } from "@/lib/roles";
 
 const assignmentCategories = [
@@ -984,6 +985,7 @@ const AssignmentForm = ({
       startDate: toDateTimeLocal(data?.startDate) as any,
       dueDate: toDateTimeLocal(data?.dueDate) as any,
       category: getAssignmentCategory(data?.category) as AssignmentSchema["category"],
+      trailAwardId: data?.trailAwardId || undefined,
       points: data?.points || 25,
       audience:
         data?.audience === "all" ? "all" : "group",
@@ -1198,6 +1200,40 @@ const AssignmentForm = ({
     getAssignmentCategory(data?.category) as AssignmentSchema["category"]
   );
   const selectedAssignmentGroup = watch("assignmentGroup") as string | undefined;
+  const selectedTrailAwardId = watch("trailAwardId") as string | undefined;
+  const effectiveAwardGroup = isAdminAssignmentEditor
+    ? selectedAssignmentGroup
+    : relatedData?.currentLeaderGroup;
+  const availableBiblicalAwards = useMemo(
+    () => getBiblicalAwardOptions(effectiveAwardGroup),
+    [effectiveAwardGroup]
+  );
+
+  useEffect(() => {
+    if (selectedCategory !== "Estudio biblico") {
+      if (selectedTrailAwardId) {
+        setValue("trailAwardId", undefined, { shouldDirty: true });
+      }
+      return;
+    }
+
+    if (
+      selectedTrailAwardId &&
+      !availableBiblicalAwards.some(
+        (award) => award.value === selectedTrailAwardId
+      )
+    ) {
+      setValue("trailAwardId", undefined, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  }, [
+    availableBiblicalAwards,
+    selectedCategory,
+    selectedTrailAwardId,
+    setValue,
+  ]);
 
   return (
     <form className="flex max-h-[90vh] flex-col bg-white" onSubmit={onSubmit}>
@@ -1241,12 +1277,18 @@ const AssignmentForm = ({
                   htmlFor="assignment-title"
                   className="mb-2 block text-sm font-semibold text-[#344054]"
                 >
-                  Nombre de la tarea <span className="text-red-600">*</span>
+                  {selectedCategory === "Estudio biblico"
+                    ? "Tema de la tarea"
+                    : "Nombre de la tarea"} <span className="text-red-600">*</span>
                 </label>
                 <input
                   id="assignment-title"
                   defaultValue={data?.title}
-                  placeholder="Ej. Folleto informativo del destacamento"
+                  placeholder={
+                    selectedCategory === "Estudio biblico"
+                      ? "Ej. Salmos"
+                      : "Ej. Folleto informativo del destacamento"
+                  }
                   aria-invalid={Boolean(errors.title)}
                   aria-describedby="assignment-title-error"
                   className={`${fieldBaseClass} ${errors.title ? fieldErrorClass : ""}`}
@@ -1432,6 +1474,43 @@ const AssignmentForm = ({
                   error={errors.category as FieldError}
                 />
               </div>
+              {selectedCategory === "Estudio biblico" && (
+                <div>
+                  <label
+                    htmlFor="assignment-trail-award"
+                    className="mb-2 block text-sm font-semibold text-[#344054]"
+                  >
+                    Premio biblico <span className="text-red-600">*</span>
+                  </label>
+                  <select
+                    id="assignment-trail-award"
+                    value={selectedTrailAwardId || ""}
+                    aria-invalid={Boolean(errors.trailAwardId)}
+                    aria-describedby="assignment-trail-award-help assignment-trail-award-error"
+                    className={`${fieldBaseClass} ${errors.trailAwardId ? fieldErrorClass : ""}`}
+                    disabled={saving || availableBiblicalAwards.length === 0}
+                    {...register("trailAwardId")}
+                  >
+                    <option value="" disabled>
+                      {availableBiblicalAwards.length
+                        ? "Seleccionar premio biblico"
+                        : "Este grupo no tiene premios biblicos"}
+                    </option>
+                    {availableBiblicalAwards.map((award) => (
+                      <option value={award.value} key={award.value}>
+                        {award.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p id="assignment-trail-award-help" className="mt-2 text-xs text-[#667085]">
+                    El tema de esta tarea se mostrara debajo del premio seleccionado en Ascenso de la Senda.
+                  </p>
+                  <FieldErrorMessage
+                    id="assignment-trail-award-error"
+                    error={errors.trailAwardId as FieldError}
+                  />
+                </div>
+              )}
               {isTeacher ? (
                 <div>
                   <label

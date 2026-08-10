@@ -120,6 +120,7 @@ model Assignment {
   startDate   DateTime
   dueDate     DateTime
   category    String                 @default("Premio de adiestramiento")
+  trailAwardId String?
   audience    String                 @default("group")
   points      Int                    @default(25)
   createdById String?
@@ -131,6 +132,7 @@ model Assignment {
   submissions AssignmentSubmission[]
 
   @@index([createdById])
+  @@index([trailAwardId])
 }
 
 model AssignmentFile {

@@ -155,6 +155,10 @@ export const assignmentSchema = z.object({
     ["Premio de adiestramiento", "Estudio biblico", "Premio liderazgo", "Otros"],
     { message: "La categoria es obligatoria!" }
   ),
+  trailAwardId: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string().optional()
+  ),
   points: z.coerce
     .number({ message: "El puntaje es obligatorio!" })
     .refine((value) => [25, 50, 75, 100].includes(value), {
@@ -175,6 +179,14 @@ export const assignmentSchema = z.object({
     (value) => (value === "" ? undefined : value),
     z.enum(["group", "all"]).optional()
   ),
+}).superRefine((data, context) => {
+  if (data.category === "Estudio biblico" && !data.trailAwardId) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["trailAwardId"],
+      message: "Selecciona el premio biblico correspondiente!",
+    });
+  }
 });
 
 export type AssignmentSchema = z.infer<typeof assignmentSchema>;

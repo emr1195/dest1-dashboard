@@ -36,8 +36,8 @@ const getStudentFormData = cache(async () => {
 });
 
 const getAssignmentFormData = cache(
-  async (role?: string, currentUserId?: string) => {
-    const [lessons, assignmentCreators] = await Promise.all([
+  async (role?: string, currentUserId?: string, currentUserEmail?: string) => {
+    const [lessons, assignmentCreators, currentLeaderAccount] = await Promise.all([
       prisma.lesson.findMany({
         where: role === "teacher" ? { teacherId: currentUserId! } : {},
         select: { id: true, name: true },
@@ -55,9 +55,27 @@ const getAssignmentFormData = cache(
             orderBy: [{ role: "asc" }, { name: "asc" }],
           })
         : Promise.resolve([]),
+      role === "teacher"
+        ? prisma.authUser.findFirst({
+            where: {
+              role: "teacher",
+              OR: [
+                ...(currentUserId ? [{ id: currentUserId }] : []),
+                ...(currentUserEmail
+                  ? [{ email: currentUserEmail.toLowerCase() }]
+                  : []),
+              ],
+            },
+            select: { leaderGroup: true },
+          })
+        : Promise.resolve(null),
     ]);
 
-    return { lessons, assignmentCreators };
+    return {
+      lessons,
+      assignmentCreators,
+      currentLeaderGroup: currentLeaderAccount?.leaderGroup || undefined,
+    };
   }
 );
 
@@ -115,9 +133,10 @@ const FormContainer = async ({
       }
       case "exam":
       case "assignment": {
-        const { lessons, assignmentCreators } = await getAssignmentFormData(
+        const { lessons, assignmentCreators, currentLeaderGroup } = await getAssignmentFormData(
           role,
-          currentUserId
+          currentUserId,
+          currentUser?.email
         );
         let initialAssignmentGroup: string | undefined;
 
@@ -142,7 +161,12 @@ const FormContainer = async ({
           }
         }
 
-        relatedData = { lessons, assignmentCreators, initialAssignmentGroup };
+        relatedData = {
+          lessons,
+          assignmentCreators,
+          initialAssignmentGroup,
+          currentLeaderGroup,
+        };
         break;
       }
       default:

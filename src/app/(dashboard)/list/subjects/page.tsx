@@ -109,6 +109,8 @@ const strongestState = (...states: TrailAwardState[]) =>
   states.reduce((best, state) => statePriority[state] > statePriority[best] ? state : best, "locked");
 
 const badgeMatchesAssignment = (badge: TrailAwardCatalogItem, assignment: ProgressAssignment) => {
+  if (assignment.trailAwardId) return assignment.trailAwardId === badge.id;
+
   const title = normalizeText(assignment.title);
   const id = normalizeText(badge.id);
   const labels = [badge.alt, ...(badge.aliases || [])]
@@ -281,8 +283,8 @@ const SubjectListPage = async ({
         href: matchingAssignments[0] ? `/list/assignments/${matchingAssignments[0].id}` : undefined,
         detail: status === "rejected"
           ? "Certificado rechazado"
-          : assignmentProgress.requiresMinimum && assignmentProgress.percentage !== null
-            ? `${formatTrailAwardProgress(assignmentProgress.percentage)}% alcanzado - mínimo ${TRAIL_AWARD_MINIMUM_PERCENT}%`
+          : matchingAssignments.length
+            ? matchingAssignments.map((assignment) => assignment.title).join(" · ")
             : badge.detail,
       };
     });

@@ -621,6 +621,7 @@ export const createAssignment = async (
         startDate: data.startDate,
         dueDate: data.dueDate,
         category: data.category,
+        trailAwardId: data.category === "Estudio biblico" ? data.trailAwardId : null,
         audience:
           data.assignmentGroup === "all" || data.audience === "all" ? "all" : "group",
         points: data.points,
@@ -671,6 +672,7 @@ export const updateAssignment = async (
         startDate: data.startDate,
         dueDate: data.dueDate,
         category: data.category,
+        trailAwardId: data.category === "Estudio biblico" ? data.trailAwardId : null,
         audience:
           data.assignmentGroup === "all" || data.audience === "all"
             ? "all"
