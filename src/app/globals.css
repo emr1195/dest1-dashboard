@@ -68,6 +68,55 @@
   border-radius: 999px;
 }
 
+@media (max-height: 900px) {
+  .desktop-sidebar > header,
+  #mobile-sidebar > header {
+    height: 68px;
+  }
+
+  .sidebar-navigation-list {
+    padding-bottom: 8px;
+    padding-top: 8px;
+  }
+
+  .sidebar-navigation-list .sidebar-section + .sidebar-section {
+    margin-top: 10px;
+  }
+
+  .sidebar-navigation-list h2,
+  .sidebar-account > h2 {
+    margin-bottom: 4px;
+  }
+
+  .sidebar-navigation-list .group\/item,
+  .sidebar-account .group\/item {
+    min-height: 36px;
+  }
+
+  .sidebar-navigation-list .sidebar-items > :not([hidden]) ~ :not([hidden]),
+  .sidebar-account ul > :not([hidden]) ~ :not([hidden]) {
+    margin-bottom: 0;
+    margin-top: 0;
+  }
+
+  .sidebar-account {
+    padding-bottom: 8px;
+    padding-top: 8px;
+  }
+
+  .sidebar-account > div {
+    margin-bottom: 4px;
+    min-height: 40px;
+    padding-bottom: 4px;
+    padding-top: 4px;
+  }
+
+  .sidebar-account > div > span:first-child {
+    height: 32px;
+    width: 32px;
+  }
+}
+
 .sidebar-tooltip {
   pointer-events: none;
   position: absolute;

@@ -14,6 +14,11 @@ import {
   trailAwardCounts,
   TrailAwardCatalogItem,
 } from "@/lib/trailAwardCatalog";
+import {
+  formatTrailAwardProgress,
+  getTrailAwardProgress,
+  TRAIL_AWARD_MINIMUM_PERCENT,
+} from "@/lib/trailAwardProgress";
 import { Prisma } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -91,20 +96,6 @@ const getAwardCategory = (category: string) => {
   if (normalized.includes("destreza") || normalized.includes("adiestramiento")) return "Premios de destreza";
 
   return "Actividades complementarias";
-};
-
-const getAssignmentState = (assignment: ProgressAssignment): TrailAwardState => {
-  if (assignment.results.length || assignment.submissions.some((submission) => submission.status === "reviewed")) {
-    return "completed";
-  }
-
-  if (assignment.submissions.some((submission) => submission.status === "returned")) {
-    return "returned";
-  }
-
-  if (assignment.submissions.length) return "pending";
-
-  return "locked";
 };
 
 const statePriority: Record<TrailAwardState, number> = {
@@ -273,9 +264,7 @@ const SubjectListPage = async ({
     const officialAwards: TrailAwardView[] = officialBadges.map((badge) => {
       const matchingAssignments = groupAssignments.filter((assignment) => badgeMatchesAssignment(badge, assignment));
       matchingAssignments.forEach((assignment) => matchedAssignments.add(assignment.id));
-      const assignmentState = matchingAssignments.length
-        ? strongestState(...matchingAssignments.map(getAssignmentState))
-        : "locked";
+      const assignmentProgress = getTrailAwardProgress(matchingAssignments);
       const status = certificateStatus.get(badge.id);
       const certificateState: TrailAwardState = status === "approved"
         ? "completed"
@@ -288,27 +277,37 @@ const SubjectListPage = async ({
         title: badge.alt,
         image: badge.src,
         category: badge.category,
-        state: strongestState(assignmentState, certificateState),
+        state: strongestState(assignmentProgress.state, certificateState),
         href: matchingAssignments[0] ? `/list/assignments/${matchingAssignments[0].id}` : undefined,
-        detail: status === "rejected" ? "Certificado rechazado" : badge.detail,
+        detail: status === "rejected"
+          ? "Certificado rechazado"
+          : assignmentProgress.requiresMinimum && assignmentProgress.percentage !== null
+            ? `${formatTrailAwardProgress(assignmentProgress.percentage)}% alcanzado - mínimo ${TRAIL_AWARD_MINIMUM_PERCENT}%`
+            : badge.detail,
       };
     });
 
     const assignmentAwards: TrailAwardView[] = groupAssignments
       .filter((assignment) => !matchedAssignments.has(assignment.id))
-      .map((assignment) => ({
-        id: `assignment-${assignment.id}`,
-        title: assignment.title,
-        image: assignment.files[0]?.filePath || selectedGroup.icon,
-        category: getAwardCategory(assignment.category),
-        state: getAssignmentState(assignment),
-        href: `/list/assignments/${assignment.id}`,
-        detail: assignment.results.length
-          ? `${assignment.points} puntos obtenidos`
-          : assignment.submissions.length
-            ? "Entrega registrada"
-            : `${assignment.points} puntos`,
-      }));
+      .map((assignment) => {
+        const progress = getTrailAwardProgress([assignment]);
+
+        return {
+          id: `assignment-${assignment.id}`,
+          title: assignment.title,
+          image: assignment.files[0]?.filePath || selectedGroup.icon,
+          category: getAwardCategory(assignment.category),
+          state: progress.state,
+          href: `/list/assignments/${assignment.id}`,
+          detail: progress.requiresMinimum && progress.percentage !== null
+            ? `${formatTrailAwardProgress(progress.percentage)}% alcanzado - mínimo ${TRAIL_AWARD_MINIMUM_PERCENT}%`
+            : assignment.results.length
+              ? `${assignment.results[0].score} puntos obtenidos`
+              : assignment.submissions.length
+                ? "Entrega registrada"
+                : `${assignment.points} puntos`,
+        };
+      });
 
     awards = [...officialAwards, ...assignmentAwards];
   }

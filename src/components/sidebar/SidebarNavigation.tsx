@@ -109,14 +109,14 @@ const SidebarNavigation = ({
   const initial = user.displayName.charAt(0).toUpperCase();
 
   return (
-    <nav aria-label="Navegación principal" className="flex min-h-0 flex-1 flex-col">
-      <div className="sidebar-scrollbar min-h-0 flex-1 overflow-x-clip overflow-y-auto overscroll-contain px-3 pb-4 pt-3">
+    <nav aria-label="Navegación principal" className="sidebar-navigation flex min-h-0 flex-1 flex-col">
+      <div className="sidebar-navigation-list sidebar-scrollbar min-h-0 flex-1 overflow-x-clip overflow-y-auto overscroll-contain px-3 pb-4 pt-3">
         {sections.map((section, sectionIndex) => (
           <section
             key={section.label}
             aria-label={collapsed ? section.label : undefined}
             aria-labelledby={collapsed ? undefined : `sidebar-section-${sectionIndex}`}
-            className={sectionIndex ? "mt-5" : ""}
+            className={sectionIndex ? "sidebar-section mt-5" : "sidebar-section"}
           >
             {collapsed ? (
               <div className="mx-2 mb-2 border-t border-[var(--sidebar-border)]" aria-hidden="true" />
@@ -125,7 +125,7 @@ const SidebarNavigation = ({
                 {section.label}
               </h2>
             )}
-            <ul className="space-y-1">
+            <ul className="sidebar-items space-y-1">
               {section.items.map((item) => (
                 <li key={item.href}>
                   <NavigationItem item={item} collapsed={collapsed} />
@@ -136,7 +136,7 @@ const SidebarNavigation = ({
         ))}
       </div>
 
-      <div className="shrink-0 border-t border-[var(--sidebar-border)] bg-[var(--sidebar-background)] p-3 pb-[max(12px,env(safe-area-inset-bottom))]">
+      <div className="sidebar-account shrink-0 border-t border-[var(--sidebar-border)] bg-[var(--sidebar-background)] p-3 pb-[max(12px,env(safe-area-inset-bottom))]">
         {!collapsed && (
           <h2 className="mb-2 px-3 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--sidebar-muted)]">
             Cuenta
