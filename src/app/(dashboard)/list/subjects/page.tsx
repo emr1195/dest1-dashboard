@@ -5,12 +5,15 @@ import TrailProgressBoard, {
 } from "@/components/trail/TrailProgressBoard";
 import { getCurrentUser } from "@/lib/auth";
 import {
-  BadgeCourse,
   getAge,
-  getBadgeCatalog,
   getStudentGroupName,
 } from "@/lib/badgeCatalog";
 import prisma from "@/lib/prisma";
+import {
+  getTrailAwardCatalog,
+  trailAwardCounts,
+  TrailAwardCatalogItem,
+} from "@/lib/trailAwardCatalog";
 import { Prisma } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -114,13 +117,33 @@ const statePriority: Record<TrailAwardState, number> = {
 const strongestState = (...states: TrailAwardState[]) =>
   states.reduce((best, state) => statePriority[state] > statePriority[best] ? state : best, "locked");
 
-const badgeMatchesAssignment = (badge: BadgeCourse, assignment: ProgressAssignment) => {
+const badgeMatchesAssignment = (badge: TrailAwardCatalogItem, assignment: ProgressAssignment) => {
   const title = normalizeText(assignment.title);
   const id = normalizeText(badge.id);
-  const label = normalizeText(badge.alt);
+  const labels = [badge.alt, ...(badge.aliases || [])]
+    .map(normalizeText)
+    .filter((label) => label.length > 3);
   const idPattern = new RegExp(`(^|[^0-9a-z])${id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^0-9a-z]|$)`);
+  const ignoredWords = new Set([
+    "de", "del", "la", "el", "los", "las", "y", "o", "en", "para",
+    "tarea", "actividad", "premio",
+  ]);
+  const significantWords = (value: string) =>
+    value
+      .split(/[^0-9a-z]+/)
+      .filter((word) => word.length > 2 && !ignoredWords.has(word));
+  const titleWords = significantWords(title);
+  const matchesLabel = (label: string) => {
+    if (title === label) return true;
 
-  return idPattern.test(title) || (label.length > 3 && title.includes(label));
+    const words = significantWords(label);
+
+    return words.length > 1 &&
+      words.length === titleWords.length &&
+      words.every((word) => titleWords.includes(word));
+  };
+
+  return idPattern.test(title) || labels.some(matchesLabel);
 };
 
 const SubjectListPage = async ({
@@ -244,7 +267,7 @@ const SubjectListPage = async ({
       getAssignmentGroup(assignment, accountsById, accountsByEmail) === selectedGroup.key
     );
     const certificateStatus = new Map(certificates.map((certificate) => [certificate.badgeId, certificate.status]));
-    const officialBadges = getBadgeCatalog("student", selectedGroup.name);
+    const officialBadges = getTrailAwardCatalog(selectedGroup.name);
     const matchedAssignments = new Set<number>();
 
     const officialAwards: TrailAwardView[] = officialBadges.map((badge) => {
@@ -264,10 +287,10 @@ const SubjectListPage = async ({
         id: `official-${badge.id}`,
         title: badge.alt,
         image: badge.src,
-        category: badge.id === "ilj" || badge.id === "cbd" ? "Actividades complementarias" : "Premios de liderazgo",
+        category: badge.category,
         state: strongestState(assignmentState, certificateState),
         href: matchingAssignments[0] ? `/list/assignments/${matchingAssignments[0].id}` : undefined,
-        detail: status === "rejected" ? "Certificado rechazado" : "Premio oficial de la senda",
+        detail: status === "rejected" ? "Certificado rechazado" : badge.detail,
       };
     });
 
@@ -318,7 +341,9 @@ const SubjectListPage = async ({
               <Image src={group.icon} alt={group.name} width={76} height={76} className="h-14 w-16 object-contain sm:h-20 sm:w-20" />
               <span className="mt-2 break-words text-sm font-extrabold sm:text-base">{group.name}</span>
               <span className="mt-1 text-xs font-semibold opacity-70">
-                {role === "student" ? "Ver mi progreso" : `${groupCounts.get(group.key) || 0} muchachos`}
+                {role === "student"
+                  ? `${trailAwardCounts[group.name]} premios`
+                  : `${groupCounts.get(group.key) || 0} muchachos · ${trailAwardCounts[group.name]} premios`}
               </span>
             </Link>
           );

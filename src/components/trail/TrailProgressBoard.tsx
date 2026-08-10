@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { trailAwardCategories } from "@/lib/trailAwardCatalog";
 
 export type TrailAwardState = "completed" | "pending" | "returned" | "locked";
 
@@ -36,9 +37,7 @@ const stateClasses: Record<TrailAwardState, string> = {
 };
 
 const categoryOrder = [
-  "Premios de liderazgo",
-  "Premios de destreza",
-  "Estudios bíblicos",
+  ...trailAwardCategories,
   "Actividades complementarias",
 ];
 
