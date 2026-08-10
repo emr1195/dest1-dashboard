@@ -3,6 +3,20 @@ export type SkillAverageSource = {
   category: string;
 };
 
+export type ResultCategoryAverage = {
+  totalScore: number;
+  resultCount: number;
+  average: number;
+};
+
+export type StudentResultAverageSummary = {
+  skill: ResultCategoryAverage;
+  biblical: ResultCategoryAverage;
+  leadership: ResultCategoryAverage;
+  complementary: ResultCategoryAverage;
+  generalAverage: number;
+};
+
 const normalizeCategory = (category: string) =>
   category
     .trim()
@@ -16,19 +30,58 @@ export const isSkillAwardResult = ({ category }: SkillAverageSource) => {
   return normalized.includes("destreza") || normalized.includes("adiestramiento");
 };
 
-export const calculateSkillAwardAverage = (
-  results: SkillAverageSource[]
-) => {
-  const skillResults = results.filter(isSkillAwardResult);
-  const totalScore = skillResults.reduce(
+export const isBiblicalStudyResult = ({ category }: SkillAverageSource) =>
+  normalizeCategory(category).includes("estudio biblico");
+
+export const isLeadershipAwardResult = ({ category }: SkillAverageSource) =>
+  normalizeCategory(category).includes("liderazgo");
+
+export const isComplementaryResult = ({ category }: SkillAverageSource) =>
+  normalizeCategory(category) === "otros";
+
+const calculateCategoryAverage = (
+  results: SkillAverageSource[],
+  predicate: (result: SkillAverageSource) => boolean
+): ResultCategoryAverage => {
+  const categoryResults = results.filter(predicate);
+  const totalScore = categoryResults.reduce(
     (total, result) => total + result.score,
     0
   );
 
   return {
     totalScore,
-    resultCount: skillResults.length,
-    average: skillResults.length ? totalScore / skillResults.length : null,
+    resultCount: categoryResults.length,
+    average: categoryResults.length ? totalScore / categoryResults.length : 0,
+  };
+};
+
+export const calculateSkillAwardAverage = (
+  results: SkillAverageSource[]
+) => {
+  return calculateCategoryAverage(results, isSkillAwardResult);
+};
+
+export const calculateStudentResultAverages = (
+  results: SkillAverageSource[]
+): StudentResultAverageSummary => {
+  const skill = calculateCategoryAverage(results, isSkillAwardResult);
+  const biblical = calculateCategoryAverage(results, isBiblicalStudyResult);
+  const leadership = calculateCategoryAverage(results, isLeadershipAwardResult);
+  const complementary = calculateCategoryAverage(results, isComplementaryResult);
+  const generalAverage =
+    (skill.average +
+      biblical.average +
+      leadership.average +
+      complementary.average) /
+    4;
+
+  return {
+    skill,
+    biblical,
+    leadership,
+    complementary,
+    generalAverage,
   };
 };
 
