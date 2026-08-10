@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isBiblicalBookName } from "./biblicalAwardOptions";
 
 const panamaDateTimeLocalToUtc = (value: string) => {
   const match = value.match(
@@ -159,6 +160,12 @@ export const assignmentSchema = z.object({
     (value) => (value === "" ? undefined : value),
     z.string().optional()
   ),
+  biblicalBook: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.string().trim().refine(isBiblicalBookName, {
+      message: "Selecciona un libro biblico valido!",
+    }).optional()
+  ),
   points: z.coerce
     .number({ message: "El puntaje es obligatorio!" })
     .refine((value) => [25, 50, 75, 100].includes(value), {
@@ -185,6 +192,13 @@ export const assignmentSchema = z.object({
       code: z.ZodIssueCode.custom,
       path: ["trailAwardId"],
       message: "Selecciona el premio biblico correspondiente!",
+    });
+  }
+  if (data.category === "Estudio biblico" && !data.biblicalBook) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["biblicalBook"],
+      message: "Escribe el libro asignado a este estudio!",
     });
   }
 });

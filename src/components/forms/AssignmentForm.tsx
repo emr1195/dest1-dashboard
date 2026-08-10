@@ -19,7 +19,10 @@ import {
   assignmentSchema,
   AssignmentSchema,
 } from "@/lib/formValidationSchemas";
-import { getBiblicalAwardOptions } from "@/lib/biblicalAwardOptions";
+import {
+  biblicalBookOptions,
+  getBiblicalAwardOptions,
+} from "@/lib/biblicalAwardOptions";
 import { leaderGroupOptions } from "@/lib/roles";
 
 const assignmentCategories = [
@@ -986,6 +989,7 @@ const AssignmentForm = ({
       dueDate: toDateTimeLocal(data?.dueDate) as any,
       category: getAssignmentCategory(data?.category) as AssignmentSchema["category"],
       trailAwardId: data?.trailAwardId || undefined,
+      biblicalBook: data?.biblicalBook || undefined,
       points: data?.points || 25,
       audience:
         data?.audience === "all" ? "all" : "group",
@@ -1475,7 +1479,8 @@ const AssignmentForm = ({
                 />
               </div>
               {selectedCategory === "Estudio biblico" && (
-                <div>
+                <div className="grid gap-4 md:col-span-2 md:grid-cols-2">
+                  <div>
                   <label
                     htmlFor="assignment-trail-award"
                     className="mb-2 block text-sm font-semibold text-[#344054]"
@@ -1509,6 +1514,36 @@ const AssignmentForm = ({
                     id="assignment-trail-award-error"
                     error={errors.trailAwardId as FieldError}
                   />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="assignment-biblical-book"
+                      className="mb-2 block text-sm font-semibold text-[#344054]"
+                    >
+                      Libro asignado <span className="text-red-600">*</span>
+                    </label>
+                    <select
+                      id="assignment-biblical-book"
+                      defaultValue={data?.biblicalBook || ""}
+                      aria-invalid={Boolean(errors.biblicalBook)}
+                      aria-describedby="assignment-biblical-book-error"
+                      className={`${fieldBaseClass} ${errors.biblicalBook ? fieldErrorClass : ""}`}
+                      {...register("biblicalBook")}
+                    >
+                      <option value="" disabled>
+                        Seleccionar libro
+                      </option>
+                      {biblicalBookOptions.map((book) => (
+                        <option value={book.name} key={book.number}>
+                          {book.number} - {book.name}
+                        </option>
+                      ))}
+                    </select>
+                    <FieldErrorMessage
+                      id="assignment-biblical-book-error"
+                      error={errors.biblicalBook as FieldError}
+                    />
+                  </div>
                 </div>
               )}
               {isTeacher ? (

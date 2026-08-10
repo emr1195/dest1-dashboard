@@ -121,6 +121,7 @@ model Assignment {
   dueDate     DateTime
   category    String                 @default("Premio de adiestramiento")
   trailAwardId String?
+  biblicalBook String?
   audience    String                 @default("group")
   points      Int                    @default(25)
   createdById String?

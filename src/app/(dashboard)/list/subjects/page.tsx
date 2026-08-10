@@ -267,6 +267,11 @@ const SubjectListPage = async ({
       const matchingAssignments = groupAssignments.filter((assignment) => badgeMatchesAssignment(badge, assignment));
       matchingAssignments.forEach((assignment) => matchedAssignments.add(assignment.id));
       const assignmentProgress = getTrailAwardProgress(matchingAssignments);
+      const assignedBiblicalBooks = Array.from(new Set(
+        matchingAssignments
+          .map((assignment) => assignment.biblicalBook?.trim())
+          .filter((book): book is string => Boolean(book))
+      ));
       const status = certificateStatus.get(badge.id);
       const certificateState: TrailAwardState = status === "approved"
         ? "completed"
@@ -283,9 +288,11 @@ const SubjectListPage = async ({
         href: matchingAssignments[0] ? `/list/assignments/${matchingAssignments[0].id}` : undefined,
         detail: status === "rejected"
           ? "Certificado rechazado"
-          : matchingAssignments.length
-            ? matchingAssignments.map((assignment) => assignment.title).join(" · ")
-            : badge.detail,
+          : badge.category === "Estudios bíblicos" && assignedBiblicalBooks.length
+            ? assignedBiblicalBooks.join(" · ")
+            : assignmentProgress.requiresMinimum && assignmentProgress.percentage !== null
+              ? `${formatTrailAwardProgress(assignmentProgress.percentage)}% alcanzado - mínimo ${TRAIL_AWARD_MINIMUM_PERCENT}%`
+              : badge.detail,
       };
     });
 
