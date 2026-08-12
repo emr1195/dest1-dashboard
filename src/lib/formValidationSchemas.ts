@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isBiblicalBookName } from "./biblicalAwardOptions";
+import { isLeadershipAwardId } from "./leadershipAwardOptions";
 
 const panamaDateTimeLocalToUtc = (value: string) => {
   const match = value.match(
@@ -199,6 +200,16 @@ export const assignmentSchema = z.object({
       code: z.ZodIssueCode.custom,
       path: ["biblicalBook"],
       message: "Escribe el libro asignado a este estudio!",
+    });
+  }
+  if (
+    data.category === "Premio liderazgo" &&
+    (!data.trailAwardId || !isLeadershipAwardId(data.trailAwardId))
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["trailAwardId"],
+      message: "Selecciona el premio de liderazgo correspondiente!",
     });
   }
 });

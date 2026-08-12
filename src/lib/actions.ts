@@ -621,7 +621,10 @@ export const createAssignment = async (
         startDate: data.startDate,
         dueDate: data.dueDate,
         category: data.category,
-        trailAwardId: data.category === "Estudio biblico" ? data.trailAwardId : null,
+        trailAwardId:
+          data.category === "Estudio biblico" || data.category === "Premio liderazgo"
+            ? data.trailAwardId
+            : null,
         biblicalBook: data.category === "Estudio biblico" ? data.biblicalBook : null,
         audience:
           data.assignmentGroup === "all" || data.audience === "all" ? "all" : "group",
@@ -673,7 +676,10 @@ export const updateAssignment = async (
         startDate: data.startDate,
         dueDate: data.dueDate,
         category: data.category,
-        trailAwardId: data.category === "Estudio biblico" ? data.trailAwardId : null,
+        trailAwardId:
+          data.category === "Estudio biblico" || data.category === "Premio liderazgo"
+            ? data.trailAwardId
+            : null,
         biblicalBook: data.category === "Estudio biblico" ? data.biblicalBook : null,
         audience:
           data.assignmentGroup === "all" || data.audience === "all"

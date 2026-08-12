@@ -297,7 +297,11 @@ const SubjectListPage = async ({
     });
 
     const assignmentAwards: TrailAwardView[] = groupAssignments
-      .filter((assignment) => !matchedAssignments.has(assignment.id))
+      .filter(
+        (assignment) =>
+          !matchedAssignments.has(assignment.id) &&
+          getAwardCategory(assignment.category) === "Actividades complementarias"
+      )
       .map((assignment) => {
         const progress = getTrailAwardProgress([assignment]);
 

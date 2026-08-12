@@ -23,6 +23,7 @@ import {
   biblicalBookOptions,
   getBiblicalAwardOptions,
 } from "@/lib/biblicalAwardOptions";
+import { getLeadershipAwardOptions } from "@/lib/leadershipAwardOptions";
 import { leaderGroupOptions } from "@/lib/roles";
 
 const assignmentCategories = [
@@ -1212,9 +1213,25 @@ const AssignmentForm = ({
     () => getBiblicalAwardOptions(effectiveAwardGroup),
     [effectiveAwardGroup]
   );
+  const availableLeadershipAwards = useMemo(
+    () => getLeadershipAwardOptions(effectiveAwardGroup),
+    [effectiveAwardGroup]
+  );
+  const availableTrailAwards = useMemo(
+    () =>
+      selectedCategory === "Estudio biblico"
+        ? availableBiblicalAwards
+        : selectedCategory === "Premio liderazgo"
+          ? availableLeadershipAwards
+          : [],
+    [availableBiblicalAwards, availableLeadershipAwards, selectedCategory]
+  );
 
   useEffect(() => {
-    if (selectedCategory !== "Estudio biblico") {
+    if (
+      selectedCategory !== "Estudio biblico" &&
+      selectedCategory !== "Premio liderazgo"
+    ) {
       if (selectedTrailAwardId) {
         setValue("trailAwardId", undefined, { shouldDirty: true });
       }
@@ -1223,7 +1240,7 @@ const AssignmentForm = ({
 
     if (
       selectedTrailAwardId &&
-      !availableBiblicalAwards.some(
+      !availableTrailAwards.some(
         (award) => award.value === selectedTrailAwardId
       )
     ) {
@@ -1233,7 +1250,7 @@ const AssignmentForm = ({
       });
     }
   }, [
-    availableBiblicalAwards,
+    availableTrailAwards,
     selectedCategory,
     selectedTrailAwardId,
     setValue,
@@ -1544,6 +1561,43 @@ const AssignmentForm = ({
                       error={errors.biblicalBook as FieldError}
                     />
                   </div>
+                </div>
+              )}
+              {selectedCategory === "Premio liderazgo" && (
+                <div>
+                  <label
+                    htmlFor="assignment-leadership-award"
+                    className="mb-2 block text-sm font-semibold text-[#344054]"
+                  >
+                    Premio de liderazgo <span className="text-red-600">*</span>
+                  </label>
+                  <select
+                    id="assignment-leadership-award"
+                    value={selectedTrailAwardId || ""}
+                    aria-invalid={Boolean(errors.trailAwardId)}
+                    aria-describedby="assignment-leadership-award-help assignment-leadership-award-error"
+                    className={`${fieldBaseClass} ${errors.trailAwardId ? fieldErrorClass : ""}`}
+                    disabled={saving || availableLeadershipAwards.length === 0}
+                    {...register("trailAwardId")}
+                  >
+                    <option value="" disabled>
+                      {availableLeadershipAwards.length
+                        ? "Seleccionar premio de liderazgo"
+                        : "Este grupo no tiene premios de liderazgo"}
+                    </option>
+                    {availableLeadershipAwards.map((award) => (
+                      <option value={award.value} key={award.value}>
+                        {award.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p id="assignment-leadership-award-help" className="mt-2 text-xs text-[#667085]">
+                    La nota de esta tarea se contabilizara en el promedio del icono seleccionado.
+                  </p>
+                  <FieldErrorMessage
+                    id="assignment-leadership-award-error"
+                    error={errors.trailAwardId as FieldError}
+                  />
                 </div>
               )}
               {isTeacher ? (

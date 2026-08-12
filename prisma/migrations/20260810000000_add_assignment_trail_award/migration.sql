@@ -21,3 +21,12 @@ WHERE "category" = 'Estudio biblico'
       'verdad versus mentiras'
     )
   );
+
+UPDATE "Assignment"
+SET "trailAwardId" = SUBSTRING(
+  LOWER("title")
+  FROM '(101|102|103|104|105|106|201|202|203|204|205|206|301|302|303|304|305|306)'
+)
+WHERE "category" = 'Premio liderazgo'
+  AND "trailAwardId" IS NULL
+  AND LOWER("title") ~ '(^|[^0-9])(101|102|103|104|105|106|201|202|203|204|205|206|301|302|303|304|305|306)([^0-9]|$)';
