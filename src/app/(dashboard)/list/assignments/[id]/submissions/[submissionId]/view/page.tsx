@@ -12,6 +12,11 @@ import prisma from "@/lib/prisma";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Entrega de tarea",
+};
 
 const SubmissionPreviewPage = async ({
   params,

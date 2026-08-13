@@ -24,6 +24,23 @@ import {
 } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Tareas",
+};
+
+type AssignmentFileSummary = Pick<
+  AssignmentFile,
+  "id" | "fileName" | "fileType" | "createdAt"
+>;
+
+type AssignmentSubmissionSummary = Pick<
+  AssignmentSubmission,
+  "id" | "studentId" | "fileName" | "updatedAt" | "status"
+> & {
+  student: Pick<Muchacho, "name" | "surname">;
+};
 
 type AssignmentList = Assignment & {
   lesson: {
@@ -31,15 +48,19 @@ type AssignmentList = Assignment & {
     class: Pick<Class, "name"> & { _count: { students: number } };
     teacher: Pick<Lider, "id" | "name" | "surname">;
   };
-  files: AssignmentFile[];
-  submissions: (AssignmentSubmission & {
-    student: Pick<Muchacho, "name" | "surname">;
-  })[];
+  files: AssignmentFileSummary[];
+  submissions: AssignmentSubmissionSummary[];
   results: { studentId: string }[];
 };
 
-const isAwardImageFile = (file: AssignmentFile) =>
+const isAwardImageFile = (file: AssignmentFileSummary) =>
   file.fileType === "award-image";
+
+const getAssignmentFileUrl = (fileId: string) =>
+  `/api/public-files/assignment-file/${encodeURIComponent(fileId)}`;
+
+const getSubmissionFileUrl = (submissionId: string) =>
+  `/api/public-files/assignment-submission/${encodeURIComponent(submissionId)}`;
 
 const toSubmissionFiles = (
   submissions: AssignmentList["submissions"],
@@ -54,7 +75,7 @@ const toSubmissionFiles = (
     return {
       id: submission.id,
       fileName: submission.fileName,
-      filePath: submission.filePath,
+      filePath: getSubmissionFileUrl(submission.id),
       href: withAssignmentReturnHref(
         reviewLinks
           ? `/list/assignments/${assignmentId}/submissions/${submission.id}`
@@ -165,14 +186,7 @@ const assignmentFileIcon = (fileName: string) => {
   return "FILE";
 };
 
-const getDataUrlSize = (path: string) => {
-  const encoded = path.includes(",") ? path.split(",")[1] : "";
-  if (!encoded) return null;
-  const bytes = Math.max(0, Math.floor((encoded.length * 3) / 4));
-  return bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-};
-
-const AssignmentDocumentsList = ({ assignment, files, canManage, returnHref }: { assignment: AssignmentList; files: AssignmentFile[]; canManage: boolean; returnHref: string }) => (
+const AssignmentDocumentsList = ({ assignment, files, canManage, returnHref }: { assignment: AssignmentList; files: AssignmentFileSummary[]; canManage: boolean; returnHref: string }) => (
   <section aria-labelledby={`materials-${assignment.id}`} className="min-w-0 max-w-full">
     <h3 id={`materials-${assignment.id}`} className="break-words text-lg font-extrabold text-[var(--text-primary)]">Material de la tarea</h3>
     {files.length ? (
@@ -189,7 +203,7 @@ const AssignmentDocumentsList = ({ assignment, files, canManage, returnHref }: {
               {file.fileName}
             </span>
             <span className="mt-1 block truncate text-xs text-[var(--text-secondary)]">
-              {[getDataUrlSize(file.filePath), `Subido el ${formatDeadline(file.createdAt)}`].filter(Boolean).join(" · ")}
+              {`Subido el ${formatDeadline(file.createdAt)}`}
             </span>
           </span>
           <div className="ml-auto flex shrink-0 items-center gap-1 sm:ml-0">
@@ -199,7 +213,7 @@ const AssignmentDocumentsList = ({ assignment, files, canManage, returnHref }: {
             >
               Ver
             </Link>
-            <a href={file.filePath} download={file.fileName} className="inline-flex min-h-10 items-center rounded-lg px-3 text-xs font-bold text-[var(--text-secondary)] hover:bg-[var(--surface-tertiary)] focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)]">Descargar</a>
+            <a href={getAssignmentFileUrl(file.id)} download={file.fileName} className="inline-flex min-h-10 items-center rounded-lg px-3 text-xs font-bold text-[var(--text-secondary)] hover:bg-[var(--surface-tertiary)] focus:outline-none focus:ring-4 focus:ring-[var(--focus-ring)]">Descargar</a>
           </div>
         </div>
       ))}</div>
@@ -314,6 +328,12 @@ const AssignmentListPage = async ({
           },
         },
         files: {
+          select: {
+            id: true,
+            fileName: true,
+            fileType: true,
+            createdAt: true,
+          },
           orderBy: { createdAt: "desc" },
         },
         submissions: {
@@ -323,7 +343,12 @@ const AssignmentListPage = async ({
               : role === "parent"
                 ? { studentId: { in: parentStudentIds } }
                 : undefined,
-          include: {
+          select: {
+            id: true,
+            studentId: true,
+            fileName: true,
+            updatedAt: true,
+            status: true,
             student: { select: { name: true, surname: true } },
           },
           orderBy: { updatedAt: "desc" },
@@ -431,7 +456,7 @@ const AssignmentListPage = async ({
             <article id={`task-${assignment.id}`} key={assignment.id} className="min-w-0 max-w-full scroll-mt-24 overflow-hidden rounded-2xl border border-[var(--border-soft)] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.05)]">
               <div className="flex flex-col gap-5 p-4 sm:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                  {awardImage ? <Image src={awardImage.filePath} alt={`Portada de ${title}`} width={84} height={84} unoptimized className="h-20 w-20 shrink-0 rounded-xl object-cover sm:h-[84px] sm:w-[84px]" /> : <span className="grid h-20 w-20 shrink-0 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-9 w-9" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z" /><path d="M8 7h8M8 11h8M8 15h5" /></svg></span>}
+                  {awardImage ? <Image src={getAssignmentFileUrl(awardImage.id)} alt={`Portada de ${title}`} width={84} height={84} unoptimized className="h-20 w-20 shrink-0 rounded-xl object-cover sm:h-[84px] sm:w-[84px]" /> : <span className="grid h-20 w-20 shrink-0 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-9 w-9" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z" /><path d="M8 7h8M8 11h8M8 15h5" /></svg></span>}
                   <div className="min-w-0 flex-1">
                     <h2 title={title} className="line-clamp-2 text-xl font-extrabold text-[var(--text-primary)] sm:text-2xl">{title}</h2>
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-[var(--text-secondary)]"><span className="rounded-full bg-[var(--surface-tertiary)] px-3 py-1">{translateDisplayText(assignment.category)}</span><span>·</span><span>Líder {assignment.createdByName || `${assignment.lesson.teacher.name} ${assignment.lesson.teacher.surname}`}</span></div>

@@ -9,6 +9,11 @@ import Image from "next/image";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Revisar entrega",
+};
 
 const formatDate = (date: Date) => new Intl.DateTimeFormat("es-PA", {
   timeZone: "America/Panama",
