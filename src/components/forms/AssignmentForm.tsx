@@ -22,6 +22,7 @@ import {
 import {
   biblicalBookOptions,
   getBiblicalAwardOptions,
+  isSpiritualChallengeAwardId,
 } from "@/lib/biblicalAwardOptions";
 import { getLeadershipAwardOptions } from "@/lib/leadershipAwardOptions";
 import { leaderGroupOptions } from "@/lib/roles";
@@ -1206,6 +1207,9 @@ const AssignmentForm = ({
   );
   const selectedAssignmentGroup = watch("assignmentGroup") as string | undefined;
   const selectedTrailAwardId = watch("trailAwardId") as string | undefined;
+  const isSpiritualChallenge = isSpiritualChallengeAwardId(
+    selectedTrailAwardId
+  );
   const effectiveAwardGroup = isAdminAssignmentEditor
     ? selectedAssignmentGroup
     : relatedData?.currentLeaderGroup;
@@ -1255,6 +1259,15 @@ const AssignmentForm = ({
     selectedTrailAwardId,
     setValue,
   ]);
+
+  useEffect(() => {
+    if (isSpiritualChallenge) {
+      setValue("biblicalBook", undefined, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  }, [isSpiritualChallenge, setValue]);
 
   return (
     <form className="flex max-h-[90vh] flex-col bg-white" onSubmit={onSubmit}>
@@ -1532,7 +1545,7 @@ const AssignmentForm = ({
                     error={errors.trailAwardId as FieldError}
                   />
                   </div>
-                  <div>
+                  {!isSpiritualChallenge && selectedTrailAwardId && <div>
                     <label
                       htmlFor="assignment-biblical-book"
                       className="mb-2 block text-sm font-semibold text-[#344054]"
@@ -1560,7 +1573,12 @@ const AssignmentForm = ({
                       id="assignment-biblical-book-error"
                       error={errors.biblicalBook as FieldError}
                     />
-                  </div>
+                  </div>}
+                  {isSpiritualChallenge && (
+                    <p className="self-center text-sm text-[#667085]">
+                      Los retos espirituales no requieren seleccionar un libro.
+                    </p>
+                  )}
                 </div>
               )}
               {selectedCategory === "Premio liderazgo" && (

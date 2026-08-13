@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { isBiblicalBookName } from "./biblicalAwardOptions";
+import {
+  isBiblicalBookName,
+  isSpiritualChallengeAwardId,
+} from "./biblicalAwardOptions";
 import { isLeadershipAwardId } from "./leadershipAwardOptions";
 
 const panamaDateTimeLocalToUtc = (value: string) => {
@@ -195,7 +198,11 @@ export const assignmentSchema = z.object({
       message: "Selecciona el premio biblico correspondiente!",
     });
   }
-  if (data.category === "Estudio biblico" && !data.biblicalBook) {
+  if (
+    data.category === "Estudio biblico" &&
+    !isSpiritualChallengeAwardId(data.trailAwardId) &&
+    !data.biblicalBook
+  ) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["biblicalBook"],

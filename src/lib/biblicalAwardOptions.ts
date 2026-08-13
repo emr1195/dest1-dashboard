@@ -72,3 +72,14 @@ export const getBiblicalAwardOptions = (group?: string) =>
   group && group !== "all"
     ? biblicalAwardOptions.filter((award) => award.group === group)
     : biblicalAwardOptions;
+
+export const isSpiritualChallengeAwardId = (value?: string | null) =>
+  Boolean(
+    value &&
+      biblicalAwardOptions.some(
+        (award) =>
+          award.value === value &&
+          award.group === "exploradores" &&
+          award.label.toLowerCase().startsWith("reto espiritual")
+      )
+  );
