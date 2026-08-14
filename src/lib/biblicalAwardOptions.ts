@@ -68,11 +68,6 @@ export const biblicalAwardOptions: BiblicalAwardOption[] = [
   })),
 ];
 
-export const getBiblicalAwardOptions = (group?: string) =>
-  group && group !== "all"
-    ? biblicalAwardOptions.filter((award) => award.group === group)
-    : biblicalAwardOptions;
-
 export const isSpiritualChallengeAwardId = (value?: string | null) =>
   Boolean(
     value &&
@@ -82,4 +77,27 @@ export const isSpiritualChallengeAwardId = (value?: string | null) =>
           award.group === "exploradores" &&
           award.label.toLowerCase().startsWith("reto espiritual")
       )
+  );
+
+export const isBiblicalStudyAwardId = (value?: string | null) =>
+  Boolean(
+    value &&
+      biblicalAwardOptions.some(
+        (award) =>
+          award.value === value && !isSpiritualChallengeAwardId(award.value)
+      )
+  );
+
+export const getBiblicalAwardOptions = (group?: string) =>
+  biblicalAwardOptions.filter(
+    (award) =>
+      !isSpiritualChallengeAwardId(award.value) &&
+      (!group || group === "all" || award.group === group)
+  );
+
+export const getSpiritualChallengeAwardOptions = (group?: string) =>
+  biblicalAwardOptions.filter(
+    (award) =>
+      isSpiritualChallengeAwardId(award.value) &&
+      (!group || group === "all" || award.group === group)
   );

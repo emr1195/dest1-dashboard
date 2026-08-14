@@ -92,7 +92,11 @@ const getAwardCategory = (category: string) => {
   const normalized = normalizeText(category);
 
   if (normalized.includes("lider")) return "Premios de liderazgo";
-  if (normalized.includes("biblic") || normalized.includes("biblia")) return "Estudios bíblicos";
+  if (
+    normalized.includes("biblic") ||
+    normalized.includes("biblia") ||
+    normalized.includes("reto espiritual")
+  ) return "Estudios bíblicos";
   if (normalized.includes("destreza") || normalized.includes("adiestramiento")) return "Premios de destreza";
 
   return "Actividades complementarias";

@@ -44,7 +44,7 @@ const TasksToolbar = ({ createAction }: { createAction?: ReactNode }) => {
         <label htmlFor="tasks-category" className="sr-only">Filtrar por categoría</label>
         <select id="tasks-category" value={category} onChange={(event) => updateParams({ category: event.target.value })} className="h-11 min-w-0 w-full rounded-xl border border-[var(--border-default)] bg-white px-3 text-sm outline-none focus:border-[var(--primary)] focus:ring-4 focus:ring-[var(--focus-ring)] sm:w-auto">
           <option value="">Todas las categorías</option>
-          <option>Premio de adiestramiento</option><option>Estudio biblico</option><option>Premio liderazgo</option><option>Otros</option>
+          <option>Premio de adiestramiento</option><option>Estudio biblico</option><option>Reto espiritual</option><option>Premio liderazgo</option><option>Otros</option>
         </select>
         <label htmlFor="tasks-status" className="sr-only">Filtrar por estado</label>
         <select id="tasks-status" value={status} onChange={(event) => updateParams({ status: event.target.value })} className="h-11 min-w-0 w-full rounded-xl border border-[var(--border-default)] bg-white px-3 text-sm outline-none focus:border-[var(--primary)] focus:ring-4 focus:ring-[var(--focus-ring)] sm:w-auto">

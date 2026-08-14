@@ -22,7 +22,7 @@ import {
 import {
   biblicalBookOptions,
   getBiblicalAwardOptions,
-  isSpiritualChallengeAwardId,
+  getSpiritualChallengeAwardOptions,
 } from "@/lib/biblicalAwardOptions";
 import { getLeadershipAwardOptions } from "@/lib/leadershipAwardOptions";
 import { leaderGroupOptions } from "@/lib/roles";
@@ -30,6 +30,7 @@ import { leaderGroupOptions } from "@/lib/roles";
 const assignmentCategories = [
   "Premio de adiestramiento",
   "Estudio biblico",
+  "Reto espiritual",
   "Premio liderazgo",
   "Otros",
 ] as const;
@@ -1207,14 +1208,15 @@ const AssignmentForm = ({
   );
   const selectedAssignmentGroup = watch("assignmentGroup") as string | undefined;
   const selectedTrailAwardId = watch("trailAwardId") as string | undefined;
-  const isSpiritualChallenge = isSpiritualChallengeAwardId(
-    selectedTrailAwardId
-  );
   const effectiveAwardGroup = isAdminAssignmentEditor
     ? selectedAssignmentGroup
     : relatedData?.currentLeaderGroup;
   const availableBiblicalAwards = useMemo(
     () => getBiblicalAwardOptions(effectiveAwardGroup),
+    [effectiveAwardGroup]
+  );
+  const availableSpiritualChallenges = useMemo(
+    () => getSpiritualChallengeAwardOptions(effectiveAwardGroup),
     [effectiveAwardGroup]
   );
   const availableLeadershipAwards = useMemo(
@@ -1225,15 +1227,23 @@ const AssignmentForm = ({
     () =>
       selectedCategory === "Estudio biblico"
         ? availableBiblicalAwards
+        : selectedCategory === "Reto espiritual"
+          ? availableSpiritualChallenges
         : selectedCategory === "Premio liderazgo"
           ? availableLeadershipAwards
           : [],
-    [availableBiblicalAwards, availableLeadershipAwards, selectedCategory]
+    [
+      availableBiblicalAwards,
+      availableLeadershipAwards,
+      availableSpiritualChallenges,
+      selectedCategory,
+    ]
   );
 
   useEffect(() => {
     if (
       selectedCategory !== "Estudio biblico" &&
+      selectedCategory !== "Reto espiritual" &&
       selectedCategory !== "Premio liderazgo"
     ) {
       if (selectedTrailAwardId) {
@@ -1261,13 +1271,13 @@ const AssignmentForm = ({
   ]);
 
   useEffect(() => {
-    if (isSpiritualChallenge) {
+    if (selectedCategory !== "Estudio biblico") {
       setValue("biblicalBook", undefined, {
         shouldDirty: true,
         shouldValidate: true,
       });
     }
-  }, [isSpiritualChallenge, setValue]);
+  }, [selectedCategory, setValue]);
 
   return (
     <form className="flex max-h-[90vh] flex-col bg-white" onSubmit={onSubmit}>
@@ -1311,7 +1321,7 @@ const AssignmentForm = ({
                   htmlFor="assignment-title"
                   className="mb-2 block text-sm font-semibold text-[#344054]"
                 >
-                  {selectedCategory === "Estudio biblico"
+                  {selectedCategory === "Estudio biblico" || selectedCategory === "Reto espiritual"
                     ? "Tema de la tarea"
                     : "Nombre de la tarea"} <span className="text-red-600">*</span>
                 </label>
@@ -1319,7 +1329,7 @@ const AssignmentForm = ({
                   id="assignment-title"
                   defaultValue={data?.title}
                   placeholder={
-                    selectedCategory === "Estudio biblico"
+                    selectedCategory === "Estudio biblico" || selectedCategory === "Reto espiritual"
                       ? "Ej. Salmos"
                       : "Ej. Folleto informativo del destacamento"
                   }
@@ -1545,7 +1555,7 @@ const AssignmentForm = ({
                     error={errors.trailAwardId as FieldError}
                   />
                   </div>
-                  {!isSpiritualChallenge && selectedTrailAwardId && <div>
+                  {selectedTrailAwardId && <div>
                     <label
                       htmlFor="assignment-biblical-book"
                       className="mb-2 block text-sm font-semibold text-[#344054]"
@@ -1574,11 +1584,43 @@ const AssignmentForm = ({
                       error={errors.biblicalBook as FieldError}
                     />
                   </div>}
-                  {isSpiritualChallenge && (
-                    <p className="self-center text-sm text-[#667085]">
-                      Los retos espirituales no requieren seleccionar un libro.
-                    </p>
-                  )}
+                </div>
+              )}
+              {selectedCategory === "Reto espiritual" && (
+                <div className="md:col-span-2">
+                  <label
+                    htmlFor="assignment-spiritual-challenge"
+                    className="mb-2 block text-sm font-semibold text-[#344054]"
+                  >
+                    Reto espiritual <span className="text-red-600">*</span>
+                  </label>
+                  <select
+                    id="assignment-spiritual-challenge"
+                    value={selectedTrailAwardId || ""}
+                    aria-invalid={Boolean(errors.trailAwardId)}
+                    aria-describedby="assignment-spiritual-challenge-help assignment-spiritual-challenge-error"
+                    className={`${fieldBaseClass} ${errors.trailAwardId ? fieldErrorClass : ""}`}
+                    disabled={saving || availableSpiritualChallenges.length === 0}
+                    {...register("trailAwardId")}
+                  >
+                    <option value="" disabled>
+                      {availableSpiritualChallenges.length
+                        ? "Seleccionar reto espiritual"
+                        : "Este grupo no tiene retos espirituales"}
+                    </option>
+                    {availableSpiritualChallenges.map((award) => (
+                      <option value={award.value} key={award.value}>
+                        {award.label}
+                      </option>
+                    ))}
+                  </select>
+                  <p id="assignment-spiritual-challenge-help" className="mt-2 text-xs text-[#667085]">
+                    Esta tarea aportara al promedio del reto seleccionado y no requiere libro.
+                  </p>
+                  <FieldErrorMessage
+                    id="assignment-spiritual-challenge-error"
+                    error={errors.trailAwardId as FieldError}
+                  />
                 </div>
               )}
               {selectedCategory === "Premio liderazgo" && (

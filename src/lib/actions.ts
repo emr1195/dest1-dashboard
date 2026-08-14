@@ -12,7 +12,6 @@ import {
 import { getCurrentUser } from "./auth";
 import prisma from "./prisma";
 import { randomUUID } from "crypto";
-import { isSpiritualChallengeAwardId } from "./biblicalAwardOptions";
 
 type CurrentState = { success: boolean; error: boolean; id?: number };
 
@@ -623,14 +622,12 @@ export const createAssignment = async (
         dueDate: data.dueDate,
         category: data.category,
         trailAwardId:
-          data.category === "Estudio biblico" || data.category === "Premio liderazgo"
+          data.category === "Estudio biblico" ||
+          data.category === "Reto espiritual" ||
+          data.category === "Premio liderazgo"
             ? data.trailAwardId
             : null,
-        biblicalBook:
-          data.category === "Estudio biblico" &&
-          !isSpiritualChallengeAwardId(data.trailAwardId)
-            ? data.biblicalBook
-            : null,
+        biblicalBook: data.category === "Estudio biblico" ? data.biblicalBook : null,
         audience:
           data.assignmentGroup === "all" || data.audience === "all" ? "all" : "group",
         points: data.points,
@@ -682,14 +679,12 @@ export const updateAssignment = async (
         dueDate: data.dueDate,
         category: data.category,
         trailAwardId:
-          data.category === "Estudio biblico" || data.category === "Premio liderazgo"
+          data.category === "Estudio biblico" ||
+          data.category === "Reto espiritual" ||
+          data.category === "Premio liderazgo"
             ? data.trailAwardId
             : null,
-        biblicalBook:
-          data.category === "Estudio biblico" &&
-          !isSpiritualChallengeAwardId(data.trailAwardId)
-            ? data.biblicalBook
-            : null,
+        biblicalBook: data.category === "Estudio biblico" ? data.biblicalBook : null,
         audience:
           data.assignmentGroup === "all" || data.audience === "all"
             ? "all"

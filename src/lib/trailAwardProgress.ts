@@ -27,7 +27,8 @@ export const trailCategoryRequiresMinimum = (category: string) => {
     normalized.includes("liderazgo") ||
     normalized.includes("destreza") ||
     normalized.includes("adiestramiento") ||
-    normalized.includes("estudio biblico")
+    normalized.includes("estudio biblico") ||
+    normalized.includes("reto espiritual")
   );
 };
 

@@ -31,7 +31,8 @@ export const isSkillAwardResult = ({ category }: SkillAverageSource) => {
 };
 
 export const isBiblicalStudyResult = ({ category }: SkillAverageSource) =>
-  normalizeCategory(category).includes("estudio biblico");
+  normalizeCategory(category).includes("estudio biblico") ||
+  normalizeCategory(category).includes("reto espiritual");
 
 export const isLeadershipAwardResult = ({ category }: SkillAverageSource) =>
   normalizeCategory(category).includes("liderazgo");

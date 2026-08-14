@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   isBiblicalBookName,
+  isBiblicalStudyAwardId,
   isSpiritualChallengeAwardId,
 } from "./biblicalAwardOptions";
 import { isLeadershipAwardId } from "./leadershipAwardOptions";
@@ -157,7 +158,13 @@ export const assignmentSchema = z.object({
   startDate: dateTimeField("La fecha de inicio es obligatoria!"),
   dueDate: dateTimeField("La fecha limite es obligatoria!"),
   category: z.enum(
-    ["Premio de adiestramiento", "Estudio biblico", "Premio liderazgo", "Otros"],
+    [
+      "Premio de adiestramiento",
+      "Estudio biblico",
+      "Reto espiritual",
+      "Premio liderazgo",
+      "Otros",
+    ],
     { message: "La categoria es obligatoria!" }
   ),
   trailAwardId: z.preprocess(
@@ -191,7 +198,10 @@ export const assignmentSchema = z.object({
     z.enum(["group", "all"]).optional()
   ),
 }).superRefine((data, context) => {
-  if (data.category === "Estudio biblico" && !data.trailAwardId) {
+  if (
+    data.category === "Estudio biblico" &&
+    !isBiblicalStudyAwardId(data.trailAwardId)
+  ) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["trailAwardId"],
@@ -200,13 +210,22 @@ export const assignmentSchema = z.object({
   }
   if (
     data.category === "Estudio biblico" &&
-    !isSpiritualChallengeAwardId(data.trailAwardId) &&
     !data.biblicalBook
   ) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["biblicalBook"],
       message: "Escribe el libro asignado a este estudio!",
+    });
+  }
+  if (
+    data.category === "Reto espiritual" &&
+    !isSpiritualChallengeAwardId(data.trailAwardId)
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["trailAwardId"],
+      message: "Selecciona el reto espiritual correspondiente!",
     });
   }
   if (
