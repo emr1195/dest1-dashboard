@@ -5,6 +5,10 @@ import { getCurrentUser } from "@/lib/auth";
 import { translateDisplayText } from "@/lib/displayText";
 import { canPreviewFile, getFileExtension, getOfficePreviewUrl, getPublicBaseUrl, isImageFile, isOfficeFile } from "@/lib/filePreview";
 import prisma from "@/lib/prisma";
+import {
+  getStudentGroupFromReturnHref,
+  getStudentProfileIdsForGroup,
+} from "@/lib/studentGroups";
 import Image from "next/image";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -54,11 +58,24 @@ const SubmissionReviewPage = async ({
   const assignmentId = Number(params.id);
   if (!assignmentId) notFound();
   const returnHref = getAssignmentReturnHref(searchParams.returnTo, assignmentId);
+  const selectedGroup = getStudentGroupFromReturnHref(searchParams.returnTo);
+  const selectedGroupStudentIds = selectedGroup
+    ? await getStudentProfileIdsForGroup(selectedGroup)
+    : null;
 
   const submission = await prisma.assignmentSubmission.findFirst({
     where: {
       id: params.submissionId,
       assignmentId,
+      ...(selectedGroupStudentIds
+        ? {
+            studentId: {
+              in: selectedGroupStudentIds.length
+                ? selectedGroupStudentIds
+                : ["__no_student__"],
+            },
+          }
+        : {}),
       ...(currentUser.role === "teacher" || currentUser.role === "admin" ? {} : { id: "__no_access__" }),
     },
     include: {

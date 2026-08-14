@@ -13,6 +13,12 @@ import { getAccessibleStudentProfileIdsForParent } from "@/lib/guardianLinks";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import {
+  getStudentProfileIdsForGroup,
+  isStudentGroupValue,
+  StudentGroupValue,
+  studentGroupValues,
+} from "@/lib/studentGroups";
+import {
   Assignment,
   AssignmentFile,
   AssignmentSubmission,
@@ -123,14 +129,8 @@ const getDeadlineStatus = (dueDate: Date) => {
   };
 };
 
-const groupValues = [
-  "navegantes",
-  "pioneros",
-  "seguidores",
-  "exploradores",
-] as const;
-
-type GroupValue = (typeof groupValues)[number];
+const groupValues = studentGroupValues;
+type GroupValue = StudentGroupValue;
 
 const assignmentGroupCards: Record<GroupValue, { label: string; icon: string; active: string }> = {
   navegantes: { label: "Navegantes", icon: "/navegantes.png", active: "border-amber-400 bg-amber-50 text-amber-900" },
@@ -138,9 +138,6 @@ const assignmentGroupCards: Record<GroupValue, { label: string; icon: string; ac
   seguidores: { label: "Seguidores", icon: "/seguidores.png", active: "border-purple-500 bg-purple-50 text-purple-800" },
   exploradores: { label: "Exploradores", icon: "/exploradores.png", active: "border-green-500 bg-green-50 text-green-800" },
 };
-
-const isGroupValue = (value?: string | null): value is GroupValue =>
-  groupValues.includes(value as GroupValue);
 
 const getLeaderIdsForGroups = async (groups: GroupValue[]) => {
   if (!groups.length) return [];
@@ -235,14 +232,27 @@ const AssignmentListPage = async ({
   const currentUser = await getCurrentUser();
   const role = currentUser?.role;
   const currentUserId = currentUser?.id;
-  const selectedGroup = isGroupValue(searchParams.group) ? searchParams.group : null;
-  const parentStudentIds =
-    role === "parent" && currentUserId
-      ? await getAccessibleStudentProfileIdsForParent(currentUserId)
-      : [];
-  const selectedLeaderIds = selectedGroup
-    ? await getLeaderIdsForGroups([selectedGroup])
-    : [];
+  const selectedGroup = isStudentGroupValue(searchParams.group) ? searchParams.group : null;
+  const [parentStudentIds, selectedLeaderIds, selectedGroupStudentIds] =
+    await Promise.all([
+      role === "parent" && currentUserId
+        ? getAccessibleStudentProfileIdsForParent(currentUserId)
+        : Promise.resolve([]),
+      selectedGroup
+        ? getLeaderIdsForGroups([selectedGroup])
+        : Promise.resolve([]),
+      selectedGroup
+        ? getStudentProfileIdsForGroup(selectedGroup)
+        : Promise.resolve([]),
+    ]);
+  const visibleSubmissionStudentIds =
+    role === "student" && currentUserId
+      ? [currentUserId]
+      : role === "parent"
+        ? parentStudentIds
+        : role === "admin" || role === "teacher"
+          ? selectedGroupStudentIds
+          : [];
 
   const { page, pageSize: pageSizeParam, ...queryParams } = searchParams;
   const p = page ? parseInt(page) : 1;
@@ -337,12 +347,13 @@ const AssignmentListPage = async ({
           orderBy: { createdAt: "desc" },
         },
         submissions: {
-          where:
-            role === "student"
-              ? { studentId: currentUserId! }
-              : role === "parent"
-                ? { studentId: { in: parentStudentIds } }
-                : undefined,
+          where: {
+            studentId: {
+              in: visibleSubmissionStudentIds.length
+                ? visibleSubmissionStudentIds
+                : ["__no_student__"],
+            },
+          },
           select: {
             id: true,
             studentId: true,
@@ -353,7 +364,16 @@ const AssignmentListPage = async ({
           },
           orderBy: { updatedAt: "desc" },
         },
-        results: { select: { studentId: true } },
+        results: {
+          where: {
+            studentId: {
+              in: visibleSubmissionStudentIds.length
+                ? visibleSubmissionStudentIds
+                : ["__no_student__"],
+            },
+          },
+          select: { studentId: true },
+        },
       },
       take: pageSize,
       skip: pageSize * (p - 1),
@@ -434,7 +454,7 @@ const AssignmentListPage = async ({
           const late = assignment.submissions.length - onTime;
           const evaluatedIds = new Set(assignment.results.map((result) => result.studentId));
           const evaluated = assignment.submissions.filter((submission) => submission.status === "reviewed" || (submission.status !== "returned" && evaluatedIds.has(submission.studentId))).length;
-          const expected = role === "student" ? 1 : role === "parent" ? parentStudentIds.length : assignment.lesson.class._count.students;
+          const expected = visibleSubmissionStudentIds.length;
           const pending = Math.max(0, expected - assignment.submissions.length);
           const submissionItems: TaskSubmissionItem[] = assignment.submissions.map((submission) => ({
             id: submission.id,
