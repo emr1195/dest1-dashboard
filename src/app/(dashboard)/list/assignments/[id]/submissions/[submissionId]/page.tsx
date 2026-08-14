@@ -7,7 +7,9 @@ import { canPreviewFile, getFileExtension, getOfficePreviewUrl, getPublicBaseUrl
 import prisma from "@/lib/prisma";
 import {
   getStudentGroupFromReturnHref,
+  getStudentProfileGroup,
   getStudentProfileIdsForGroup,
+  StudentGroupValue,
 } from "@/lib/studentGroups";
 import Image from "next/image";
 import { headers } from "next/headers";
@@ -17,6 +19,13 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Revisar entrega",
+};
+
+const studentGroupLabels: Record<StudentGroupValue, string> = {
+  navegantes: "Navegante",
+  pioneros: "Pionero",
+  seguidores: "Seguidor",
+  exploradores: "Explorador",
 };
 
 const formatDate = (date: Date) => new Intl.DateTimeFormat("es-PA", {
@@ -79,7 +88,15 @@ const SubmissionReviewPage = async ({
       ...(currentUser.role === "teacher" || currentUser.role === "admin" ? {} : { id: "__no_access__" }),
     },
     include: {
-      student: { select: { name: true, surname: true, email: true } },
+      student: {
+        select: {
+          id: true,
+          name: true,
+          surname: true,
+          email: true,
+          birthday: true,
+        },
+      },
       assignment: {
         include: {
           files: { where: { fileType: "award-image" }, orderBy: { createdAt: "desc" }, take: 1 },
@@ -99,6 +116,11 @@ const SubmissionReviewPage = async ({
   const previewSrc = officeFile ? getOfficePreviewUrl(publicFileUrl) : submission.filePath;
   const leaderName = submission.assignment.createdByName || `${submission.assignment.lesson.teacher.name} ${submission.assignment.lesson.teacher.surname}`;
   const studentName = `${submission.student.name} ${submission.student.surname}`;
+  const resolvedStudentGroup =
+    selectedGroup || (await getStudentProfileGroup(submission.student));
+  const studentGroupLabel = resolvedStudentGroup
+    ? studentGroupLabels[resolvedStudentGroup]
+    : "Muchacho";
   const translatedTitle = translateDisplayText(submission.assignment.title);
   const translatedCategory = translateDisplayText(submission.assignment.category);
   const fileType = fileTypeConfig(submission.fileName, submission.fileType);
@@ -111,7 +133,7 @@ const SubmissionReviewPage = async ({
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex min-w-0 items-start gap-4">
             {awardImage ? <Image src={awardImage.filePath} alt={`Imagen de ${translatedTitle}`} width={72} height={72} unoptimized className="h-16 w-16 shrink-0 rounded-2xl object-cover sm:h-[72px] sm:w-[72px]" /> : <span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-[#EFF6FF] text-[#2563EB] sm:h-[72px] sm:w-[72px]"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-8 w-8"><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h6M9 17h6" /></svg></span>}
-            <div className="min-w-0"><h1 title={translatedTitle} className="line-clamp-2 text-2xl font-extrabold tracking-normal sm:text-3xl">{translatedTitle}</h1><p className="mt-2 flex items-center gap-2 text-sm font-semibold text-[#475569]"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg>Muchacho: {studentName}</p><p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-[#64748B]"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0"><path d="M12 3 4 7v5c0 5 3.5 8 8 9 4.5-1 8-4 8-9V7z" /></svg>{translatedCategory}<span aria-hidden="true">·</span>Líder {leaderName}</p></div>
+            <div className="min-w-0"><h1 title={translatedTitle} className="line-clamp-2 text-2xl font-extrabold tracking-normal sm:text-3xl">{translatedTitle}</h1><p className="mt-2 flex items-center gap-2 text-sm font-semibold text-[#475569]"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0"><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg>{studentGroupLabel}: {studentName}</p><p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-[#64748B]"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4 shrink-0"><path d="M12 3 4 7v5c0 5 3.5 8 8 9 4.5-1 8-4 8-9V7z" /></svg>{translatedCategory}<span aria-hidden="true">·</span>Líder {leaderName}</p></div>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center lg:shrink-0"><span className={`inline-flex min-h-9 w-max items-center gap-2 rounded-full border px-3 text-sm font-extrabold ${status.style}`}><span aria-hidden="true">{status.icon}</span>{status.label}</span><Link href={returnHref} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#CBD5E1] bg-white px-4 text-sm font-bold text-[#334155] transition hover:bg-[#F1F5F9] focus:outline-none focus:ring-4 focus:ring-[#2563EB]/15"><span aria-hidden="true">←</span> Volver</Link></div>
         </div>

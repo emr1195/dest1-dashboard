@@ -25,6 +25,29 @@ const groupValueByName: Record<string, StudentGroupValue> = {
 const getStudentGroupByBirthday = (birthday: Date) =>
   groupValueByName[getStudentGroupName(birthday)] || null;
 
+export const getStudentProfileGroup = async (student: {
+  id: string;
+  email?: string | null;
+  birthday: Date;
+}) => {
+  const account = await prisma.authUser.findFirst({
+    where: {
+      role: "student",
+      OR: [
+        { id: student.id },
+        ...(student.email
+          ? [{ email: student.email.toLowerCase() }]
+          : []),
+      ],
+    },
+    select: { leaderGroup: true, birthday: true },
+  });
+
+  return isStudentGroupValue(account?.leaderGroup)
+    ? account.leaderGroup
+    : getStudentGroupByBirthday(account?.birthday || student.birthday);
+};
+
 export const getStudentProfileIdsForGroup = async (
   group: StudentGroupValue
 ) => {
