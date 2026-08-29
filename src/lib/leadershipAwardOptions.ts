@@ -28,5 +28,8 @@ export const getLeadershipAwardOptions = (group?: string) =>
     ? leadershipAwardOptions.filter((award) => award.group === group)
     : leadershipAwardOptions;
 
+export const getLeadershipAwardGroup = (value?: string | null) =>
+  leadershipAwardOptions.find((award) => award.value === value)?.group;
+
 export const isLeadershipAwardId = (value: string) =>
   leadershipAwardOptions.some((award) => award.value === value);

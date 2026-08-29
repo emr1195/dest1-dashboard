@@ -8,6 +8,7 @@ import {
   getAge,
   getStudentGroupName,
 } from "@/lib/badgeCatalog";
+import { getLeadershipAwardGroup } from "@/lib/leadershipAwardOptions";
 import prisma from "@/lib/prisma";
 import {
   getTrailAwardCatalog,
@@ -78,6 +79,9 @@ const getAssignmentGroup = (
   accountsById: Map<string, LeaderGroupAccount>,
   accountsByEmail: Map<string, LeaderGroupAccount>
 ) => {
+  const leadershipGroup = getLeadershipAwardGroup(assignment.trailAwardId);
+  if (leadershipGroup) return leadershipGroup;
+
   const teacher = assignment.lesson.teacher;
   const account =
     accountsById.get(teacher.id) ||
@@ -259,10 +263,14 @@ const SubjectListPage = async ({
       : [];
     const accountsById = new Map(leaderAccounts.map((account) => [account.id, account]));
     const accountsByEmail = new Map(leaderAccounts.map((account) => [account.email.toLowerCase(), account]));
-    const groupAssignments = allAssignments.filter((assignment) =>
-      assignment.audience === "all" ||
-      getAssignmentGroup(assignment, accountsById, accountsByEmail) === selectedGroup.key
-    );
+    const groupAssignments = allAssignments.filter((assignment) => {
+      const leadershipGroup = getLeadershipAwardGroup(assignment.trailAwardId);
+
+      return leadershipGroup
+        ? leadershipGroup === selectedGroup.key
+        : assignment.audience === "all" ||
+            getAssignmentGroup(assignment, accountsById, accountsByEmail) === selectedGroup.key;
+    });
     const certificateStatus = new Map(certificates.map((certificate) => [certificate.badgeId, certificate.status]));
     const officialBadges = getTrailAwardCatalog(selectedGroup.name);
     const matchedAssignments = new Set<number>();

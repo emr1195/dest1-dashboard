@@ -10,6 +10,10 @@ import { withAssignmentReturnHref } from "@/lib/assignmentNavigation";
 import { getCurrentUser } from "@/lib/auth";
 import { translateDisplayText } from "@/lib/displayText";
 import { getAccessibleStudentProfileIdsForParent } from "@/lib/guardianLinks";
+import {
+  getLeadershipAwardOptions,
+  leadershipAwardOptions,
+} from "@/lib/leadershipAwardOptions";
 import prisma from "@/lib/prisma";
 import { ITEM_PER_PAGE } from "@/lib/settings";
 import {
@@ -306,18 +310,42 @@ const AssignmentListPage = async ({
 
   if (selectedGroup) {
     const searchFilter = query.OR;
+    const selectedLeadershipAwardIds = getLeadershipAwardOptions(selectedGroup)
+      .map((award) => award.value);
+    const allLeadershipAwardIds = leadershipAwardOptions.map((award) => award.value);
     delete query.OR;
     query.AND = [
       ...(searchFilter ? [{ OR: searchFilter }] : []),
       {
         OR: [
-          { audience: "all" },
           {
-            lesson: {
-              teacherId: {
-                in: selectedLeaderIds.length ? selectedLeaderIds : ["__no_teacher__"],
-              },
+            trailAwardId: {
+              in: selectedLeadershipAwardIds.length
+                ? selectedLeadershipAwardIds
+                : ["__no_leadership_award__"],
             },
+          },
+          {
+            AND: [
+              {
+                OR: [
+                  { trailAwardId: null },
+                  { trailAwardId: { notIn: allLeadershipAwardIds } },
+                ],
+              },
+              {
+                OR: [
+                  { audience: "all" },
+                  {
+                    lesson: {
+                      teacherId: {
+                        in: selectedLeaderIds.length ? selectedLeaderIds : ["__no_teacher__"],
+                      },
+                    },
+                  },
+                ],
+              },
+            ],
           },
         ],
       },
