@@ -77,7 +77,7 @@ const TrailProgressBoard = ({
             <p className="text-xs font-extrabold uppercase text-[#07569F]">Progreso personal</p>
             <h2 className="truncate text-xl font-extrabold text-[#0F172A] sm:text-2xl">{student.name}</h2>
             <p className="mt-1 text-sm text-[#64748B]">
-              {student.age} años · Grupo actual: {student.currentGroup}
+              {student.age ? `${student.age} años · ` : ""}Grupo actual: {student.currentGroup}
             </p>
           </div>
         </div>

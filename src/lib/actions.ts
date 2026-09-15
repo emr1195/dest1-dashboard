@@ -14,6 +14,7 @@ import prisma from "./prisma";
 import { randomUUID } from "crypto";
 import { hashPassword } from "./password";
 import { getStudentInitialPassword, getStudentUsernameBase } from "./studentCredentials";
+import { getAge, getStudentGroupName } from "./badgeCatalog";
 
 type CurrentState = { success: boolean; error: boolean; id?: number; username?: string };
 
@@ -422,6 +423,16 @@ export const createStudent = async (
 
     const base = getStudentUsernameBase(data.name, data.surname);
     if (!base) return { success: false, error: true };
+    const groupByName = {
+      Navegantes: "navegantes",
+      Pioneros: "pioneros",
+      Seguidores: "seguidores",
+      Exploradores: "exploradores",
+    } as const;
+    const ageGroup = data.birthday
+      ? groupByName[getStudentGroupName(data.birthday) as keyof typeof groupByName]
+      : undefined;
+    const studentGroup = ageGroup || data.group;
 
     const username = await prisma.$transaction(async (tx) => {
       const classItem = await tx.class.findUnique({
@@ -477,7 +488,7 @@ export const createStudent = async (
           img: data.img || null,
           bloodType: data.bloodType,
           sex: data.sex,
-          birthday: data.birthday,
+          birthday: data.birthday ?? null,
           gradeId: data.gradeId,
           classId: data.classId,
           parentId: guardian.id,
@@ -488,7 +499,9 @@ export const createStudent = async (
           id,
           email: email || `student.${id}@destacamento.local`,
           name: `${data.name.trim()} ${data.surname.trim()}`,
-          birthday: data.birthday,
+          birthday: data.birthday ?? null,
+          age: data.birthday ? getAge(data.birthday) : null,
+          leaderGroup: studentGroup,
           sex: data.sex,
           passwordHash: hashPassword(getStudentInitialPassword(username)),
           provider: "credentials",
@@ -528,10 +541,10 @@ export const updateStudent = async (
         img: data.img || null,
         bloodType: data.bloodType,
         sex: data.sex,
-        birthday: data.birthday,
+        birthday: data.birthday ?? undefined,
         gradeId: data.gradeId,
         classId: data.classId,
-        parentId: data.parentId,
+        parentId: data.parentId || undefined,
       },
     });
     // revalidatePath("/list/students");

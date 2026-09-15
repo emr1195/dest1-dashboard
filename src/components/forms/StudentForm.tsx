@@ -23,6 +23,7 @@ import { toast } from "react-toastify";
 import { CldUploadWidget } from "next-cloudinary";
 import DateTimePicker from "../DateTimePicker";
 import { getStudentUsernameBase } from "@/lib/studentCredentials";
+import { getStudentGroupName } from "@/lib/badgeCatalog";
 
 const toDateValue = (value?: Date | string) => {
   if (!value) return undefined;
@@ -44,6 +45,10 @@ const StudentForm = ({
   setOpen: Dispatch<SetStateAction<boolean>>;
   relatedData?: any;
 }) => {
+  const availableClass = relatedData?.classes?.find(
+    (item: { capacity: number; _count: { students: number } }) =>
+      item._count.students < item.capacity
+  ) || relatedData?.classes?.[0];
   const {
     register,
     handleSubmit,
@@ -54,6 +59,9 @@ const StudentForm = ({
     resolver: zodResolver(studentSchema),
     defaultValues: {
       birthday: toDateValue(data?.birthday) as any,
+      classId: data?.classId || availableClass?.id,
+      gradeId: data?.gradeId || availableClass?.gradeId || relatedData?.grades?.[0]?.id,
+      group: relatedData?.initialGroup || "navegantes",
     },
   });
 
@@ -62,6 +70,7 @@ const StudentForm = ({
   const birthdayValue = watch("birthday") as unknown as string | undefined;
   const nameValue = watch("name") || "";
   const surnameValue = watch("surname") || "";
+  const groupValue = watch("group");
 
   useEffect(() => {
     if (type !== "create") return;
@@ -69,6 +78,19 @@ const StudentForm = ({
       shouldValidate: false,
     });
   }, [type, nameValue, surnameValue, setValue]);
+
+  useEffect(() => {
+    if (type !== "create" || !birthdayValue) return;
+    const groupName = getStudentGroupName(new Date(birthdayValue));
+    const groupByName = {
+      Navegantes: "navegantes",
+      Pioneros: "pioneros",
+      Seguidores: "seguidores",
+      Exploradores: "exploradores",
+    } as const;
+    const ageGroup = groupByName[groupName as keyof typeof groupByName];
+    if (ageGroup) setValue("group", ageGroup);
+  }, [type, birthdayValue, setValue]);
 
   const [state, formAction] = useFormState(
     type === "create" ? createStudent : updateStudent,
@@ -94,8 +116,6 @@ const StudentForm = ({
       router.refresh();
     }
   }, [state, router, type, setOpen]);
-
-  const { grades = [], classes = [] } = relatedData || {};
 
   return (
     <form className="flex flex-col gap-8" onSubmit={onSubmit}>
@@ -194,8 +214,7 @@ const StudentForm = ({
         <div className="w-full md:w-1/4">
           <DateTimePicker
             id="student-birthday"
-            label="Fecha de nacimiento"
-            required
+            label="Fecha de nacimiento (opcional)"
             dateOnly
             value={birthdayValue}
             onChange={(value) =>
@@ -208,6 +227,21 @@ const StudentForm = ({
             openPicker={openDatePicker}
             setOpenPicker={setOpenDatePicker}
           />
+        </div>
+        <div className="flex w-full flex-col gap-2 md:w-1/4">
+          <label htmlFor="student-group" className="text-xs text-gray-500">Grupo</label>
+          <select
+            id="student-group"
+            className="w-full rounded-md p-2 text-sm ring-[1.5px] ring-gray-300"
+            {...register("group")}
+            value={groupValue}
+          >
+            <option value="navegantes">Navegantes (5-7 años)</option>
+            <option value="pioneros">Pioneros (8-10 años)</option>
+            <option value="seguidores">Seguidores (11-14 años)</option>
+            <option value="exploradores">Exploradores (15-17 años)</option>
+          </select>
+          {errors.group?.message && <p className="text-xs text-lamaPurple">{errors.group.message}</p>}
         </div>
         <InputField
           label="ID del padre (opcional)"
@@ -242,53 +276,8 @@ const StudentForm = ({
             </p>
           )}
         </div>
-        <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-xs text-gray-500">Grado</label>
-          <select
-            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-            {...register("gradeId")}
-            defaultValue={data?.gradeId}
-          >
-            {grades.map((grade: { id: number; level: number }) => (
-              <option value={grade.id} key={grade.id}>
-                {grade.level}
-              </option>
-            ))}
-          </select>
-          {errors.gradeId?.message && (
-            <p className="text-xs text-lamaPurple">
-              {errors.gradeId.message.toString()}
-            </p>
-          )}
-        </div>
-        <div className="flex flex-col gap-2 w-full md:w-1/4">
-          <label className="text-xs text-gray-500">Grupo</label>
-          <select
-            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
-            {...register("classId")}
-            defaultValue={data?.classId}
-          >
-            {classes.map(
-              (classItem: {
-                id: number;
-                name: string;
-                capacity: number;
-                _count: { students: number };
-              }) => (
-                <option value={classItem.id} key={classItem.id}>
-                  ({classItem.name} -{" "}
-                  {classItem._count.students + "/" + classItem.capacity}{" "}
-                  capacidad)
-                </option>
-              )
-            )}
-          </select>
-          {errors.classId?.message && (
-            <p className="text-xs text-lamaPurple">
-              {errors.classId.message.toString()}
-            </p>
-          )}
-        </div>
+        <input type="hidden" {...register("gradeId")} />
+        <input type="hidden" {...register("classId")} />
       </div>
       {state.error && (
         <span className="text-lamaPurple">Algo salio mal!</span>

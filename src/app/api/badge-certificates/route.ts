@@ -1,6 +1,7 @@
 import { getCurrentUser } from "@/lib/auth";
 import { getBadgeCatalog, getStudentGroupName } from "@/lib/badgeCatalog";
 import prisma from "@/lib/prisma";
+import { getLeaderGroupOption } from "@/lib/roles";
 import { fileToDataUrl } from "@/lib/uploadStorage";
 import { NextResponse } from "next/server";
 
@@ -46,7 +47,12 @@ const allowedBadges = async (userId: string, userType: "student" | "teacher") =>
 
   if (!student) return [];
 
-  return getBadgeCatalog("student", getStudentGroupName(student.birthday));
+  const account = await prisma.authUser.findUnique({
+    where: { id: userId },
+    select: { leaderGroup: true },
+  });
+  const groupName = getLeaderGroupOption(account?.leaderGroup)?.label || getStudentGroupName(student.birthday);
+  return getBadgeCatalog("student", groupName);
 };
 
 export const GET = async (req: Request) => {

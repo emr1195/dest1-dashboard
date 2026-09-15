@@ -8,7 +8,7 @@ import { getLeaderGroupOption } from "@/lib/roles";
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 
-const getStudentGroup = (birthday: Date) => {
+const getStudentGroup = (birthday: Date | null) => {
   const age = getStudentAge(birthday);
 
   if (age >= 5 && age <= 7) return { name: "Navegantes", icon: "/navegantes-card.png" };

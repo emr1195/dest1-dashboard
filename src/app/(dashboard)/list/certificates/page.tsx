@@ -2,6 +2,7 @@ import CertificateCenter from "@/components/CertificateCenter";
 import { getCurrentUser } from "@/lib/auth";
 import { getBadgeCatalog, getStudentGroupName } from "@/lib/badgeCatalog";
 import prisma from "@/lib/prisma";
+import { getLeaderGroupOption } from "@/lib/roles";
 import { notFound, redirect } from "next/navigation";
 
 const CertificatesPage = async () => {
@@ -39,7 +40,11 @@ const CertificatesPage = async () => {
 
   if (!student) notFound();
 
-  const studentGroup = getStudentGroupName(student.birthday);
+  const account = await prisma.authUser.findUnique({
+    where: { id: currentUser.id },
+    select: { leaderGroup: true },
+  });
+  const studentGroup = getLeaderGroupOption(account?.leaderGroup)?.label || getStudentGroupName(student.birthday);
 
   return (
     <div className="flex-1 p-4">

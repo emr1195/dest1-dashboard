@@ -132,7 +132,11 @@ export const studentSchema = z.object({
   address: z.string(),
   img: z.string().optional(),
   bloodType: z.string().min(1, { message: "El tipo de sangre es obligatorio!" }),
-  birthday: z.coerce.date({ message: "La fecha de nacimiento es obligatoria!" }),
+  birthday: z.preprocess(
+    (value) => value === "" || value === null ? undefined : value,
+    z.coerce.date({ message: "La fecha de nacimiento no es valida!" }).optional()
+  ),
+  group: z.enum(["navegantes", "pioneros", "seguidores", "exploradores"]),
   sex: z.enum(["MALE", "FEMALE"], { message: "El sexo es obligatorio!" }),
   gradeId: z.coerce.number().min(1, { message: "El grado es obligatorio!" }),
   classId: z.coerce.number().min(1, { message: "El Premio B es obligatorio!" }),

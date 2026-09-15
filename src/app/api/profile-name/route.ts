@@ -117,7 +117,7 @@ export const GET = async (req: Request) => {
   });
 
   const profileWithOptionalFields = profile as typeof profile & {
-    birthday?: Date;
+    birthday?: Date | null;
     sex?: UserSex;
     rank?: string | null;
   };
@@ -178,7 +178,7 @@ export const PATCH = async (req: Request) => {
     !name ||
     !surname ||
     !email ||
-    !birthdayValue ||
+    (type === "teacher" && !birthdayValue) ||
     !Object.values(UserSex).includes(sex) ||
     username.length > 60 ||
     name.length > 80 ||
@@ -191,8 +191,8 @@ export const PATCH = async (req: Request) => {
     return NextResponse.json({ message: "Datos invalidos." }, { status: 400 });
   }
 
-  const birthday = new Date(`${birthdayValue}T12:00:00.000Z`);
-  if (Number.isNaN(birthday.getTime())) {
+  const birthday = birthdayValue ? new Date(`${birthdayValue}T12:00:00.000Z`) : null;
+  if (birthday && Number.isNaN(birthday.getTime())) {
     return NextResponse.json(
       { message: "La fecha de nacimiento no es valida." },
       { status: 400 }
@@ -312,7 +312,7 @@ export const PATCH = async (req: Request) => {
           email,
           phone: phone || null,
           address,
-          birthday,
+          birthday: birthday || null,
           sex,
           rank: rank || null,
         },
@@ -327,7 +327,7 @@ export const PATCH = async (req: Request) => {
           email,
           phone: phone || null,
           address,
-          birthday,
+          birthday: birthday!,
           sex,
           rank: rank || null,
         },

@@ -36,10 +36,11 @@ type TrailGroupKey = (typeof trailGroups)[number]["key"];
 
 type StudentRecord = {
   id: string;
+  email: string | null;
   name: string;
   surname: string;
   img: string | null;
-  birthday: Date;
+  birthday: Date | null;
 };
 
 type ProgressAssignment = Prisma.AssignmentGetPayload<{
@@ -67,7 +68,7 @@ const normalizeText = (value: string) =>
 const isTrailGroupKey = (value?: string): value is TrailGroupKey =>
   trailGroups.some((group) => group.key === value);
 
-const getStudentGroupKey = (birthday: Date) => {
+const getStudentGroupKey = (birthday: Date | null) => {
   const groupName = getStudentGroupName(birthday);
   const group = trailGroups.find((item) => item.name === groupName);
 
@@ -164,6 +165,7 @@ const SubjectListPage = async ({
 
   const studentSelect = {
     id: true,
+    email: true,
     name: true,
     surname: true,
     img: true,
@@ -189,8 +191,29 @@ const SubjectListPage = async ({
   const ownStudent = role === "student" ? directoryStudents[0] : undefined;
   if (role === "student" && !ownStudent) notFound();
 
+  const studentAccounts = directoryStudents.length
+    ? await prisma.authUser.findMany({
+        where: {
+          role: "student",
+          OR: [
+            { id: { in: directoryStudents.map((student) => student.id) } },
+            { email: { in: directoryStudents.flatMap((student) => student.email ? [student.email] : []) } },
+          ],
+        },
+        select: { id: true, email: true, leaderGroup: true, birthday: true },
+      })
+    : [];
+  const accountById = new Map(studentAccounts.map((account) => [account.id, account]));
+  const accountByEmail = new Map(studentAccounts.map((account) => [account.email.toLowerCase(), account]));
+  const getResolvedStudentGroupKey = (student: StudentRecord) => {
+    const account = accountById.get(student.id) || (student.email ? accountByEmail.get(student.email.toLowerCase()) : undefined);
+    return isTrailGroupKey(account?.leaderGroup || undefined)
+      ? account?.leaderGroup as TrailGroupKey
+      : getStudentGroupKey(account?.birthday || student.birthday);
+  };
+
   const groupStudents = selectedGroup
-    ? directoryStudents.filter((student) => getStudentGroupKey(student.birthday) === selectedGroup.key)
+    ? directoryStudents.filter((student) => getResolvedStudentGroupKey(student) === selectedGroup.key)
     : [];
 
   const selectedStudent = role === "student"
@@ -202,7 +225,7 @@ const SubjectListPage = async ({
   const groupCounts = new Map<TrailGroupKey, number>(
     trailGroups.map((group) => [
       group.key,
-      directoryStudents.filter((student) => getStudentGroupKey(student.birthday) === group.key).length,
+      directoryStudents.filter((student) => getResolvedStudentGroupKey(student) === group.key).length,
     ])
   );
 
@@ -405,7 +428,7 @@ const SubjectListPage = async ({
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-extrabold">{name}</span>
-                      <span className="mt-1 block text-xs text-[#64748B]">{getAge(student.birthday)} años · {approvedCountByStudent.get(student.id) || 0} premios aprobados</span>
+                      <span className="mt-1 block text-xs text-[#64748B]">{student.birthday ? `${getAge(student.birthday)} años · ` : ""}{approvedCountByStudent.get(student.id) || 0} premios aprobados</span>
                     </span>
                     <span className="text-xl text-[#07569F]" aria-hidden="true">›</span>
                   </Link>
@@ -431,7 +454,7 @@ const SubjectListPage = async ({
               name: `${selectedStudent.name} ${selectedStudent.surname}`.trim(),
               image: selectedStudent.img,
               age: getAge(selectedStudent.birthday),
-              currentGroup: getStudentGroupName(selectedStudent.birthday),
+              currentGroup: trailGroups.find((group) => group.key === getResolvedStudentGroupKey(selectedStudent))?.name || "Sin grupo",
             } satisfies TrailStudentView}
             selectedGroup={selectedGroup.name}
             groupIcon={selectedGroup.icon}

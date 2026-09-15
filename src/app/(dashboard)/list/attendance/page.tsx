@@ -38,7 +38,8 @@ const getAge = (birthday: Date) => {
   return age;
 };
 
-const getGroupValueByBirthday = (birthday: Date): GroupValue | null => {
+const getGroupValueByBirthday = (birthday: Date | null): GroupValue | null => {
+  if (!birthday) return null;
   const age = getAge(birthday);
 
   if (age >= 5 && age <= 7) return "navegantes";
@@ -49,7 +50,7 @@ const getGroupValueByBirthday = (birthday: Date): GroupValue | null => {
   return null;
 };
 
-const getGroup = (birthday: Date) => {
+const getGroup = (birthday: Date | null) => {
   const groupValue = getGroupValueByBirthday(birthday);
   if (groupValue) return groupMetaByValue[groupValue];
 
@@ -57,7 +58,7 @@ const getGroup = (birthday: Date) => {
 };
 
 const getResolvedStudentGroupValue = (
-  student: { birthday: Date },
+  student: { birthday: Date | null },
   account?: { leaderGroup: string | null; birthday?: Date | null } | null
 ) => {
   if (isGroupValue(account?.leaderGroup)) return account.leaderGroup;

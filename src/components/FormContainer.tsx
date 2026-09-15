@@ -98,6 +98,7 @@ export type FormContainerProps = {
   id?: number | string;
   triggerLabel?: ReactNode;
   triggerClassName?: string;
+  initialGroup?: string;
 };
 
 const FormContainer = async ({
@@ -107,6 +108,7 @@ const FormContainer = async ({
   id,
   triggerLabel,
   triggerClassName,
+  initialGroup,
 }: FormContainerProps) => {
   let relatedData = {};
   const currentUser = await getCurrentUser();
@@ -174,6 +176,9 @@ const FormContainer = async ({
     }
   }
   relatedData = { ...relatedData, currentRole: role, currentUserId };
+  if (table === "student" && type === "create") {
+    relatedData = { ...relatedData, initialGroup };
+  }
 
   return (
     <div>

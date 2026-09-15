@@ -52,7 +52,7 @@ const groupConfig: Record<GroupKey, {
   },
 };
 
-const getStudentGroupKey = (birthday: Date): GroupKey | "sin-grupo" => {
+const getStudentGroupKey = (birthday: Date | null): GroupKey | "sin-grupo" => {
   const age = getStudentAge(birthday);
   if (age >= 5 && age <= 7) return "navegantes";
   if (age >= 8 && age <= 10) return "pioneros";
@@ -61,7 +61,7 @@ const getStudentGroupKey = (birthday: Date): GroupKey | "sin-grupo" => {
   return "sin-grupo";
 };
 
-const getDisplayedGroupKey = (savedGroup: string | null | undefined, birthday: Date) => {
+const getDisplayedGroupKey = (savedGroup: string | null | undefined, birthday: Date | null) => {
   const option = getLeaderGroupOption(savedGroup);
   if (option?.value === "sin-grupo") return "sin-grupo" as const;
   if (option && groupOrder.includes(option.value as GroupKey)) return option.value as GroupKey;
@@ -262,7 +262,7 @@ const StudentListPage = async ({ searchParams }: { searchParams: { [key: string]
                 <div><h2 className="text-xl font-extrabold">{groupConfig[selectedGroup].name}</h2><p className="text-sm text-[#64748B]">{selectedStudents.length} {selectedStudents.length === 1 ? "muchacho registrado" : "muchachos registrados"}</p></div>
               </div>
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                {role === "admin" && <FormContainer table="student" type="create" triggerLabel={<span className="inline-flex items-center gap-2"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5"><path d="M15 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M8.5 11a4 4 0 1 0 0-8M19 8v6M22 11h-6" /></svg>Agregar muchacho</span>} triggerClassName="min-h-11 w-full rounded-xl bg-[#07569F] px-4 text-sm font-bold text-white transition hover:bg-[#064A89] focus:outline-none focus:ring-4 focus:ring-[#07569F]/20 sm:w-auto" />}
+                {role === "admin" && <FormContainer table="student" type="create" initialGroup={selectedGroup} triggerLabel={<span className="inline-flex items-center gap-2"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5"><path d="M15 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M8.5 11a4 4 0 1 0 0-8M19 8v6M22 11h-6" /></svg>Agregar muchacho</span>} triggerClassName="min-h-11 w-full rounded-xl bg-[#07569F] px-4 text-sm font-bold text-white transition hover:bg-[#064A89] focus:outline-none focus:ring-4 focus:ring-[#07569F]/20 sm:w-auto" />}
                 <Link href={buildHref({ group: undefined, page: undefined })} aria-label="Contraer detalles del grupo" title="Contraer" className="grid h-11 w-11 place-items-center self-end rounded-xl border border-[#CBD5E1] text-[#475569] transition hover:bg-[#F1F5F9] focus:outline-none focus:ring-2 focus:ring-[#07569F]"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5"><path d="m18 15-6-6-6 6" /></svg></Link>
               </div>
             </div>
@@ -304,7 +304,7 @@ const StudentListPage = async ({ searchParams }: { searchParams: { [key: string]
               </footer>
             </>
           ) : (
-            <div className="p-8 text-center sm:p-12"><span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-[#EAF3FB] text-[#07569F]"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-6 w-6"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg></span><h3 className="mt-4 font-extrabold">{selectedStudents.length ? "No encontramos muchachos que coincidan con tu búsqueda." : "No hay muchachos registrados en este grupo."}</h3><p className="mt-1 text-sm text-[#64748B]">{selectedStudents.length ? "Limpia la búsqueda o modifica los filtros." : "Agrega el primer muchacho para comenzar a administrar el grupo."}</p>{role === "admin" && !selectedStudents.length && <div className="mt-5 inline-block"><FormContainer table="student" type="create" triggerLabel="Agregar muchacho" triggerClassName="min-h-11 rounded-xl bg-[#07569F] px-5 text-sm font-bold text-white hover:bg-[#064A89] focus:outline-none focus:ring-4 focus:ring-[#07569F]/20" /></div>}</div>
+            <div className="p-8 text-center sm:p-12"><span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-[#EAF3FB] text-[#07569F]"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-6 w-6"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg></span><h3 className="mt-4 font-extrabold">{selectedStudents.length ? "No encontramos muchachos que coincidan con tu búsqueda." : "No hay muchachos registrados en este grupo."}</h3><p className="mt-1 text-sm text-[#64748B]">{selectedStudents.length ? "Limpia la búsqueda o modifica los filtros." : "Agrega el primer muchacho para comenzar a administrar el grupo."}</p>{role === "admin" && !selectedStudents.length && <div className="mt-5 inline-block"><FormContainer table="student" type="create" initialGroup={selectedGroup} triggerLabel="Agregar muchacho" triggerClassName="min-h-11 rounded-xl bg-[#07569F] px-5 text-sm font-bold text-white hover:bg-[#064A89] focus:outline-none focus:ring-4 focus:ring-[#07569F]/20" /></div>}</div>
           )}
         </section>
       )}

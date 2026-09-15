@@ -237,7 +237,7 @@ const UserNameEditor = ({ id, type, name, surname, triggerLabel, triggerClassNam
                 </label>
                 <DateTimePicker
                   id="profile-birthday"
-                  label="Fecha de nacimiento"
+                  label={type === "student" ? "Fecha de nacimiento (opcional)" : "Fecha de nacimiento"}
                   value={form.birthday}
                   onChange={(value) => setField("birthday", value)}
                   dateOnly

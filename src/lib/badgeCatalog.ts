@@ -57,7 +57,8 @@ export const studentBadgesByGroup: Record<string, BadgeCourse[]> = {
   ],
 };
 
-export const getAge = (birthday: Date) => {
+export const getAge = (birthday: Date | null) => {
+  if (!birthday) return 0;
   const [year, month, day] = getTodayDateKey().split("-").map(Number);
   const today = new Date(Date.UTC(year, month - 1, day, 12));
   let age = today.getUTCFullYear() - birthday.getUTCFullYear();
@@ -70,7 +71,7 @@ export const getAge = (birthday: Date) => {
   return age;
 };
 
-export const getStudentGroupName = (birthday: Date) => {
+export const getStudentGroupName = (birthday: Date | null) => {
   const age = getAge(birthday);
 
   if (age >= 5 && age <= 7) return "Navegantes";

@@ -22,13 +22,13 @@ const groupValueByName: Record<string, StudentGroupValue> = {
   Exploradores: "exploradores",
 };
 
-const getStudentGroupByBirthday = (birthday: Date) =>
+const getStudentGroupByBirthday = (birthday: Date | null) =>
   groupValueByName[getStudentGroupName(birthday)] || null;
 
 export const getStudentProfileGroup = async (student: {
   id: string;
   email?: string | null;
-  birthday: Date;
+  birthday: Date | null;
 }) => {
   const account = await prisma.authUser.findFirst({
     where: {

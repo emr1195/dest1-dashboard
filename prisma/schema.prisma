@@ -309,7 +309,7 @@ model Muchacho {
   parentId       String
   classId        Int
   gradeId        Int
-  birthday       DateTime
+  birthday       DateTime?
   externalSource String?
   externalId     String?
   Attendance     Attendance[]

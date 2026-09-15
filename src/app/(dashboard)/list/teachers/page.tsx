@@ -39,7 +39,7 @@ const teacherRankOrder: Record<string, number> = {
   Capellan: 4,
 };
 
-const getGroupByBirthday = (birthday: Date) => {
+const getGroupByBirthday = (birthday: Date | null) => {
   const age = getStudentAge(birthday);
   if (age >= 5 && age <= 7) return groupIconMap.navegantes;
   if (age >= 8 && age <= 10) return groupIconMap.pioneros;
