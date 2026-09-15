@@ -22,6 +22,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { CldUploadWidget } from "next-cloudinary";
 import DateTimePicker from "../DateTimePicker";
+import { getStudentUsernameBase } from "@/lib/studentCredentials";
 
 const toDateValue = (value?: Date | string) => {
   if (!value) return undefined;
@@ -59,18 +60,26 @@ const StudentForm = ({
   const [img, setImg] = useState<any>();
   const [openDatePicker, setOpenDatePicker] = useState<string | null>(null);
   const birthdayValue = watch("birthday") as unknown as string | undefined;
+  const nameValue = watch("name") || "";
+  const surnameValue = watch("surname") || "";
+
+  useEffect(() => {
+    if (type !== "create") return;
+    setValue("username", getStudentUsernameBase(nameValue, surnameValue), {
+      shouldValidate: false,
+    });
+  }, [type, nameValue, surnameValue, setValue]);
 
   const [state, formAction] = useFormState(
     type === "create" ? createStudent : updateStudent,
     {
       success: false,
       error: false,
+      username: undefined as string | undefined,
     }
   );
 
   const onSubmit = handleSubmit((data) => {
-    console.log("hello");
-    console.log(data);
     formAction({ ...data, img: img?.secure_url });
   });
 
@@ -78,13 +87,15 @@ const StudentForm = ({
 
   useEffect(() => {
     if (state.success) {
-      toast(`Muchacho ${type === "create" ? "creado" : "actualizado"}!`);
+      toast(type === "create" && state.username
+        ? `Muchacho creado. Usuario: ${state.username}`
+        : `Muchacho ${type === "create" ? "creado" : "actualizado"}!`);
       setOpen(false);
       router.refresh();
     }
   }, [state, router, type, setOpen]);
 
-  const { grades, classes } = relatedData;
+  const { grades = [], classes = [] } = relatedData || {};
 
   return (
     <form className="flex flex-col gap-8" onSubmit={onSubmit}>
@@ -101,6 +112,7 @@ const StudentForm = ({
           defaultValue={data?.username}
           register={register}
           error={errors?.username}
+          inputProps={type === "create" ? { readOnly: true } : undefined}
         />
         <InputField
           label="Correo"
@@ -109,37 +121,39 @@ const StudentForm = ({
           register={register}
           error={errors?.email}
         />
-        <InputField
-          label="Contrasena"
-          name="password"
-          type="password"
-          defaultValue={data?.password}
-          register={register}
-          error={errors?.password}
-        />
+        {type === "update" && (
+          <InputField
+            label="Contrasena"
+            name="password"
+            type="password"
+            register={register}
+            error={errors?.password}
+          />
+        )}
       </div>
       <span className="text-xs text-gray-500 font-medium">
         Informacion personal
       </span>
-      <CldUploadWidget
-        uploadPreset="school"
-        onSuccess={(result, { widget }) => {
-          setImg(result.info);
-          widget.close();
-        }}
-      >
-        {({ open }) => {
-          return (
-            <div
-              className="text-xs text-gray-500 flex items-center gap-2 cursor-pointer"
+      {process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME && (
+        <CldUploadWidget
+          uploadPreset="school"
+          onSuccess={(result, { widget }) => {
+            setImg(result.info);
+            widget.close();
+          }}
+        >
+          {({ open }) => (
+            <button
+              type="button"
+              className="flex items-center gap-2 text-xs text-gray-500"
               onClick={() => open()}
             >
               <Image src="/upload.png" alt="" width={28} height={28} />
               <span>Subir foto</span>
-            </div>
-          );
-        }}
-      </CldUploadWidget>
+            </button>
+          )}
+        </CldUploadWidget>
+      )}
       <div className="flex justify-between flex-wrap gap-4">
         <InputField
           label="Nombre"
@@ -196,7 +210,7 @@ const StudentForm = ({
           />
         </div>
         <InputField
-          label="ID del padre"
+          label="ID del padre (opcional)"
           name="parentId"
           defaultValue={data?.parentId}
           register={register}

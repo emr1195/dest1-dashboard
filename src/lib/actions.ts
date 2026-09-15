@@ -12,8 +12,10 @@ import {
 import { getCurrentUser } from "./auth";
 import prisma from "./prisma";
 import { randomUUID } from "crypto";
+import { hashPassword } from "./password";
+import { getStudentInitialPassword, getStudentUsernameBase } from "./studentCredentials";
 
-type CurrentState = { success: boolean; error: boolean; id?: number };
+type CurrentState = { success: boolean; error: boolean; id?: number; username?: string };
 
 const getOrCreateAssignmentLesson = async (leader: {
   id: string;
@@ -413,38 +415,91 @@ export const deleteTeacher = async (
 export const createStudent = async (
   currentState: CurrentState,
   data: StudentSchema
-) => {
-  console.log(data);
+): Promise<CurrentState> => {
   try {
-    const classItem = await prisma.class.findUnique({
-      where: { id: data.classId },
-      include: { _count: { select: { students: true } } },
+    const currentUser = await getCurrentUser();
+    if (currentUser?.role !== "admin") return { success: false, error: true };
+
+    const base = getStudentUsernameBase(data.name, data.surname);
+    if (!base) return { success: false, error: true };
+
+    const username = await prisma.$transaction(async (tx) => {
+      const classItem = await tx.class.findUnique({
+        where: { id: data.classId },
+        include: { _count: { select: { students: true } } },
+      });
+      if (!classItem || classItem._count.students >= classItem.capacity) {
+        throw new Error("El grupo seleccionado no tiene cupos disponibles.");
+      }
+
+      let username = base;
+      let suffix = 2;
+      while (true) {
+        const [student, leader, parent, admin] = await Promise.all([
+          tx.muchacho.findFirst({ where: { username: { equals: username, mode: "insensitive" } }, select: { id: true } }),
+          tx.lider.findFirst({ where: { username: { equals: username, mode: "insensitive" } }, select: { id: true } }),
+          tx.parent.findFirst({ where: { username: { equals: username, mode: "insensitive" } }, select: { id: true } }),
+          tx.admin.findFirst({ where: { username: { equals: username, mode: "insensitive" } }, select: { id: true } }),
+        ]);
+        if (!student && !leader && !parent && !admin) break;
+        const suffixText = String(suffix++);
+        username = `${base.slice(0, 20 - suffixText.length)}${suffixText}`;
+      }
+
+      const guardian = data.parentId?.trim()
+        ? await tx.parent.findUnique({ where: { id: data.parentId.trim() }, select: { id: true } })
+        : await tx.parent.upsert({
+            where: { id: "guardian-placeholder" },
+            create: {
+              id: "guardian-placeholder",
+              username: "guardian-placeholder",
+              name: "Acudiente",
+              surname: "Sin perfil",
+              phone: "guardian-placeholder",
+              address: "Destacamento",
+            },
+            update: {},
+            select: { id: true },
+          });
+      if (!guardian) throw new Error("El padre seleccionado no existe.");
+
+      const id = randomUUID();
+      const email = data.email?.trim().toLowerCase() || null;
+      await tx.muchacho.create({
+        data: {
+          id,
+          username,
+          name: data.name.trim(),
+          surname: data.surname.trim(),
+          email,
+          phone: data.phone || null,
+          address: data.address,
+          img: data.img || null,
+          bloodType: data.bloodType,
+          sex: data.sex,
+          birthday: data.birthday,
+          gradeId: data.gradeId,
+          classId: data.classId,
+          parentId: guardian.id,
+        },
+      });
+      await tx.authUser.create({
+        data: {
+          id,
+          email: email || `student.${id}@destacamento.local`,
+          name: `${data.name.trim()} ${data.surname.trim()}`,
+          birthday: data.birthday,
+          sex: data.sex,
+          passwordHash: hashPassword(getStudentInitialPassword(username)),
+          provider: "credentials",
+          role: "student",
+        },
+      });
+      return username;
     });
 
-    if (classItem && classItem.capacity === classItem._count.students) {
-      return { success: false, error: true };
-    }
-    await prisma.muchacho.create({
-      data: {
-        id: randomUUID(),
-        username: data.username,
-        name: data.name,
-        surname: data.surname,
-        email: data.email || null,
-        phone: data.phone || null,
-        address: data.address,
-        img: data.img || null,
-        bloodType: data.bloodType,
-        sex: data.sex,
-        birthday: data.birthday,
-        gradeId: data.gradeId,
-        classId: data.classId,
-        parentId: data.parentId,
-      },
-    });
-
-    // revalidatePath("/list/students");
-    return { success: true, error: false };
+    revalidatePath("/list/students");
+    return { success: true, error: false, username };
   } catch (err) {
     console.log(err);
     return { success: false, error: true };
@@ -454,7 +509,7 @@ export const createStudent = async (
 export const updateStudent = async (
   currentState: CurrentState,
   data: StudentSchema
-) => {
+): Promise<CurrentState> => {
   if (!data.id) {
     return { success: false, error: true };
   }

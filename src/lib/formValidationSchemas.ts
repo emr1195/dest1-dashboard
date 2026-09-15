@@ -136,7 +136,7 @@ export const studentSchema = z.object({
   sex: z.enum(["MALE", "FEMALE"], { message: "El sexo es obligatorio!" }),
   gradeId: z.coerce.number().min(1, { message: "El grado es obligatorio!" }),
   classId: z.coerce.number().min(1, { message: "El Premio B es obligatorio!" }),
-  parentId: z.string().min(1, { message: "El ID del padre es obligatorio!" }),
+  parentId: z.string().optional(),
 });
 
 export type StudentSchema = z.infer<typeof studentSchema>;
