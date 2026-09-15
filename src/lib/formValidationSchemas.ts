@@ -131,7 +131,6 @@ export const studentSchema = z.object({
   phone: z.string().optional(),
   address: z.string(),
   img: z.string().optional(),
-  bloodType: z.string().min(1, { message: "El tipo de sangre es obligatorio!" }),
   birthday: z.preprocess(
     (value) => value === "" || value === null ? undefined : value,
     z.coerce.date({ message: "La fecha de nacimiento no es valida!" }).optional()

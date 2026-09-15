@@ -203,13 +203,6 @@ const StudentForm = ({
           register={register}
           error={errors.address}
         />
-        <InputField
-          label="Tipo de sangre"
-          name="bloodType"
-          defaultValue={data?.bloodType}
-          register={register}
-          error={errors.bloodType}
-        />
         <input type="hidden" {...register("birthday")} />
         <div className="w-full md:w-1/4">
           <DateTimePicker
