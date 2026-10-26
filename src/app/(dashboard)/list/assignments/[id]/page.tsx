@@ -1,10 +1,12 @@
 import { translateDisplayText } from "@/lib/displayText";
+import OdtPreview from "@/components/assignments/OdtPreview";
 import { getAssignmentReturnHref } from "@/lib/assignmentNavigation";
 import {
   canPreviewFile,
   getOfficePreviewUrl,
   getPublicBaseUrl,
   isImageFile,
+  isOdtFile,
   isOfficeFile,
 } from "@/lib/filePreview";
 import prisma from "@/lib/prisma";
@@ -65,12 +67,13 @@ const AssignmentDetailPage = async ({
     headerList.get("host"),
     headerList.get("x-forwarded-proto")
   );
+  const selectedFileUrl = selectedFile
+    ? `${publicBaseUrl}/api/public-files/assignment-file/${selectedFile.id}`
+    : "";
   const selectedFilePreviewSrc =
     selectedFile && isOfficeFile(selectedFile.fileName, selectedFile.fileType)
-      ? getOfficePreviewUrl(
-          `${publicBaseUrl}/api/public-files/assignment-file/${selectedFile.id}`
-        )
-      : selectedFile?.filePath;
+      ? getOfficePreviewUrl(selectedFileUrl)
+      : selectedFileUrl;
 
   return (
     <div className="flex-1 p-4">
@@ -120,7 +123,7 @@ const AssignmentDetailPage = async ({
                     </p>
                   </div>
                   <a
-                    href={selectedFile.filePath}
+                    href={selectedFileUrl}
                     target="_blank"
                     rel="noreferrer"
                     className="w-max rounded-md bg-lamaSky px-5 py-2 text-sm font-semibold text-white"
@@ -129,10 +132,12 @@ const AssignmentDetailPage = async ({
                   </a>
                 </div>
                 {canPreviewFile(selectedFile.fileName, selectedFile.fileType) ? (
-                  isImageFile(selectedFile.fileName, selectedFile.fileType) ? (
+                  isOdtFile(selectedFile.fileName, selectedFile.fileType) ? (
+                    <OdtPreview fileName={selectedFile.fileName} fileUrl={selectedFileUrl} />
+                  ) : isImageFile(selectedFile.fileName, selectedFile.fileType) ? (
                     <div className="flex min-h-[50vh] items-center justify-center rounded-md border border-gray-200 bg-gray-50 p-4">
                       <img
-                        src={selectedFile.filePath}
+                        src={selectedFileUrl}
                         alt={selectedFile.fileName}
                         className="max-h-[65vh] max-w-full object-contain"
                       />

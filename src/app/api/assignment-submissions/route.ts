@@ -39,7 +39,7 @@ export const POST = async (request: Request) => {
 
   const extension = path.extname(file.name) || ".dat";
   const safeName = sanitizeFileName(file.name, `respuesta${extension}`);
-  const filePath = await fileToDataUrl(file);
+  const filePath = await fileToDataUrl(file, { maxSize: 25 * 1024 * 1024 });
 
   const submission = await prisma.assignmentSubmission.upsert({
     where: {

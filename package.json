@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-      "build": "prisma generate && next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "sync:attendance": "ts-node --project tsconfig.sync.json scripts/sync-firebase-attendance.ts"
@@ -13,6 +13,7 @@
     "@hookform/resolvers": "^3.9.0",
     "@prisma/client": "^5.19.1",
     "@types/react-big-calendar": "^1.8.9",
+    "jszip": "^3.10.2",
     "moment": "^2.30.1",
     "next": "14.2.5",
     "next-auth": "^4.24.14",

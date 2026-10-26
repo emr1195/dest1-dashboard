@@ -55,7 +55,7 @@ export const POST = async (request: Request) => {
       file,
       isAwardImage
         ? { allowedMimePrefixes: ["image/"], maxSize: 8 * 1024 * 1024 }
-        : {}
+        : { maxSize: 25 * 1024 * 1024 }
     );
   } catch (error) {
     return NextResponse.json(

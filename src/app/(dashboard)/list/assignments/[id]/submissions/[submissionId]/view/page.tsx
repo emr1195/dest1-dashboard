@@ -1,10 +1,12 @@
 import { getCurrentUser } from "@/lib/auth";
+import OdtPreview from "@/components/assignments/OdtPreview";
 import { getAssignmentReturnHref } from "@/lib/assignmentNavigation";
 import {
   canPreviewFile,
   getOfficePreviewUrl,
   getPublicBaseUrl,
   isImageFile,
+  isOdtFile,
   isOfficeFile,
 } from "@/lib/filePreview";
 import { getAccessibleStudentProfileIdsForParent } from "@/lib/guardianLinks";
@@ -160,10 +162,12 @@ const SubmissionPreviewPage = async ({
           </p>
         </div>
         {canPreviewFile(submission.fileName, submission.fileType) ? (
-          isImageFile(submission.fileName, submission.fileType) ? (
+          isOdtFile(submission.fileName, submission.fileType) ? (
+            <OdtPreview fileName={submission.fileName} fileUrl={publicFileUrl} />
+          ) : isImageFile(submission.fileName, submission.fileType) ? (
             <div className="flex min-h-[60vh] items-center justify-center rounded-md border border-gray-200 bg-gray-50 p-4">
               <img
-                src={submission.filePath}
+                src={publicFileUrl}
                 alt={submission.fileName}
                 className="max-h-[70vh] max-w-full object-contain"
               />

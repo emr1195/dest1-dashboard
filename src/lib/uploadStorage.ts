@@ -43,6 +43,7 @@ export const fileToDataUrl = async (
 
 export const documentMimeTypes = [
   "application/pdf",
+  "application/vnd.oasis.opendocument.text",
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/vnd.ms-excel",

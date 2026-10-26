@@ -25,6 +25,8 @@ export const officeExtensions = [
   "pub",
 ];
 
+export const odtMimeType = "application/vnd.oasis.opendocument.text";
+
 export const getFileExtension = (fileName: string) =>
   fileName.split(".").pop()?.toLowerCase() || "";
 
@@ -33,6 +35,9 @@ export const isOfficeFile = (fileName: string, fileType?: string | null) =>
     (fileType && officeMimeTypes.includes(fileType)) ||
       officeExtensions.includes(getFileExtension(fileName))
   );
+
+export const isOdtFile = (fileName: string, fileType?: string | null) =>
+  fileType === odtMimeType || getFileExtension(fileName) === "odt";
 
 export const isImageFile = (fileName: string, fileType?: string | null) =>
   Boolean(
@@ -43,6 +48,7 @@ export const isImageFile = (fileName: string, fileType?: string | null) =>
 export const canPreviewFile = (fileName: string, fileType?: string | null) =>
   Boolean(
     isOfficeFile(fileName, fileType) ||
+      isOdtFile(fileName, fileType) ||
       isImageFile(fileName, fileType) ||
       fileType === "application/pdf" ||
       fileType?.startsWith("text/") ||

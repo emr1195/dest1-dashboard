@@ -45,6 +45,7 @@ const allowedDocumentExtensions = [
   "pdf",
   "doc",
   "docx",
+  "odt",
   "xls",
   "xlsx",
   "ppt",
@@ -178,6 +179,7 @@ const getDocumentIcon = (fileName: string) => {
 
   if (extension === "pdf") return "PDF";
   if (["doc", "docx"].includes(extension)) return "DOC";
+  if (extension === "odt") return "ODT";
   if (["xls", "xlsx"].includes(extension)) return "XLS";
   if (["ppt", "pptx"].includes(extension)) return "PPT";
   if (["jpg", "jpeg", "png", "webp", "gif"].includes(extension)) return "IMG";
@@ -1729,12 +1731,12 @@ const AssignmentForm = ({
               <FileUploadCard
                 title="Archivo de la tarea"
                 description="Adjunta el documento que deberan utilizar o entregar"
-                helperText="PDF, Word, Excel, PowerPoint, Visio, Project, Publisher o imagen. Maximo 25 MB."
+                helperText="PDF, Word, OpenDocument, Excel, PowerPoint, Visio, Project, Publisher o imagen. Maximo 25 MB."
                 buttonLabel="Seleccionar archivo"
                 file={selectedFile}
                 error={fileError}
                 inputRef={fileInputRef}
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.vsd,.vsdx,.vsdm,.mpp,.pub,.jpg,.jpeg,.png"
+                accept=".pdf,.doc,.docx,.odt,.xls,.xlsx,.ppt,.pptx,.vsd,.vsdx,.vsdm,.mpp,.pub,.jpg,.jpeg,.png"
                 onFile={selectDocument}
                 onRemove={clearFile}
               />

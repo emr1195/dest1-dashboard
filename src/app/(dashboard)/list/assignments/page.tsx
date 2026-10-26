@@ -181,6 +181,7 @@ const assignmentFileIcon = (fileName: string) => {
   if (extension === "pdf") return "PDF";
   if (["xls", "xlsx", "csv"].includes(extension || "")) return "XLS";
   if (["doc", "docx"].includes(extension || "")) return "DOC";
+  if (extension === "odt") return "ODT";
   if (["ppt", "pptx"].includes(extension || "")) return "PPT";
   if (["zip", "rar", "7z"].includes(extension || "")) return "ZIP";
   if (["png", "jpg", "jpeg", "webp"].includes(extension || "")) return "IMG";

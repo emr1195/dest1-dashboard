@@ -40,6 +40,7 @@ const formatDate = (date: Date) => new Intl.DateTimeFormat("es-PA", {
 const fileTypeConfig = (fileName: string, fileType?: string | null) => {
   const extension = getFileExtension(fileName).toUpperCase() || "ARCHIVO";
   if (["DOC", "DOCX"].includes(extension)) return { label: extension, style: "bg-blue-50 text-blue-700 border-blue-200" };
+  if (extension === "ODT") return { label: extension, style: "bg-cyan-50 text-cyan-700 border-cyan-200" };
   if (extension === "PDF") return { label: extension, style: "bg-red-50 text-red-700 border-red-200" };
   if (["XLS", "XLSX", "CSV"].includes(extension)) return { label: extension, style: "bg-emerald-50 text-emerald-700 border-emerald-200" };
   if (["PPT", "PPTX"].includes(extension)) return { label: extension, style: "bg-orange-50 text-orange-700 border-orange-200" };

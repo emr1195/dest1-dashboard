@@ -21,6 +21,7 @@ const fileIcon = (fileName: string) => {
   if (extension === "pdf") return "PDF";
   if (["xls", "xlsx", "csv"].includes(extension || "")) return "XLS";
   if (["doc", "docx"].includes(extension || "")) return "DOC";
+  if (extension === "odt") return "ODT";
   if (["png", "jpg", "jpeg", "webp"].includes(extension || "")) return "IMG";
   return "FILE";
 };
@@ -174,6 +175,7 @@ const AssignmentUploadBox = ({
           type="file"
           className="hidden"
           multiple={false}
+          accept=".pdf,.doc,.docx,.odt,.xls,.xlsx,.csv,.ppt,.pptx,.jpg,.jpeg,.png,.webp"
           onChange={(event) => uploadFile(event.target.files?.[0])}
         />
         <div

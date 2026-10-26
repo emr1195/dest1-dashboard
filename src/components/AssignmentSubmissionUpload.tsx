@@ -43,6 +43,7 @@ const AssignmentSubmissionUpload = ({
       <input
         ref={inputRef}
         type="file"
+        accept=".pdf,.doc,.docx,.odt,.xls,.xlsx,.csv,.ppt,.pptx,.jpg,.jpeg,.png,.webp"
         className="hidden"
         onChange={uploadSubmission}
       />

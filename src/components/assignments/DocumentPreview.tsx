@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { isOdtFile } from "@/lib/filePreview";
+import OdtPreview from "./OdtPreview";
 
 type Props = {
   fileName: string;
@@ -12,6 +14,7 @@ type Props = {
 };
 
 const DocumentPreview = ({ fileName, fileUrl, previewSrc, previewable, imageFile }: Props) => {
+  const odtFile = isOdtFile(fileName);
   const [loading, setLoading] = useState(previewable);
   const [failed, setFailed] = useState(false);
 
@@ -20,7 +23,7 @@ const DocumentPreview = ({ fileName, fileUrl, previewSrc, previewable, imageFile
   return (
     <div className="overflow-hidden rounded-[14px] border border-[#E2E8F0] bg-[#F8FAFC]">
       <div className="relative min-h-[420px] sm:min-h-[560px] lg:min-h-[650px]">
-        {loading && !unavailable && (
+        {loading && !unavailable && !odtFile && (
           <div role="status" className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#F8FAFC] text-[#64748B]">
             <span className="h-9 w-9 animate-spin rounded-full border-4 border-[#BFDBFE] border-t-[#2563EB] motion-reduce:animate-none" aria-hidden="true" />
             <p className="mt-4 text-sm font-bold">Cargando documento…</p>
@@ -41,6 +44,8 @@ const DocumentPreview = ({ fileName, fileUrl, previewSrc, previewable, imageFile
               <DownloadIcon /> Descargar archivo
             </a>
           </div>
+        ) : odtFile ? (
+          <OdtPreview fileName={fileName} fileUrl={fileUrl} />
         ) : imageFile ? (
           <Image src={previewSrc} alt={fileName} fill unoptimized sizes="(max-width: 1280px) 100vw, 70vw" onLoad={() => setLoading(false)} onError={() => { setLoading(false); setFailed(true); }} className="object-contain p-4" />
         ) : (
