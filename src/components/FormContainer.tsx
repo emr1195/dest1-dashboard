@@ -1,4 +1,5 @@
 import { getCurrentUser } from "@/lib/auth";
+import { getLeadershipAwardGroup } from "@/lib/leadershipAwardOptions";
 import prisma from "@/lib/prisma";
 import FormModal from "./FormModal";
 import { cache, ReactNode } from "react";
@@ -143,7 +144,13 @@ const FormContainer = async ({
         let initialAssignmentGroup: string | undefined;
 
         if (table === "assignment" && role === "admin" && type === "update") {
-          if (data?.audience === "all") {
+          const leadershipAwardGroup = getLeadershipAwardGroup(
+            data?.trailAwardId
+          );
+
+          if (leadershipAwardGroup) {
+            initialAssignmentGroup = leadershipAwardGroup;
+          } else if (data?.audience === "all") {
             initialAssignmentGroup = "all";
           } else if (data?.lesson?.teacher) {
             const lessonOwner = data.lesson.teacher as {
