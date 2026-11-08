@@ -11,6 +11,7 @@ import { getLeadershipAwardGroup } from "@/lib/leadershipAwardOptions";
 import prisma from "@/lib/prisma";
 import { calculateStudentResultAverages } from "@/lib/resultAverages";
 import {
+  getStudentProfileIdsForGroup,
   isStudentGroupValue,
   StudentGroupValue,
 } from "@/lib/studentGroups";
@@ -107,6 +108,35 @@ const ResultListPage = async ({ searchParams }: { searchParams: { [key: string]:
   const currentUserId = currentUser?.id;
   const currentStudentProfile = role === "student" && currentUserId ? await prisma.muchacho.findFirst({ where: { OR: [{ id: currentUserId }, ...(currentUser?.email ? [{ email: currentUser.email }] : [])] }, select: { id: true } }) : null;
   const parentStudentIds = role === "parent" && currentUserId ? await getAccessibleStudentProfileIdsForParent(currentUserId) : [];
+  const teacherAccount = role === "teacher"
+    ? await prisma.authUser.findFirst({
+        where: {
+          role: "teacher",
+          OR: [
+            ...(currentUserId ? [{ id: currentUserId }] : []),
+            ...(currentUser?.email ? [{ email: currentUser.email.toLowerCase() }] : []),
+          ],
+        },
+        select: { leaderGroup: true },
+      })
+    : null;
+  const teacherStudentIds = isStudentGroupValue(teacherAccount?.leaderGroup)
+    ? await getStudentProfileIdsForGroup(teacherAccount.leaderGroup)
+    : [];
+  const registeredStudentWhere: Prisma.MuchachoWhereInput = role === "admin"
+    ? {}
+    : role === "teacher"
+      ? { id: { in: teacherStudentIds } }
+      : role === "parent"
+        ? { id: { in: parentStudentIds } }
+        : role === "student"
+          ? { id: currentStudentProfile?.id || "__no_student__" }
+          : { id: "__no_student__" };
+  const registeredStudents = await prisma.muchacho.findMany({
+    where: registeredStudentWhere,
+    select: { id: true, name: true, surname: true },
+    orderBy: [{ name: "asc" }, { surname: "asc" }],
+  });
   const query: Prisma.ResultWhereInput = {};
   if (searchParams.studentId) query.studentId = searchParams.studentId;
   if (role === "teacher") query.OR = [{ exam: { lesson: { teacherId: currentUserId! } } }, { assignment: { lesson: { teacherId: currentUserId! } } }];
@@ -177,15 +207,14 @@ const ResultListPage = async ({ searchParams }: { searchParams: { [key: string]:
   const pageResults = filtered.slice((page - 1) * pageSize, page * pageSize);
   const buildHref = (updates: Record<string, string | number | undefined>) => { const params = new URLSearchParams(); Object.entries(searchParams).forEach(([key, value]) => value && params.set(key, value)); Object.entries(updates).forEach(([key, value]) => value === undefined || value === "" ? params.delete(key) : params.set(key, String(value))); return `/list/results${params.toString() ? `?${params.toString()}` : ""}`; };
   const leaders = Array.from(new Map(allResults.map((item) => [item.teacherId, { value: item.teacherId, label: `${item.teacherName} ${item.teacherSurname}` }])).values()).sort((a, b) => a.label.localeCompare(b.label, "es"));
-  const students = Array.from(new Map(allResults.map((item) => [item.studentId, { value: item.studentId, label: `${item.studentName} ${item.studentSurname}` }])).values()).sort((a, b) => a.label.localeCompare(b.label, "es"));
+  const students = registeredStudents.map((student) => ({
+    value: student.id,
+    label: `${student.name} ${student.surname}`,
+  }));
   const pendingStudentIds = Array.from(new Set(
     studentFilter
       ? [studentFilter]
-      : role === "student"
-        ? [currentStudentProfile?.id || ""]
-        : role === "parent"
-          ? parentStudentIds
-          : allResults.map((item) => item.studentId)
+      : registeredStudents.map((student) => student.id)
   )).filter(Boolean);
   const pendingStudents = pendingStudentIds.length
     ? await prisma.muchacho.findMany({
