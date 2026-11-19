@@ -32,7 +32,12 @@ export const POST = async (request: Request) => {
     where: {
       id: assignmentId,
       ...(currentUser.role === "teacher"
-        ? { lesson: { teacherId: currentUser.id } }
+        ? {
+            OR: [
+              { lesson: { teacherId: currentUser.id } },
+              { createdById: currentUser.id },
+            ],
+          }
         : {}),
     },
     select: { id: true },

@@ -100,12 +100,12 @@ const getLeaderForAssignmentGroup = async (assignmentGroup?: string) => {
 };
 
 const getAssignmentLessonId = async (lessonId?: number, assignmentGroup?: string) => {
-  if (lessonId) return lessonId;
-
   const currentUser = await getCurrentUser();
   const isLeader = currentUser?.role === "teacher";
+  const canSelectAssignmentGroup =
+    currentUser?.role === "admin" || currentUser?.role === "teacher";
 
-  if (currentUser?.role === "admin" && assignmentGroup && assignmentGroup !== "all") {
+  if (canSelectAssignmentGroup && assignmentGroup && assignmentGroup !== "all") {
     const groupLeader = await getLeaderForAssignmentGroup(assignmentGroup);
 
     if (!groupLeader) {
@@ -114,6 +114,8 @@ const getAssignmentLessonId = async (lessonId?: number, assignmentGroup?: string
 
     return getOrCreateAssignmentLesson(groupLeader);
   }
+
+  if (lessonId) return lessonId;
 
   const existingLesson = await prisma.lesson.findFirst({
     where: isLeader ? { teacherId: currentUser.id } : undefined,
@@ -727,7 +729,7 @@ export const updateAssignment = async (
         ? await getAssignmentCreator(data.createdById)
         : null;
     const changingToSpecificGroup =
-      currentUser?.role === "admin" &&
+      (currentUser?.role === "admin" || currentUser?.role === "teacher") &&
       Boolean(data.assignmentGroup) &&
       data.assignmentGroup !== "all";
     const lessonId = await getAssignmentLessonId(

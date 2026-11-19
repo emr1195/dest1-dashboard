@@ -1195,9 +1195,9 @@ const AssignmentForm = ({
   });
 
   const lessons = relatedData?.lessons || [];
-  const isAdminAssignmentEditor = relatedData?.currentRole === "admin";
+  const canSelectAssignmentGroup =
+    relatedData?.currentRole === "admin" || relatedData?.currentRole === "teacher";
   const canEditDisplayedLeader = relatedData?.currentRole === "admin";
-  const isTeacher = relatedData?.currentRole === "teacher";
   const assignmentCreators = relatedData?.assignmentCreators || [];
   const assignableGroups = [
     { label: "Todos los grupos", value: "all", image: "/logo-catedral-de-vida.png" },
@@ -1210,7 +1210,7 @@ const AssignmentForm = ({
   );
   const selectedAssignmentGroup = watch("assignmentGroup") as string | undefined;
   const selectedTrailAwardId = watch("trailAwardId") as string | undefined;
-  const effectiveAwardGroup = isAdminAssignmentEditor
+  const effectiveAwardGroup = canSelectAssignmentGroup
     ? selectedAssignmentGroup
     : relatedData?.currentLeaderGroup;
   const availableBiblicalAwards = useMemo(
@@ -1431,14 +1431,14 @@ const AssignmentForm = ({
                   {...register("id")}
                 />
               )}
-              {defaultLessonId && (type === "update" || !isAdminAssignmentEditor) && (
+              {defaultLessonId && type === "update" && (
                 <input
                   type="hidden"
                   value={defaultLessonId}
                   {...register("lessonId")}
                 />
               )}
-              {isAdminAssignmentEditor && (
+              {canSelectAssignmentGroup && (
                 <>
                   <input type="hidden" {...register("assignmentGroup")} />
                   <GroupPicker
@@ -1662,27 +1662,7 @@ const AssignmentForm = ({
                   />
                 </div>
               )}
-              {isTeacher ? (
-                <div>
-                  <label
-                    htmlFor="assignment-audience"
-                    className="mb-2 block text-sm font-semibold text-[#344054]"
-                  >
-                    Dirigida a
-                  </label>
-                  <select
-                    id="assignment-audience"
-                    defaultValue={data?.audience || "group"}
-                    className={fieldBaseClass}
-                    {...register("audience")}
-                  >
-                    <option value="group">Solo mi grupo</option>
-                    <option value="all">Todos los grupos</option>
-                  </select>
-                </div>
-              ) : (
-                <input type="hidden" {...register("audience")} />
-              )}
+              <input type="hidden" {...register("audience")} />
               <div>
                 <label
                   htmlFor="assignment-points"

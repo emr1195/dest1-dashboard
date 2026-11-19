@@ -3,7 +3,7 @@ import nodemailer from "nodemailer";
 const smtpConfig = () => {
   const host = process.env.SMTP_HOST?.trim();
   const user = process.env.SMTP_USER?.trim();
-  const pass = process.env.SMTP_PASS?.trim();
+  const pass = process.env.SMTP_PASS?.replace(/\s+/g, "");
   const to = process.env.CODE_REQUEST_EMAIL?.trim();
 
   if (!host || !user || !pass || !to) return null;

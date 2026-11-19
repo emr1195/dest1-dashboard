@@ -43,7 +43,7 @@ const getAssignmentFormData = cache(
         where: role === "teacher" ? { teacherId: currentUserId! } : {},
         select: { id: true, name: true },
       }),
-      role === "admin"
+      role === "admin" || role === "teacher"
         ? prisma.authUser.findMany({
             where: { role: { in: ["admin", "teacher"] } },
             select: {
@@ -143,7 +143,11 @@ const FormContainer = async ({
         );
         let initialAssignmentGroup: string | undefined;
 
-        if (table === "assignment" && role === "admin" && type === "update") {
+        if (
+          table === "assignment" &&
+          (role === "admin" || role === "teacher") &&
+          type === "update"
+        ) {
           const leadershipAwardGroup = getLeadershipAwardGroup(
             data?.trailAwardId
           );
@@ -168,6 +172,12 @@ const FormContainer = async ({
             );
             initialAssignmentGroup = teacherAccount?.leaderGroup || undefined;
           }
+        } else if (
+          table === "assignment" &&
+          role === "teacher" &&
+          type === "create"
+        ) {
+          initialAssignmentGroup = currentLeaderGroup;
         }
 
         relatedData = {

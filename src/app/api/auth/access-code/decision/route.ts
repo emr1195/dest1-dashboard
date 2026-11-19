@@ -97,16 +97,34 @@ export async function GET(req: Request) {
     roleLabels[accessCode.role as keyof typeof roleLabels] || accessCode.role;
 
   if (action === "approve") {
-    await prisma.accessCode.update({
-      where: { id: accessCode.id },
-      data: { status: "approved", decidedAt: new Date() },
-    });
+    try {
+      const result = await sendApprovedAccessCodeEmail({
+        requesterEmail: accessCode.email,
+        roleLabel,
+        code: accessCode.code,
+      });
 
-    await sendApprovedAccessCodeEmail({
-      requesterEmail: accessCode.email,
-      roleLabel,
-      code: accessCode.code,
-    });
+      if (!result.sent) {
+        return responsePage(
+          "Correo no configurado",
+          "La solicitud sigue pendiente porque SMTP no esta configurado. Corrige el correo y vuelve a aprobarla.",
+          503
+        );
+      }
+
+      await prisma.accessCode.update({
+        where: { id: accessCode.id },
+        data: { status: "approved", decidedAt: new Date() },
+      });
+    } catch (error) {
+      console.error("No se pudo enviar el codigo aprobado:", error);
+
+      return responsePage(
+        "No se pudo enviar el codigo",
+        "La solicitud sigue pendiente. Revisa la configuracion SMTP y vuelve a aprobarla.",
+        502
+      );
+    }
 
     return responsePage(
       "Solicitud aprobada",
@@ -114,15 +132,33 @@ export async function GET(req: Request) {
     );
   }
 
-  await prisma.accessCode.update({
-    where: { id: accessCode.id },
-    data: { status: "rejected", decidedAt: new Date() },
-  });
+  try {
+    const result = await sendRejectedAccessCodeEmail({
+      requesterEmail: accessCode.email,
+      roleLabel,
+    });
 
-  await sendRejectedAccessCodeEmail({
-    requesterEmail: accessCode.email,
-    roleLabel,
-  });
+    if (!result.sent) {
+      return responsePage(
+        "Correo no configurado",
+        "La solicitud sigue pendiente porque SMTP no esta configurado. Corrige el correo y vuelve a rechazarla.",
+        503
+      );
+    }
+
+    await prisma.accessCode.update({
+      where: { id: accessCode.id },
+      data: { status: "rejected", decidedAt: new Date() },
+    });
+  } catch (error) {
+    console.error("No se pudo enviar el rechazo de solicitud:", error);
+
+    return responsePage(
+      "No se pudo enviar el correo",
+      "La solicitud sigue pendiente. Revisa la configuracion SMTP y vuelve a rechazarla.",
+      502
+    );
+  }
 
   return responsePage(
     "Solicitud rechazada",

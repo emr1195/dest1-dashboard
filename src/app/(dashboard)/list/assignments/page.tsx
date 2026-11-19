@@ -478,7 +478,9 @@ const AssignmentListPage = async ({
           const deadlineStatus = getDeadlineStatus(assignment.dueDate);
           const canManageAssignment =
             role === "admin" ||
-            (role === "teacher" && assignment.lesson.teacher.id === currentUserId);
+            (role === "teacher" &&
+              (assignment.lesson.teacher.id === currentUserId ||
+                assignment.createdById === currentUserId));
           const onTime = assignment.submissions.filter((submission) => submission.updatedAt <= assignment.dueDate).length;
           const late = assignment.submissions.length - onTime;
           const evaluatedIds = new Set(assignment.results.map((result) => result.studentId));
