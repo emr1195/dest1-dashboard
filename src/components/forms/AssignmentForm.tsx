@@ -20,8 +20,8 @@ import {
   AssignmentSchema,
 } from "@/lib/formValidationSchemas";
 import {
-  biblicalBookOptions,
   getBiblicalAwardOptions,
+  getBiblicalBookOptions,
   getSpiritualChallengeAwardOptions,
 } from "@/lib/biblicalAwardOptions";
 import { getLeadershipAwardOptions } from "@/lib/leadershipAwardOptions";
@@ -1210,6 +1210,11 @@ const AssignmentForm = ({
   );
   const selectedAssignmentGroup = watch("assignmentGroup") as string | undefined;
   const selectedTrailAwardId = watch("trailAwardId") as string | undefined;
+  const selectedBiblicalBook = watch("biblicalBook") as string | undefined;
+  const availableBiblicalBooks = useMemo(
+    () => getBiblicalBookOptions(selectedTrailAwardId),
+    [selectedTrailAwardId]
+  );
   const effectiveAwardGroup = canSelectAssignmentGroup
     ? selectedAssignmentGroup
     : relatedData?.currentLeaderGroup;
@@ -1280,6 +1285,26 @@ const AssignmentForm = ({
       });
     }
   }, [selectedCategory, setValue]);
+
+  useEffect(() => {
+    if (
+      selectedCategory === "Estudio biblico" &&
+      selectedBiblicalBook &&
+      !availableBiblicalBooks.some(
+        (book) => book.name === selectedBiblicalBook
+      )
+    ) {
+      setValue("biblicalBook", undefined, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  }, [
+    availableBiblicalBooks,
+    selectedBiblicalBook,
+    selectedCategory,
+    setValue,
+  ]);
 
   return (
     <form className="flex max-h-[90vh] flex-col bg-white" onSubmit={onSubmit}>
@@ -1566,7 +1591,7 @@ const AssignmentForm = ({
                     </label>
                     <select
                       id="assignment-biblical-book"
-                      defaultValue={data?.biblicalBook || ""}
+                      value={selectedBiblicalBook || ""}
                       aria-invalid={Boolean(errors.biblicalBook)}
                       aria-describedby="assignment-biblical-book-error"
                       className={`${fieldBaseClass} ${errors.biblicalBook ? fieldErrorClass : ""}`}
@@ -1575,7 +1600,7 @@ const AssignmentForm = ({
                       <option value="" disabled>
                         Seleccionar libro
                       </option>
-                      {biblicalBookOptions.map((book) => (
+                      {availableBiblicalBooks.map((book) => (
                         <option value={book.name} key={book.number}>
                           {book.number} - {book.name}
                         </option>

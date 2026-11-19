@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  getBiblicalBookOptions,
   isBiblicalBookName,
   isBiblicalStudyAwardId,
   isSpiritualChallengeAwardId,
@@ -219,6 +220,19 @@ export const assignmentSchema = z.object({
       code: z.ZodIssueCode.custom,
       path: ["biblicalBook"],
       message: "Escribe el libro asignado a este estudio!",
+    });
+  }
+  if (
+    data.category === "Estudio biblico" &&
+    data.biblicalBook &&
+    !getBiblicalBookOptions(data.trailAwardId).some(
+      (book) => book.name === data.biblicalBook
+    )
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["biblicalBook"],
+      message: "Selecciona un libro correspondiente al premio biblico!",
     });
   }
   if (
